@@ -1,6 +1,6 @@
 {
   "name": "buffy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "A tiny always-on-top companion that reacts to what your coding agent is doing.",
   "author": "slayyyyer",
