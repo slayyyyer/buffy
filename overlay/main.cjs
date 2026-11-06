@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const ROOT = path.resolve(__dirname, '..');
 const HOME = process.env.BUFFY_HOME ? path.resolve(process.env.BUFFY_HOME) : path.join(os.homedir(), '.buffy');
@@ -55,6 +56,9 @@ let pollTimer = null;
 let cursorTimer = null;
 let failures = 0;
 let lastCursor = '';
+let embeddedDaemon = null;
+let daemonStarting = null;
+let quitting = false;
 
 function defaultBounds() {
   const area = screen.getPrimaryDisplay().workArea;
@@ -168,6 +172,30 @@ function getJson(pathname) {
     req.on('timeout', () => req.destroy(new Error('daemon timeout')));
     req.on('error', reject);
   });
+}
+
+async function ensureDaemon() {
+  try {
+    await getJson('/health');
+    return;
+  } catch {
+    /* no daemon is listening yet */
+  }
+  if (daemonStarting) return daemonStarting;
+
+  daemonStarting = (async () => {
+    try {
+      const daemonRoot = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked') : ROOT;
+      const daemonUrl = pathToFileURL(path.join(daemonRoot, 'src', 'daemon.js')).href;
+      const { startDaemon } = await import(daemonUrl);
+      embeddedDaemon = await startDaemon({ port: PORT, quiet: true });
+    } catch (error) {
+      if (error.code !== 'EADDRINUSE') {
+        console.error(`buffy daemon: ${error.message}`);
+      }
+    }
+  })();
+  return daemonStarting;
 }
 
 function postPet() {
@@ -346,11 +374,21 @@ if (!gotLock) {
   app.on('second-instance', () => {
     if (win && !win.isDestroyed()) win.showInactive();
   });
-  app.whenReady().then(createWindow);
+  app.whenReady().then(async () => {
+    await ensureDaemon();
+    createWindow();
+  });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => {
+  app.on('before-quit', (event) => {
     clearInterval(pollTimer);
     clearInterval(cursorTimer);
     saveBounds();
+    if (embeddedDaemon && !quitting) {
+      quitting = true;
+      event.preventDefault();
+      const daemon = embeddedDaemon;
+      embeddedDaemon = null;
+      daemon.close().catch(() => {}).finally(() => app.quit());
+    }
   });
 }

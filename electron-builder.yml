@@ -1,0 +1,49 @@
+appId: com.slayyyyer.buffy
+productName: Buffy
+copyright: Copyright © 2026 slayyyyer
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+directories:
+  output: dist
+  buildResources: build
+
+asar: true
+asarUnpack:
+  - src/**/*
+
+files:
+  - overlay/**/*
+  - src/**/*
+  - bin/**/*
+  - package.json
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Buffy
+  runAfterFinish: true
+
+mac:
+  icon: build/icon.png
+  category: public.app-category.entertainment
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+
+linux:
+  icon: build/icon.png
+  category: Utility
+  target:
+    - AppImage

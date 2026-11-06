@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "A tiny always-on-top companion that reacts to what your coding agent is doing.",
+  "author": "slayyyyer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/slayyyyer/buffy.git"
+  },
   "type": "module",
   "main": "overlay/main.cjs",
   "bin": {
@@ -11,7 +16,12 @@
   "scripts": {
     "buffy": "node bin/buffy.js",
     "daemon": "node src/daemon.js",
+    "start": "electron .",
     "overlay": "electron .",
+    "dist": "electron-builder --publish never",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg --publish never",
+    "dist:linux": "electron-builder --linux AppImage --publish never",
     "test": "node --test"
   },
   "engines": {
@@ -19,6 +29,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "electron": "^45.2.3"
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
   }
 }

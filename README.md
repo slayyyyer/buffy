@@ -8,6 +8,12 @@ run a shell command can drive the same pet.
   <img src="docs/buffy.png" width="240" alt="Buffy, a pink princess-cloud desktop companion, waving">
 </p>
 
+<p align="center">
+  <a href="https://slayyyyer.github.io/buffy/"><strong>Website</strong></a> ·
+  <a href="https://github.com/slayyyyer/buffy/releases/latest">Windows installer</a> ·
+  <a href="https://github.com/slayyyyer/buffy#readme">Source</a>
+</p>
+
 ```
 Claude Code ──hooks──────────┐
 Freebuff ──AGENTS.md events──┤
@@ -34,10 +40,38 @@ Steps 1–4 of five are implemented:
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 20+ to run from source or use the CLI
 - Windows, macOS or Linux with a desktop session (the overlay is an Electron window)
+- Git is recommended for the repo watcher
 
 ## Install and run
+
+### Desktop installer
+
+**Windows 10/11 (x64):** [Download Buffy 0.1.0](https://github.com/slayyyyer/buffy/releases/download/v0.1.0/Buffy-0.1.0-win-x64.exe)
+([SHA-256](https://github.com/slayyyyer/buffy/releases/download/v0.1.0/Buffy-0.1.0-win-x64.exe.sha256)).
+
+This build is unsigned, so Windows SmartScreen will warn. The installer includes
+the desktop app and starts its local daemon automatically; the pet itself does
+not need Node installed. The `buffy` CLI, Claude Code hooks, and Freebuff
+instructions still run from the Node checkout described below.
+
+Only the Windows package is prebuilt. Build macOS and Linux installers on their
+target operating systems with electron-builder:
+
+```bash
+npm install
+npm run dist:win     # Windows NSIS installer in dist/
+npm run dist:mac     # macOS dmg; build on macOS
+npm run dist:linux   # Linux AppImage; build on Linux
+```
+
+macOS builds are unsigned too and may require right-clicking the app and choosing
+**Open** unless you add a signing identity. The landing page lives in `docs/` and
+is published at [slayyyyer.github.io/buffy](https://slayyyyer.github.io/buffy/) via
+GitHub Pages.
+
+### From source
 
 ```bash
 npm install          # installs Electron
