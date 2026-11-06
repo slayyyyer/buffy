@@ -7,7 +7,7 @@
   const bubbleEl = document.getElementById('bubble');
   const textEl = document.getElementById('text');
   const sourceEl = document.getElementById('source');
-  const PET_SCALE = 1.35;
+  const PET_SCALE = 1.2;
 
   const DEFAULT_MESSAGES = {
     'needs-you': 'I need you for something.',
@@ -15,6 +15,30 @@
     error: 'Something broke.',
     thinking: 'Thinking…',
     working: 'Working…',
+  };
+
+  // Buffy's default look: a pink princess-cloud mascot with a pixel-screen face.
+  const GIRLY = {
+    hue: 338,
+    hue2: 278,
+  };
+
+  const MASCOT = {
+    outline: '#7a2556',
+    screen: '#3d102d',
+    screenPink: '#ff8ccb',
+    pink: '#f47fbd',
+    pinkLight: '#ffc0e1',
+    pinkDeep: '#dd4f9d',
+    blue: '#82cdf2',
+    blueLight: '#d0f1ff',
+    blueDeep: '#4b9ac9',
+    cream: '#fff1d2',
+    creamDeep: '#e7c79c',
+    gold: '#ffd36a',
+    goldDeep: '#b77a24',
+    red: '#e84179',
+    redDeep: '#ad2757',
   };
 
   let snapshot = null;
@@ -49,7 +73,11 @@
   function currentPalette() {
     const sprite = snapshot && snapshot.pet && snapshot.pet.sprite;
     const seed = (sprite && sprite.seed) || (snapshot && snapshot.pet && snapshot.pet.seed) || 7;
-    return (sprite && sprite.palette) || paletteFromSeed(seed);
+    const fallback = paletteFromSeed(seed);
+    const variant = sprite && sprite.palette && Number.isFinite(sprite.palette.variant)
+      ? sprite.palette.variant
+      : fallback.variant;
+    return { hue: GIRLY.hue, hue2: GIRLY.hue2, variant };
   }
 
   function syncSpriteImage(sprite, port) {
@@ -196,6 +224,70 @@
     });
   }
 
+  function drawBow(now, hue) {
+    const ink = `hsl(${hue} 48% 27%)`;
+    const ribbon = `hsl(${hue} 74% 68%)`;
+    const light = `hsl(${hue} 85% 82%)`;
+    const dark = `hsl(${hue} 55% 40%)`;
+    const sway = Math.sin(now / 850) * 0.02;
+
+    ctx.save();
+    ctx.translate(0, -61);
+    ctx.rotate(sway);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = ink;
+
+    // Ribbon tails.
+    [-1, 1].forEach((side) => {
+      ctx.fillStyle = ribbon;
+      ctx.beginPath();
+      ctx.moveTo(side * 4, 1);
+      ctx.quadraticCurveTo(side * 12, 9, side * 17, 18);
+      ctx.lineTo(side * 8, 14);
+      ctx.lineTo(side * 5, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // Two rounded loops.
+    [-1, 1].forEach((side) => {
+      ctx.fillStyle = ribbon;
+      ctx.beginPath();
+      ctx.moveTo(side * 4, -5);
+      ctx.bezierCurveTo(side * 18, -20, side * 34, -15, side * 30, -2);
+      ctx.bezierCurveTo(side * 27, 8, side * 14, 8, side * 4, 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = light;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(side * 11, -10);
+      ctx.quadraticCurveTo(side * 21, -13, side * 25, -5);
+      ctx.stroke();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2;
+    });
+
+    ctx.fillStyle = dark;
+    ctx.beginPath();
+    ctx.ellipse(0, -1.5, 6.5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = light;
+    ctx.beginPath();
+    ctx.ellipse(-2, -4, 2, 3, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.beginPath();
+    ctx.arc(7, -6, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   function drawCrossEye(x, y, size) {
     ctx.beginPath();
     ctx.moveTo(x - size / 2, y - size / 2);
@@ -255,6 +347,21 @@
       ctx.fillStyle = ink;
     }
 
+    if (state !== 'error' && state !== 'offline') {
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2;
+      [-1, 1].forEach((side) => {
+        ctx.beginPath();
+        ctx.moveTo(side * 23, eyeY - 2);
+        ctx.lineTo(side * 28, eyeY - 7);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(side * 24, eyeY + 1);
+        ctx.lineTo(side * 30, eyeY - 2);
+        ctx.stroke();
+      });
+    }
+
     const mouthY = 20;
     if (state === 'needs-you') {
       ctx.beginPath();
@@ -289,6 +396,551 @@
       ctx.arc(0, mouthY - 4, 9, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     }
+  }
+
+  function cloudPath(cx, cy, rx, ry, lobes) {
+    const step = (Math.PI * 2) / lobes;
+    ctx.beginPath();
+    for (let i = 0; i <= lobes; i += 1) {
+      const angle = -Math.PI / 2 + i * step;
+      const x = cx + Math.cos(angle) * rx;
+      const y = cy + Math.sin(angle) * ry;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        const mid = angle - step / 2;
+        ctx.quadraticCurveTo(
+          cx + Math.cos(mid) * (rx + 6),
+          cy + Math.sin(mid) * (ry + 6),
+          x,
+          y,
+        );
+      }
+    }
+    ctx.closePath();
+  }
+
+  function drawCloudHead() {
+    ctx.save();
+    const gradient = ctx.createLinearGradient(0, -54, 0, 14);
+    gradient.addColorStop(0, '#ffd3eb');
+    gradient.addColorStop(0.55, '#fb9dd1');
+    gradient.addColorStop(1, '#ee69b0');
+    cloudPath(0, -20, 45, 33, 12);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = '#8e235f';
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 32, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    [
+      [-26, -39, 3, 3],
+      [-18, -46, 2, 2],
+      [-11, -49, 2, 3],
+      [23, -37, 2, 2],
+      [31, -29, 2, 2],
+    ].forEach(([x, y, w, h]) => ctx.fillRect(x, y, w, h));
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 2;
+    [-30, -22, -14].forEach((x) => {
+      ctx.beginPath();
+      ctx.moveTo(x, -37);
+      ctx.quadraticCurveTo(x + 3, -43, x + 9, -46);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  function drawHeadphones() {
+    [-1, 1].forEach((side) => {
+      const x = side * 44;
+      ctx.save();
+      ctx.shadowColor = 'rgba(255, 62, 162, 0.8)';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#e82b83';
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(x, -17, 10.5, 10.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#ff9ed4';
+      ctx.strokeStyle = '#b82870';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(x, -17, 7, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      ctx.beginPath();
+      ctx.ellipse(x - 2.5, -20.5, 2.2, 1.5, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function drawPixelFace(now, state) {
+    ctx.save();
+    ctx.fillStyle = MASCOT.screen;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 2.2;
+    roundRect(-25, -42, 50, 31, 9);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 139, 207, 0.24)';
+    ctx.lineWidth = 1;
+    roundRect(-22.5, -39.5, 45, 26, 7);
+    ctx.stroke();
+
+    const px = (x, y, w, h, color) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+    };
+    const white = '#ffe9f7';
+    const pink = '#ff8dcc';
+    const glow = '#ff4da3';
+    const muted = '#8e657e';
+    const happy = state === 'pet' || state === 'done';
+    const blink = now % 4300 < 120 && !['needs-you', 'error', 'pet', 'done', 'offline'].includes(state);
+    const eyeY = -31;
+
+    const openEye = (side, wide) => {
+      const x = side * 13;
+      px(x - 4, eyeY - 5, 8, 9, white);
+      px(x - 5, eyeY - 3, 10, 5, white);
+      px(x - 2, eyeY - 4, 4, 6, glow);
+      px(x - 1, eyeY - 4, 2, 2, '#ffffff');
+      px(x - 5, eyeY - 7, 2, 2, pink);
+      px(x + 3, eyeY - 7, 2, 2, pink);
+      if (wide) px(x - 6, eyeY - 1, 2, 2, pink);
+    };
+    const happyEye = (side) => {
+      const x = side * 13;
+      px(x - 5, eyeY - 1, 2, 2, pink);
+      px(x - 3, eyeY - 3, 2, 2, pink);
+      px(x - 1, eyeY - 4, 3, 2, pink);
+      px(x + 2, eyeY - 3, 2, 2, pink);
+      px(x + 4, eyeY - 1, 2, 2, pink);
+    };
+    const closedEye = (side) => {
+      const x = side * 13;
+      px(x - 4, eyeY, 8, 2, pink);
+      px(x - 2, eyeY - 1, 4, 2, pink);
+    };
+    const crossEye = (side) => {
+      const x = side * 13;
+      for (let i = 0; i < 4; i += 1) {
+        px(x - 4 + i * 2, eyeY - 4 + i * 2, 2, 2, pink);
+        px(x + 4 - i * 2, eyeY - 4 + i * 2, 2, 2, pink);
+      }
+    };
+
+    if (state === 'error') {
+      crossEye(-1);
+      crossEye(1);
+    } else if (state === 'offline') {
+      [-1, 1].forEach((side) => {
+        const x = side * 13;
+        px(x - 4, eyeY - 1, 8, 2, muted);
+      });
+    } else if (happy) {
+      happyEye(-1);
+      happyEye(1);
+    } else if (blink) {
+      closedEye(-1);
+      closedEye(1);
+    } else {
+      openEye(-1, state === 'needs-you');
+      openEye(1, state === 'needs-you');
+    }
+
+    [-1, 1].forEach((side) => {
+      px(side * 20 - 3, -20, 5, 2, 'rgba(255, 104, 176, 0.65)');
+      px(side * 20 - 1, -18, 3, 2, 'rgba(255, 104, 176, 0.55)');
+    });
+
+    if (state === 'error') {
+      px(-4, -15, 2, 2, pink);
+      px(-2, -17, 4, 2, pink);
+      px(2, -15, 2, 2, pink);
+    } else if (state === 'offline') {
+      px(-4, -16, 8, 2, muted);
+    } else if (state === 'thinking') {
+      px(-4, -17, 8, 2, pink);
+    } else if (state === 'needs-you') {
+      px(-2, -18, 4, 4, glow);
+      px(-1, -17, 2, 2, '#fff0fa');
+    } else if (state === 'working') {
+      px(-1, -18, 3, 3, glow);
+    } else {
+      px(-4, -16, 2, 2, pink);
+      px(-2, -15, 4, 2, pink);
+      px(2, -16, 2, 2, pink);
+    }
+
+    px(-21, -37, 2, 2, 'rgba(255, 151, 213, 0.5)');
+    px(19, -37, 2, 2, 'rgba(255, 151, 213, 0.5)');
+    ctx.restore();
+  }
+
+  function drawJewelHeart(x, y, size, fill, stroke) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, y + size * 0.65);
+    ctx.bezierCurveTo(x - size * 1.35, y - size * 0.35, x - size * 0.4, y - size, x, y - size * 0.35);
+    ctx.bezierCurveTo(x + size * 0.4, y - size, x + size * 1.35, y - size * 0.35, x, y + size * 0.65);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillRect(x - size * 0.25, y - size * 0.3, Math.max(1, size * 0.2), Math.max(1, size * 0.2));
+    ctx.restore();
+  }
+
+  function drawTiara() {
+    ctx.save();
+    ctx.fillStyle = MASCOT.gold;
+    ctx.strokeStyle = MASCOT.goldDeep;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-21, -46);
+    ctx.lineTo(-17, -59);
+    ctx.lineTo(-8, -52);
+    ctx.lineTo(0, -65);
+    ctx.lineTo(8, -52);
+    ctx.lineTo(17, -59);
+    ctx.lineTo(21, -46);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    roundRect(-22, -49, 44, 5.5, 2.7);
+    ctx.fillStyle = MASCOT.gold;
+    ctx.fill();
+    ctx.strokeStyle = MASCOT.goldDeep;
+    ctx.stroke();
+
+    [-20, 20].forEach((x) => {
+      ctx.fillStyle = MASCOT.gold;
+      ctx.strokeStyle = MASCOT.goldDeep;
+      ctx.beginPath();
+      ctx.arc(x, -52, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    drawJewelHeart(0, -54, 6.2, '#ff4e9f', MASCOT.goldDeep);
+    drawJewelHeart(-14, -51, 4, '#ff7bb8', MASCOT.goldDeep);
+    drawJewelHeart(14, -51, 4, '#ff7bb8', MASCOT.goldDeep);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    ctx.fillRect(-8, -55, 2, 2);
+    ctx.restore();
+  }
+
+  function drawDress() {
+    ctx.save();
+    ctx.lineJoin = 'round';
+    const hem = (left, right, y, depth, count) => {
+      const step = (right - left) / count;
+      ctx.moveTo(left, y);
+      for (let i = 0; i < count; i += 1) {
+        ctx.quadraticCurveTo(left + step * (i + 0.5), y + depth, left + step * (i + 1), y);
+      }
+    };
+
+    ctx.fillStyle = MASCOT.cream;
+    ctx.strokeStyle = MASCOT.creamDeep;
+    ctx.lineWidth = 1.2;
+    [-8, 8].forEach((x) => {
+      ctx.beginPath();
+      ctx.ellipse(x, 9, 8, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    [-22, 22].forEach((x) => {
+      ctx.fillStyle = MASCOT.cream;
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(x, 16, 8, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(x - 2, 14, 3, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.beginPath();
+    ctx.moveTo(-13, 20);
+    ctx.bezierCurveTo(-29, 25, -35, 38, -30, 46);
+    hem(-30, 30, 46, 3.5, 5);
+    ctx.bezierCurveTo(35, 38, 29, 25, 13, 20);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.blueDeep;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-12, 21);
+    ctx.bezierCurveTo(-23, 28, -28, 38, -23, 44);
+    hem(-23, 23, 44, 3, 4);
+    ctx.bezierCurveTo(28, 38, 23, 28, 12, 21);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.blue;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    hem(-23, 23, 44, 3, 4);
+    ctx.strokeStyle = MASCOT.cream;
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-13, 6);
+    ctx.quadraticCurveTo(-16, 16, -12, 23);
+    ctx.quadraticCurveTo(0, 28, 12, 23);
+    ctx.quadraticCurveTo(16, 16, 13, 6);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.blueLight;
+    ctx.fill();
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    ctx.fillStyle = MASCOT.cream;
+    ctx.strokeStyle = MASCOT.creamDeep;
+    ctx.lineWidth = 1;
+    roundRect(-13, 20, 26, 3.5, 1.7);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    roundRect(-4, 8, 8, 12, 2);
+    ctx.fill();
+
+    drawJewelHeart(0, 15, 4.7, '#66c9ff', MASCOT.cream);
+
+    ctx.fillStyle = MASCOT.cream;
+    [-18, 0, 18].forEach((x) => {
+      ctx.beginPath();
+      ctx.arc(x, 42, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawShoes() {
+    ctx.save();
+    [-14, 14].forEach((x) => {
+      ctx.fillStyle = MASCOT.red;
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 2;
+      roundRect(x - 8, 44, 16, 11, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = MASCOT.cream;
+      ctx.strokeStyle = MASCOT.creamDeep;
+      ctx.lineWidth = 0.8;
+      roundRect(x - 8, 52, 16, 3, 1.5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(x - 2, 48, 3, 1.5, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawHands() {
+    [-1, 1].forEach((side) => {
+      const x = side * 31;
+      ctx.strokeStyle = MASCOT.creamDeep;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(side * 23, 18);
+      ctx.lineTo(x, 26);
+      ctx.stroke();
+
+      ctx.fillStyle = MASCOT.pink;
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(x, 28, 6.5, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      ctx.arc(x - 2, 25.5, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function drawPrincessDress() {
+    ctx.save();
+    ctx.lineJoin = 'round';
+    const hem = (left, right, y, depth, count, start = true) => {
+      const step = (right - left) / count;
+      if (start) ctx.moveTo(left, y);
+      for (let i = 0; i < count; i += 1) {
+        ctx.quadraticCurveTo(left + step * (i + 0.5), y + depth, left + step * (i + 1), y);
+      }
+    };
+
+    // Cream collar peeking out beneath the bodice.
+    ctx.fillStyle = MASCOT.cream;
+    ctx.strokeStyle = MASCOT.creamDeep;
+    ctx.lineWidth = 1.2;
+    roundRect(-12, 6, 24, 7, 3.5);
+    ctx.fill();
+    ctx.stroke();
+
+    // Puffed sleeves.
+    [-21, 21].forEach((x) => {
+      ctx.fillStyle = MASCOT.cream;
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(x, 15, 7.5, 6.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = MASCOT.blue;
+      ctx.beginPath();
+      ctx.ellipse(x, 17, 5, 3, 0, 0, Math.PI);
+      ctx.fill();
+    });
+
+    // Deep-blue back skirt.
+    ctx.beginPath();
+    ctx.moveTo(-12, 19);
+    ctx.bezierCurveTo(-28, 24, -33, 33, -29, 39);
+    hem(-29, 29, 39, 3, 5, false);
+    ctx.bezierCurveTo(33, 33, 28, 24, 12, 19);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.blueDeep;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+
+    // Lighter overskirt.
+    ctx.beginPath();
+    ctx.moveTo(-10, 20);
+    ctx.bezierCurveTo(-20, 25, -24, 32, -21, 38);
+    hem(-21, 21, 38, 2.5, 3, false);
+    ctx.bezierCurveTo(24, 32, 20, 25, 10, 20);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.blue;
+    ctx.fill();
+    ctx.stroke();
+
+    // Cream scalloped hem.
+    ctx.beginPath();
+    hem(-21, 21, 38, 2.5, 3);
+    ctx.strokeStyle = MASCOT.cream;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // Bodice.
+    ctx.beginPath();
+    ctx.moveTo(-12, 8);
+    ctx.quadraticCurveTo(-14, 15, -10, 22);
+    ctx.quadraticCurveTo(0, 26, 10, 22);
+    ctx.quadraticCurveTo(14, 15, 12, 8);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.blueLight;
+    ctx.fill();
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    // White V collar.
+    ctx.beginPath();
+    ctx.moveTo(-9, 8);
+    ctx.lineTo(0, 13);
+    ctx.lineTo(9, 8);
+    ctx.lineTo(6, 6);
+    ctx.lineTo(0, 9);
+    ctx.lineTo(-6, 6);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.cream;
+    ctx.fill();
+    ctx.strokeStyle = MASCOT.creamDeep;
+    ctx.lineWidth = 0.9;
+    ctx.stroke();
+
+    ctx.fillStyle = MASCOT.cream;
+    ctx.strokeStyle = MASCOT.creamDeep;
+    ctx.lineWidth = 1;
+    roundRect(-11, 20, 22, 3, 1.5);
+    ctx.fill();
+    ctx.stroke();
+
+    drawJewelHeart(0, 15, 4.2, '#66c9ff', MASCOT.cream);
+
+    ctx.fillStyle = MASCOT.cream;
+    [-15, 0, 15].forEach((x) => {
+      ctx.beginPath();
+      ctx.arc(x, 36, 1.1, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawPrincessShoes() {
+    ctx.save();
+    ctx.fillStyle = MASCOT.pink;
+    ctx.fillRect(-18, 36, 6, 7);
+    ctx.fillRect(12, 36, 6, 7);
+
+    [-14, 14].forEach((x) => {
+      ctx.fillStyle = MASCOT.red;
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 2;
+      roundRect(x - 8, 42, 16, 11, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = MASCOT.cream;
+      ctx.strokeStyle = MASCOT.creamDeep;
+      ctx.lineWidth = 0.8;
+      roundRect(x - 8, 50, 16, 3, 1.5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(x - 2, 46, 3, 1.5, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
   }
 
   function drawKeyboard(now, hue) {
@@ -340,6 +992,12 @@
   }
 
   function drawEffects(now, state, centerX, centerY) {
+    if (state === 'idle') {
+      const pulse = 0.18 + 0.12 * Math.sin(now / 900);
+      drawSparkle(centerX - 52, centerY - 36, 3, '#ffc2da', pulse);
+      drawSparkle(centerX + 54, centerY - 30, 2.2, '#fff0b8', pulse * 0.9);
+    }
+
     if (state === 'thinking') {
       for (let i = 0; i < 3; i += 1) {
         const progress = ((now / 1100 + i / 3) % 1);
@@ -425,34 +1083,13 @@
       ctx.drawImage(customImage, -drawWidth / 2, -drawHeight / 2 - 2, drawWidth, drawHeight);
     } else {
       ctx.scale(PET_SCALE, PET_SCALE);
-      drawBackBits(palette.variant, palette.hue, palette.hue2);
-
-      const gradient = ctx.createLinearGradient(0, -46, 0, 45);
-      gradient.addColorStop(0, `hsl(${palette.hue} 72% 79%)`);
-      gradient.addColorStop(1, `hsl(${palette.hue} 62% 62%)`);
-      ctx.fillStyle = gradient;
-      ctx.strokeStyle = `hsl(${palette.hue} 42% 38%)`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 52, 45, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = `hsla(${palette.hue2} 80% 62% / 0.32)`;
-      [-30, 30].forEach((side) => {
-        ctx.beginPath();
-        ctx.ellipse(side, 17, 8, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      ctx.fillStyle = `hsl(${palette.hue} 55% 52%)`;
-      [-22, 22].forEach((side) => {
-        ctx.beginPath();
-        ctx.ellipse(side, 44, 12, 7, 0, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      drawFace(now, state, palette.hue);
+      drawCloudHead();
+      drawHeadphones();
+      drawPixelFace(now, state);
+      drawTiara();
+      drawPrincessDress();
+      drawPrincessShoes();
+      if (state !== 'working') drawHands();
       if (state === 'working') drawKeyboard(now, palette.hue);
     }
     ctx.restore();
