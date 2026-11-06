@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('buffy', {
   onState: (callback) => subscribe('state', callback),
   onCursor: (callback) => subscribe('cursor', callback),
   onWardrobe: (callback) => subscribe('wardrobe', callback),
+  onSettings: (callback) => subscribe('settings', callback),
+  onDemoHobby: (callback) => subscribe('demo-hobby', callback),
   onPetRequest: (callback) => subscribe('pet-request', callback),
   pet: () => ipcRenderer.send('pet'),
   dismissSession: (sessionId) => ipcRenderer.invoke('dismiss-session', sessionId),

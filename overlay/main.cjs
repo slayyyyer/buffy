@@ -10,6 +10,7 @@ const {
   shell,
   clipboard,
 } = require('electron');
+const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const http = require('node:http');
 const os = require('node:os');
@@ -20,15 +21,14 @@ const ROOT = path.resolve(__dirname, '..');
 const HOME = process.env.BUFFY_HOME ? path.resolve(process.env.BUFFY_HOME) : path.join(os.homedir(), '.buffy');
 const WINDOW_FILE = path.join(HOME, 'window.json');
 const WARDROBE_FILE = path.join(HOME, 'wardrobe.json');
+const CONFIG_FILE = path.join(HOME, 'config.json');
 const ONBOARDING_FILE = path.join(HOME, 'onboarding.json');
 const DOCS_URL = 'https://github.com/slayyyyer/buffy#install-and-run';
 const WIDTH = 300;
 const HEIGHT = 330;
 const EDGE_GAP = 24;
-const WARDROBE_DEFAULTS = { bow: 'none', hat: 'none', wand: false, theme: 'rose' };
-const BOWS = ['none', 'pink', 'lavender', 'mint'];
-const HATS = ['none', 'beret', 'party'];
-const THEMES = ['rose', 'lavender', 'mint', 'sky'];
+const WARDROBE = require('./wardrobe-catalog.cjs');
+const { normalizeOverlaySettings } = require('./settings.cjs');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function readJson(file, fallback) {
@@ -41,23 +41,25 @@ function readJson(file, fallback) {
 
 function writeJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+  const temp = `${file}.${process.pid}.${Math.random().toString(16).slice(2)}.tmp`;
+  try {
+    fs.writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`);
+    try {
+      fs.renameSync(temp, file);
+    } catch (error) {
+      if (process.platform !== 'win32') throw error;
+      fs.rmSync(file, { force: true });
+      fs.renameSync(temp, file);
+    }
+  } finally {
+    fs.rmSync(temp, { force: true });
+  }
 }
 
-const config = readJson(path.join(HOME, 'config.json'), {});
+const config = readJson(CONFIG_FILE, {});
 const PORT = Number(process.env.BUFFY_PORT || config.port || 4517);
-
-function normalizeWardrobe(value) {
-  const next = value && typeof value === 'object' ? value : {};
-  return {
-    bow: BOWS.includes(next.bow) ? next.bow : WARDROBE_DEFAULTS.bow,
-    hat: HATS.includes(next.hat) ? next.hat : WARDROBE_DEFAULTS.hat,
-    wand: Boolean(next.wand),
-    theme: THEMES.includes(next.theme) ? next.theme : WARDROBE_DEFAULTS.theme,
-  };
-}
-
-let wardrobe = normalizeWardrobe(readJson(WARDROBE_FILE, {}));
+let overlaySettings = normalizeOverlaySettings(config.overlay);
+let wardrobe = WARDROBE.normalizeWardrobe(readJson(WARDROBE_FILE, {}));
 
 function argValue(name) {
   const index = process.argv.indexOf(name);
@@ -66,12 +68,17 @@ function argValue(name) {
 
 const shotPath = argValue('--shot');
 const shotExit = process.argv.includes('--shot-exit');
+const shotHobby = argValue('--shot-hobby');
+const wardrobeShotPath = argValue('--wardrobe-shot');
+const wardrobeShotExit = process.argv.includes('--wardrobe-shot-exit');
+const wardrobePreview = argValue('--wardrobe-preview');
 const dev = process.argv.includes('--dev');
 const smokeTest = process.argv.includes('--smoke-test');
 const forceOnboarding = process.argv.includes('--onboarding');
 
 let win = null;
 let setupWindow = null;
+let wardrobeWindow = null;
 let tray = null;
 let drag = null;
 let saveTimer = null;
@@ -121,57 +128,83 @@ function saveBounds() {
 function saveWardrobe() {
   try {
     writeJson(WARDROBE_FILE, wardrobe);
-  } catch {
-    /* wardrobe persistence is best effort */
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+function broadcastWardrobe() {
+  if (win && !win.isDestroyed()) win.webContents.send('wardrobe', wardrobe);
+  if (wardrobeWindow && !wardrobeWindow.isDestroyed()) {
+    wardrobeWindow.webContents.send('wardrobe:changed', wardrobe);
   }
 }
 
 function updateWardrobe(patch) {
-  wardrobe = normalizeWardrobe({ ...wardrobe, ...patch });
-  saveWardrobe();
-  if (win && !win.isDestroyed()) win.webContents.send('wardrobe', wardrobe);
+  wardrobe = WARDROBE.applyLook(wardrobe, patch);
+  const saved = saveWardrobe();
+  broadcastWardrobe();
   refreshTrayMenu();
+  return { ok: saved.ok, error: saved.error, wardrobe };
 }
 
-function wardrobeMenu() {
-  return {
-    label: 'Wardrobe',
-    submenu: [
-      {
-        label: 'Bow',
-        submenu: [
-          { label: 'No bow', type: 'radio', checked: wardrobe.bow === 'none', click: () => updateWardrobe({ bow: 'none' }) },
-          { label: 'Pink bow', type: 'radio', checked: wardrobe.bow === 'pink', click: () => updateWardrobe({ bow: 'pink' }) },
-          { label: 'Lavender bow', type: 'radio', checked: wardrobe.bow === 'lavender', click: () => updateWardrobe({ bow: 'lavender' }) },
-          { label: 'Mint bow', type: 'radio', checked: wardrobe.bow === 'mint', click: () => updateWardrobe({ bow: 'mint' }) },
-        ],
-      },
-      {
-        label: 'Hat',
-        submenu: [
-          { label: 'No hat', type: 'radio', checked: wardrobe.hat === 'none', click: () => updateWardrobe({ hat: 'none' }) },
-          { label: 'Pastel beret', type: 'radio', checked: wardrobe.hat === 'beret', click: () => updateWardrobe({ hat: 'beret' }) },
-          { label: 'Party hat', type: 'radio', checked: wardrobe.hat === 'party', click: () => updateWardrobe({ hat: 'party' }) },
-        ],
-      },
-      {
-        label: 'Wand',
-        type: 'checkbox',
-        checked: wardrobe.wand,
-        click: () => updateWardrobe({ wand: !wardrobe.wand }),
-      },
-      { type: 'separator' },
-      {
-        label: 'Theme',
-        submenu: [
-          { label: 'Rose', type: 'radio', checked: wardrobe.theme === 'rose', click: () => updateWardrobe({ theme: 'rose' }) },
-          { label: 'Lavender', type: 'radio', checked: wardrobe.theme === 'lavender', click: () => updateWardrobe({ theme: 'lavender' }) },
-          { label: 'Mint', type: 'radio', checked: wardrobe.theme === 'mint', click: () => updateWardrobe({ theme: 'mint' }) },
-          { label: 'Sky', type: 'radio', checked: wardrobe.theme === 'sky', click: () => updateWardrobe({ theme: 'sky' }) },
-        ],
-      },
-    ],
-  };
+function saveOverlaySettings(patch) {
+  const raw = readJson(CONFIG_FILE, {});
+  const base = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const current = base.overlay && typeof base.overlay === 'object' && !Array.isArray(base.overlay)
+    ? base.overlay
+    : {};
+  const overlay = { ...current, ...(patch && typeof patch === 'object' ? patch : {}) };
+  overlaySettings = normalizeOverlaySettings(overlay);
+  try {
+    writeJson(CONFIG_FILE, { ...base, overlay });
+  } catch (error) {
+    return { ok: false, error: error.message, settings: overlaySettings };
+  }
+  if (win && !win.isDestroyed()) win.webContents.send('settings', overlaySettings);
+  refreshTrayMenu();
+  return { ok: true, error: null, settings: overlaySettings };
+}
+
+async function openWardrobe({ show = true } = {}) {
+  if (wardrobeWindow && !wardrobeWindow.isDestroyed()) {
+    if (show) {
+      wardrobeWindow.show();
+      wardrobeWindow.focus();
+    }
+    return wardrobeWindow;
+  }
+
+  wardrobeWindow = new BrowserWindow({
+    width: 760,
+    height: 660,
+    minWidth: 640,
+    minHeight: 560,
+    center: true,
+    show: false,
+    title: "Buffy's wardrobe",
+    backgroundColor: '#fff8f4',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'wardrobe-preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  wardrobeWindow.setMenuBarVisibility(false);
+  wardrobeWindow.once('ready-to-show', () => {
+    if (show && wardrobeWindow && !wardrobeWindow.isDestroyed()) wardrobeWindow.show();
+  });
+  wardrobeWindow.on('closed', () => {
+    wardrobeWindow = null;
+  });
+  const loadOptions = wardrobePreview ? { query: { preview: wardrobePreview } } : undefined;
+  await wardrobeWindow.loadFile(path.join(__dirname, 'wardrobe.html'), loadOptions).catch((error) => {
+    console.error(`buffy wardrobe: ${error.message}`);
+  });
+  return wardrobeWindow;
 }
 
 function moveToCorner(corner) {
@@ -360,6 +393,8 @@ function createWindow() {
   win.webContents.on('did-finish-load', () => {
     if (!win || win.isDestroyed()) return;
     win.webContents.send('wardrobe', wardrobe);
+    win.webContents.send('settings', overlaySettings);
+    if (shotHobby) win.webContents.send('demo-hobby', shotHobby);
   });
 
   win.once('ready-to-show', () => {
@@ -645,7 +680,20 @@ function menuTemplate(fromTray = false) {
         { label: 'Bottom right', click: () => moveToCorner('bottom-right') },
       ],
     },
-    wardrobeMenu(),
+    {
+      label: 'Wardrobe…',
+      click: () => openWardrobe().catch((error) => dialog.showErrorBox('Could not open the wardrobe', error.message)),
+    },
+    {
+      label: 'Surprise me',
+      click: () => updateWardrobe(WARDROBE.randomLook()),
+    },
+    {
+      label: 'Idle hobbies',
+      type: 'checkbox',
+      checked: overlaySettings.idleHobbies,
+      click: (item) => saveOverlaySettings({ idleHobbies: item.checked }),
+    },
     { type: 'separator' },
     {
       label: 'Setup guide…',
@@ -740,11 +788,20 @@ async function runSmokeTest() {
       sleep(10_000),
     ]);
     const page = await win.webContents.executeJavaScript(
-      "({ stage: Boolean(document.querySelector('#stage')), sessions: Boolean(document.querySelector('#sessions')), api: Boolean(window.buffy), ready: document.readyState })",
+      "({ stage: Boolean(document.querySelector('#stage')), sessions: Boolean(document.querySelector('#sessions')), api: Boolean(window.buffy), character: Boolean(window.BuffyCharacter), ready: document.readyState })",
     );
-    if (!page.stage || !page.sessions || !page.api || page.ready !== 'complete') {
+    if (!page.stage || !page.sessions || !page.api || !page.character || page.ready !== 'complete') {
       throw new Error(`renderer check failed: ${JSON.stringify(page)}`);
     }
+    const wardrobeWin = await openWardrobe({ show: false });
+    await sleep(500);
+    const wardrobePage = await wardrobeWin.webContents.executeJavaScript(
+      "({ app: Boolean(document.querySelector('#wardrobe-app')), preview: Boolean(document.querySelector('#preview')), api: Boolean(window.buffyWardrobe), tabs: document.querySelectorAll('[role=tab]').length })",
+    );
+    if (!wardrobePage.app || !wardrobePage.preview || !wardrobePage.api || wardrobePage.tabs < 4) {
+      throw new Error(`wardrobe renderer check failed: ${JSON.stringify(wardrobePage)}`);
+    }
+    wardrobeWin.close();
     console.log(`SMOKE_OK ${health.version} ${page.ready}`);
     app.exit(0);
   } catch (error) {
@@ -763,6 +820,49 @@ ipcMain.handle('dismiss-session', async (_event, sessionId) => {
   } catch {
     return false;
   }
+});
+
+ipcMain.handle('wardrobe:get', () => ({ catalog: WARDROBE.CATALOG, wardrobe }));
+
+ipcMain.handle('wardrobe:update', (_event, patch) => {
+  const safe = {};
+  const incoming = patch && typeof patch === 'object' ? patch : {};
+  for (const key of Object.keys(WARDROBE.DEFAULTS)) {
+    if (Object.prototype.hasOwnProperty.call(incoming, key)) safe[key] = incoming[key];
+  }
+  return updateWardrobe(safe);
+});
+
+ipcMain.handle('wardrobe:random', () => updateWardrobe(WARDROBE.randomLook()));
+
+ipcMain.handle('wardrobe:save-preset', (_event, name) => {
+  const result = WARDROBE.addPreset(wardrobe, String(name ?? ''), { id: randomUUID(), now: new Date().toISOString() });
+  if (result.error) return { ok: false, error: result.error, wardrobe };
+  wardrobe = result.wardrobe;
+  const saved = saveWardrobe();
+  broadcastWardrobe();
+  refreshTrayMenu();
+  return { ok: saved.ok, error: saved.error, wardrobe, preset: result.preset };
+});
+
+ipcMain.handle('wardrobe:apply-preset', (_event, id) => {
+  const preset = WARDROBE.findPreset(wardrobe, String(id ?? ''));
+  if (!preset) return { ok: false, error: 'That look no longer exists.', wardrobe };
+  return updateWardrobe(preset.look);
+});
+
+ipcMain.handle('wardrobe:delete-preset', (_event, id) => {
+  const result = WARDROBE.removePreset(wardrobe, String(id ?? ''));
+  if (result.error) return { ok: false, error: result.error, wardrobe };
+  wardrobe = result.wardrobe;
+  const saved = saveWardrobe();
+  broadcastWardrobe();
+  refreshTrayMenu();
+  return { ok: saved.ok, error: saved.error, wardrobe };
+});
+
+ipcMain.on('wardrobe:close', () => {
+  if (wardrobeWindow && !wardrobeWindow.isDestroyed()) wardrobeWindow.close();
 });
 
 ipcMain.handle('setup-copy', (_event, text) => {
@@ -834,6 +934,23 @@ if (!gotLock) {
     }
     createTray();
     initUpdater();
+    if (wardrobeShotPath) {
+      try {
+        await sleep(700);
+        const wardrobeWin = await openWardrobe({ show: true });
+        await sleep(900);
+        const target = path.resolve(wardrobeShotPath);
+        const image = await wardrobeWin.webContents.capturePage();
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, image.toPNG());
+        console.log(`buffy wardrobe screenshot: ${target}`);
+      } catch (error) {
+        console.error(`buffy wardrobe screenshot failed: ${error.message}`);
+        if (wardrobeShotExit) app.exit(1);
+      }
+      if (wardrobeShotExit) app.quit();
+      return;
+    }
     if (!shotPath && (forceOnboarding || !onboardingSeen())) {
       setTimeout(() => showOnboarding({ force: forceOnboarding }), 1000);
     }

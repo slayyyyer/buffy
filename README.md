@@ -30,7 +30,7 @@ the always-on-top overlay draws it.
 
 ## Status
 
-Buffy is at **v1.0.0**. All five build steps are complete:
+Buffy is at **v1.1.0**. The core is complete, and this release adds a full wardrobe and a quieter idle life:
 
 - [x] daemon, CLI, state machine, placeholder sprite, overlay window
 - [x] Claude Code hooks, `/buffy` command and `buffy install claude`
@@ -38,6 +38,8 @@ Buffy is at **v1.0.0**. All five build steps are complete:
 - [x] `buffy hatch` with generated sprites
 - [x] multi-session arbitration and a per-session overlay rail
 - [x] desktop lifecycle (tray, launch at login, first-run setup) and update-ready releases
+- [x] wardrobe window: five outfits, five bows, three hats, glasses, wands, six themes, and twelve saved looks
+- [x] idle hobbies: reading, cocoa, and stretching, plus a configurable two-minute nap
 
 ## Requirements
 
@@ -49,12 +51,12 @@ Buffy is at **v1.0.0**. All five build steps are complete:
 
 ### Desktop installer
 
-Buffy 1.0.0 ships for Windows, macOS, and Linux:
+Buffy 1.1.0 ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-linux-x86_64.AppImage.sha256)
 
 The desktop app includes the pet and its local daemon, so the pet itself does
 not need Node installed. The `buffy` CLI, Claude Code hooks, and Freebuff
@@ -95,8 +97,10 @@ The overlay is frameless, transparent and always on top. Drag it anywhere for a
 tiny heart-and-sparkle trail, click the pet to wave, right-click or use the tray
 icon for the menu (show/hide, wardrobe, move to a screen corner, setup guide,
 launch at login, update checks, hide for 10 minutes, quit). Her eyes follow your
-cursor, and she naps after 30 seconds of quiet idle; hover or click to wake her.
-Her position is remembered in `~/.buffy/window.json`.
+cursor. After a quiet spell she opens a book, sips cocoa, or stretches; after two
+minutes she naps. Hover or click to wake her, and turn **Idle hobbies** off from
+the tray if you want a calmer desk. Her position is remembered in
+`~/.buffy/window.json`.
 
 The packaged app opens a first-run setup window that explains the desktop pet,
 the `buffy install claude` and `buffy install freebuff` commands, and where
@@ -104,8 +108,16 @@ state lives. Reopen it from the tray or with `buffy overlay --onboarding`.
 Installed builds can enable launch at login from the tray; development builds
 show those packaging-only controls as disabled.
 
-Use the **Wardrobe** menu to change her bow, hat, wand, and pastel theme. Those
-choices are saved in `~/.buffy/wardrobe.json`.
+Use the **Wardrobe** menu to build a look from five outfits (Princess, Cozy,
+Sleepover, Rainy, Starlight), five bows, three hats, glasses, and wands, then
+pick one of six pastel themes. The wardrobe window has a live preview, three
+built-in looks (Royal, Cozy, Starlight), and up to twelve named presets.
+Everything is saved in `~/.buffy/wardrobe.json`; v1 wardrobe files migrate
+automatically.
+
+<p align="center">
+  <img src="docs/shots/wardrobe.png" width="640" alt="Buffy's wardrobe window with a live preview, outfit tabs, built-in looks, and hobby chips">
+</p>
 
 Drive it from a second terminal:
 
@@ -254,8 +266,10 @@ working.
 
 `buffy hatch` generates a transparent PNG from your description with OpenAI
 Images, stores it in `~/.buffy/sprites/`, and swaps it into the running pet.
-The overlay keeps its bob, tilt, squash and effects; the generated art replaces
-the procedural body. The placeholder remains the fallback.
+Theoverlay keeps its bob, tilt, squash and effects; the generated art replaces the
+procedural body. The placeholder remains the fallback. A hatched sprite is a
+full-body replacement: procedural outfits, accessories, and hobby props are not
+drawn over it.
 
 Set the key in the shell that runs hatch (buffy never stores or prints it):
 
@@ -291,11 +305,23 @@ Configure the provider under `hatch` in `~/.buffy/config.json`:
 `baseUrl` can point at an OpenAI-compatible image endpoint; the key env var is
 still `OPENAI_API_KEY`.
 
+## Idle life
+
+When nothing is active, Buffy entertains herself. Reading lasts 20 seconds,
+cocoa 16, and stretching 7; the first hobby starts after 8 seconds of quiet,
+with a 9-second gap between them. Hobbies are cosmetic: no XP, mood, or counters
+change. After two minutes of quiet she sleeps; hover, click, or any event wakes
+her.
+
+Idle hobbies are on by default. Toggle **Idle hobbies** in the tray, or set
+`overlay.idleHobbies` in `~/.buffy/config.json`. `overlay.sleepAfterMs` accepts
+30,000–600,000 ms (default 120,000).
+
 ## States
 
 | State | Animation | Leaves when |
 | --- | --- | --- |
-| `idle` | slow breathing, blinking | any event |
+| `idle` | slow breathing, blinking, occasional hobby | any event or hover |
 | `thinking` | tilt, floating dots | any event |
 | `working` | fast typing on a tiny keyboard | any event |
 | `needs-you` | bouncing, wide eyes | another event arrives |
@@ -315,6 +341,10 @@ session. Every event carries a `source` (`claude`, `freebuff`, `watcher`, `cli`,
   "port": 4517,
   "doneHoldMs": 4000,
   "sessionTtlMs": 1800000,
+  "overlay": {
+    "idleHobbies": true,
+    "sleepAfterMs": 120000
+  },
   "watch": {
     "enabled": true,
     "directory": null,
@@ -344,7 +374,8 @@ state (used by the tests).
 | Path | Contents |
 | --- | --- |
 | `~/.buffy/state.json` | pet identity, sprite, mood, XP, counters |
-| `~/.buffy/config.json` | port, timing, watcher and hatch settings |
+| `~/.buffy/wardrobe.json` | outfit, accessories, theme, and saved looks (v2; v1 migrates) |
+| `~/.buffy/config.json` | port, timing, overlay, watcher and hatch settings |
 | `~/.buffy/runtime.json` | daemon pid/port while it runs |
 | `~/.buffy/window.json` | overlay position |
 | `~/.buffy/onboarding.json` | first-run setup acknowledgement |

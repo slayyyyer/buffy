@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'"
+    />
+    <title>Buffy's wardrobe</title>
+    <link rel="stylesheet" href="wardrobe.css" />
+  </head>
+  <body>
+    <main id="wardrobe-app" class="wardrobe">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Dress-up</p>
+          <h1>Buffy's wardrobe</h1>
+          <p class="lede">Dress her up. She keeps the look.</p>
+        </div>
+        <button id="surprise" class="surprise" type="button">Surprise me</button>
+      </header>
+
+      <div class="body">
+        <section class="preview-card" aria-label="Live preview">
+          <canvas id="preview" width="300" height="340"></canvas>
+          <p id="look-name" class="look-name">Princess · Rose</p>
+          <div id="preview-hobbies" class="preview-hobbies" aria-label="Preview idle activity"></div>
+        </section>
+
+        <section class="picker">
+          <div id="tabs" class="tabs" role="tablist" aria-label="Wardrobe sections"></div>
+          <div id="panel" class="panel" role="tabpanel"></div>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+    </main>
+    <script src="character.js"></script>
+    <script src="hobbies.js"></script>
+    <script src="wardrobe.js"></script>
+  </body>
+</html>
