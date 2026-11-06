@@ -1,6 +1,6 @@
 {
   "name": "buffy",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "A tiny always-on-top companion that reacts to what your coding agent is doing.",
   "author": "slayyyyer",
@@ -20,16 +20,21 @@
     "overlay": "electron .",
     "dist": "electron-builder --publish never",
     "dist:win": "electron-builder --win nsis --x64 --publish never",
-    "dist:mac": "electron-builder --mac dmg --x64 --arm64 --publish never",
+    "dist:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "dist:linux": "electron-builder --linux AppImage --x64 --publish never",
-    "test": "node --test"
+    "test": "node --test",
+    "smoke:packaged": "node scripts/smoke-packaged.js"
   },
   "engines": {
     "node": ">=20"
   },
   "license": "MIT",
   "devDependencies": {
+    "@electron/notarize": "^3.1.2",
     "electron": "^45.2.3",
     "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
   }
 }

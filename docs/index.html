@@ -41,9 +41,9 @@
         <h1>Your agent is busy.<br><em>Buffy</em> is on it.</h1>
         <p class="lede">A tiny princess-cloud who lives on your desktop, reacts to Claude Code, Freebuff, and repo edits, then settles in for a nap when the work is done.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="https://github.com/slayyyyer/buffy/releases/download/v0.1.0/Buffy-0.1.0-win-x64.exe">
+          <a class="button button-primary" href="https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe">
             <span>Download for Windows</span>
-            <small>v0.1.0 · 116 MB</small>
+            <small>v1.0.0 · macOS &amp; Linux too</small>
           </a>
           <a class="button button-ghost" href="https://github.com/slayyyyer/buffy">View source</a>
         </div>
@@ -72,7 +72,7 @@
         <article class="feature-card">
           <span class="feature-icon icon-pink" aria-hidden="true">♥</span>
           <h3>Agent-aware</h3>
-          <p>Claude Code and Freebuff can send <code>thinking</code>, <code>working</code>, <code>needs-you</code>, and <code>done</code>. The repo watcher catches edits when your agent stays quiet.</p>
+          <p>Claude Code and Freebuff can send <code>thinking</code>, <code>working</code>, <code>needs-you</code>, and <code>done</code>. Concurrent sessions get their own rail, and the repo watcher catches edits when your agent stays quiet.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon icon-lilac" aria-hidden="true">◌</span>
@@ -153,15 +153,20 @@
         <div class="install-copy">
           <p class="kicker kicker-light">Ready for a coworker?</p>
           <h2>Give your desktop<br>a little company.</h2>
-          <p>Buffy’s Windows installer includes the desktop app and its local daemon. Open it and she’s there — no npm setup for the pet itself.</p>
-          <a class="button button-light" href="https://github.com/slayyyyer/buffy/releases/download/v0.1.0/Buffy-0.1.0-win-x64.exe">
+          <p>Buffy’s desktop apps include the pet and its local daemon. Open one and she’s there — no npm setup for the pet itself. The CLI and agent hooks still run from the Node checkout.</p>
+          <a class="button button-light" href="https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe">
             <span>Download for Windows</span>
             <small>Windows 10/11 · x64</small>
           </a>
-          <p class="fine-print">Free and open source under the MIT license. This build is unsigned, so Windows SmartScreen may ask you to confirm. The CLI and agent hooks still run from the Node checkout.</p>
+          <p class="download-links">
+            <a href="https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg">macOS Apple silicon</a>
+            <a href="https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg">macOS Intel</a>
+            <a href="https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x64.AppImage">Linux AppImage</a>
+          </p>
+          <p class="fine-print">Free and open source under the MIT license. Builds are unsigned unless signing credentials are configured, so Windows SmartScreen or macOS Gatekeeper may ask you to confirm. Checksums and update metadata are attached to the release.</p>
           <details class="checksum">
-            <summary>SHA-256 checksum</summary>
-            <code>FF6C17C1617ED54085134055B6B25DC9F9A770CE1B0B2FC529513BEA54D26D56</code>
+            <summary>Checksums</summary>
+            <p>Every installer has a matching <code>.sha256</code> file on the v1.0.0 release page.</p>
           </details>
         </div>
         <div class="install-source">

@@ -144,6 +144,14 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     return current;
   }
 
+  function dismissSession(input, now = Date.now()) {
+    const id = cleanText(input?.sessionId ?? input?.session ?? input?.id, 96);
+    if (!id) return { removed: false, snapshot: snapshot(now) };
+    const result = machine.dismiss(id, now);
+    if (result.removed) broadcast();
+    return result;
+  }
+
   function pet(now = Date.now()) {
     reaction = { kind: 'pet', at: now };
     store.xp += 2;
@@ -291,6 +299,21 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       return sendJson(res, 200, snapshot());
     }
 
+    if (req.method === 'POST' && url.pathname === '/session/dismiss') {
+      readJsonBody(req, (err, body) => {
+        if (err) return sendJson(res, err.status || 400, { ok: false, error: err.message });
+        try {
+          const result = dismissSession({
+            sessionId: body?.sessionId ?? body?.session ?? body?.id,
+          });
+          sendJson(res, 200, { ok: true, removed: result.removed, state: snapshot() });
+        } catch (error) {
+          sendJson(res, 400, { ok: false, error: error.message });
+        }
+      });
+      return;
+    }
+
     if (req.method === 'GET' && url.pathname === '/events') {
       res.writeHead(200, {
         'content-type': 'text/event-stream; charset=utf-8',
@@ -400,7 +423,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     }
   }
 
-  return { listen, close, snapshot, dispatch, pet, machine, server, store };
+  return { listen, close, snapshot, dispatch, dismissSession, pet, machine, server, store };
 }
 
 export async function startDaemon({ config = readConfig(), env = process.env, port = config.port, quiet = false } = {}) {

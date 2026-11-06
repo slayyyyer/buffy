@@ -27,15 +27,19 @@ async function get(pathname) {
   return { status: res.status, body: await res.json() };
 }
 
-async function post(body, session) {
+async function postTo(pathname, body, session) {
   const headers = { 'content-type': 'application/json' };
   if (session) headers['x-buffy-session'] = session;
-  const res = await fetch(`${base}/event`, {
+  const res = await fetch(base + pathname, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
   });
   return { status: res.status, body: await res.json() };
+}
+
+async function post(body, session) {
+  return postTo('/event', body, session);
 }
 
 test.after(async () => {
@@ -76,4 +80,18 @@ test('the session header assigns an independent session', async () => {
   assert.equal(snapshot.current.state, 'working');
   assert.equal(snapshot.current.sessionId, 'header:one');
   assert.ok(snapshot.sessions.some((session) => session.id === 'header:one' && session.state === 'working'));
+});
+
+test('dismiss clears one session and leaves the others active', async () => {
+  await post({ state: 'needs-you', source: 'claude', sessionId: 'dismiss:a', message: 'approve?' });
+  await post({ state: 'working', source: 'freebuff', sessionId: 'dismiss:b', message: 'editing' });
+
+  const result = await postTo('/session/dismiss', { sessionId: 'dismiss:a' });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.removed, true);
+
+  const snapshot = (await get('/state')).body;
+  assert.equal(snapshot.current.sessionId, 'dismiss:b');
+  assert.equal(snapshot.current.state, 'working');
+  assert.ok(snapshot.sessions.every((session) => session.id !== 'dismiss:a'));
 });

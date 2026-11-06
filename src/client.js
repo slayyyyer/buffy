@@ -120,6 +120,18 @@ export async function sendPet(port) {
   return data.state;
 }
 
+export async function dismissSession(port, sessionId) {
+  const { status, data } = await httpJson({
+    port,
+    method: 'POST',
+    path: '/session/dismiss',
+    body: { sessionId },
+    timeout: 1500,
+  });
+  if (status !== 200 || !data?.ok) throw new Error(data?.error || `daemon returned ${status}`);
+  return data.state;
+}
+
 export async function sendSprite(port, sprite) {
   const { status, data } = await httpJson({ port, method: 'POST', path: '/sprite', body: { sprite }, timeout: 1500 });
   if (status !== 200 || !data?.ok) throw new Error(data?.error || `daemon returned ${status}`);

@@ -7,6 +7,7 @@
   const bubbleEl = document.getElementById('bubble');
   const textEl = document.getElementById('text');
   const sourceEl = document.getElementById('source');
+  const sessionsEl = document.getElementById('sessions');
   const PET_SCALE = 1.2;
   const WAVE_MS = 1800;
   const SLEEP_AFTER_MS = 30000;
@@ -132,6 +133,8 @@
   let wardrobe = { ...WARDROBE_DEFAULTS };
   let dragTrail = [];
   let bubbleUntil = 0;
+  let currentSessions = [];
+  let lastSessionsKey = '';
   let customImage = null;
   let customImageKey = '';
 
@@ -199,10 +202,18 @@
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    positionSessions();
   }
 
   window.addEventListener('resize', resize);
   resize();
+
+  function positionSessions() {
+    if (!sessionsEl) return;
+    const bubbleVisible = !bubbleEl.classList.contains('hidden');
+    const top = bubbleVisible ? bubbleEl.offsetTop + bubbleEl.offsetHeight + 6 : 8;
+    sessionsEl.style.top = `${top}px`;
+  }
 
   function showBubble(text, source, state, durationMs, agents = 1) {
     if (!text) return;
@@ -214,12 +225,115 @@
     bubbleEl.classList.remove('hidden');
     const sticky = state === 'needs-you' || state === 'error';
     bubbleUntil = sticky ? Infinity : performance.now() + (durationMs || 6500);
+    positionSessions();
   }
 
   function hideBubble() {
     bubbleEl.classList.add('hidden');
     bubbleUntil = 0;
+    positionSessions();
   }
+
+  function sessionLabel(session) {
+    const source = String(session.source || 'agent').slice(0, 24);
+    const id = String(session.id || '');
+    if (!id || id === source) return source;
+    const short = id.includes(':') ? id.split(':').slice(1).join(':') : id;
+    return `${source} · ${short.slice(0, 7)}`;
+  }
+
+  function sessionAge(session) {
+    const at = Number(session.updatedAt || session.since || Date.now());
+    const seconds = Math.max(0, Math.round((Date.now() - at) / 1000));
+    if (seconds < 10) return 'now';
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    return `${Math.floor(minutes / 60)}h`;
+  }
+
+  function renderSessions(sessions, force = false) {
+    currentSessions = Array.isArray(sessions) ? sessions : [];
+    const visible = currentSessions.length > 1;
+    sessionsEl.classList.toggle('hidden', !visible);
+    if (!visible) {
+      sessionsEl.replaceChildren();
+      lastSessionsKey = '';
+      positionSessions();
+      return;
+    }
+
+    const key = `${currentSessions.map((session) => `${session.id}|${session.state}|${session.message}|${session.seq}`).join('~')}|${Math.floor(Date.now() / 30_000)}`;
+    if (!force && key === lastSessionsKey) {
+      positionSessions();
+      return;
+    }
+    lastSessionsKey = key;
+
+    const shown = currentSessions.slice(0, 3);
+    const fragment = document.createDocumentFragment();
+    for (const session of shown) {
+      const label = sessionLabel(session);
+      const row = document.createElement('div');
+      row.className = 'session';
+      row.dataset.state = session.state || 'idle';
+      row.title = `${session.id} — ${session.state}${session.message ? `: ${session.message}` : ''}`;
+
+      const dot = document.createElement('span');
+      dot.className = 'session-dot';
+      dot.setAttribute('aria-hidden', 'true');
+
+      const name = document.createElement('span');
+      name.className = 'session-name';
+      name.textContent = label;
+
+      const state = document.createElement('span');
+      state.className = 'session-state';
+      state.textContent = String(session.state || 'idle').replace('-', ' ');
+
+      const age = document.createElement('span');
+      age.className = 'session-age';
+      age.textContent = sessionAge(session);
+
+      const dismiss = document.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'session-dismiss';
+      dismiss.dataset.session = session.id;
+      dismiss.setAttribute('aria-label', `Dismiss ${label}`);
+      dismiss.title = `Dismiss ${label}`;
+      dismiss.textContent = '×';
+
+      row.append(dot, name, state, age, dismiss);
+      fragment.append(row);
+    }
+
+    if (currentSessions.length > shown.length) {
+      const more = document.createElement('div');
+      more.className = 'session-more';
+      more.textContent = `+${currentSessions.length - shown.length} more active`;
+      fragment.append(more);
+    }
+
+    sessionsEl.replaceChildren(fragment);
+    positionSessions();
+  }
+
+  sessionsEl.addEventListener('pointerdown', (event) => event.stopPropagation());
+  sessionsEl.addEventListener('click', (event) => {
+    const button = event.target.closest?.('[data-session]');
+    if (!button) return;
+    event.stopPropagation();
+    button.disabled = true;
+    button.textContent = '…';
+    Promise.resolve(window.buffy.dismissSession(button.dataset.session)).catch(() => {
+      button.disabled = false;
+      button.textContent = '×';
+    });
+  });
+
+  setInterval(() => {
+    if (currentSessions.length) renderSessions(currentSessions, true);
+  }, 15_000);
 
   function applySnapshot(next) {
     if (!next) return;
@@ -235,7 +349,9 @@
         ? current.sessions
         : [];
     const agents = sessions.length;
-    const message = current.message || DEFAULT_MESSAGES[current.state] || null;
+    const needsCount = sessions.filter((session) => session.state === 'needs-you').length;
+    let message = current.message || DEFAULT_MESSAGES[current.state] || null;
+    if (message && needsCount > 1) message = `${message} (+${needsCount - 1} more need you)`;
     const key = `${current.seq || 0}|${current.state || 'idle'}|${message || ''}|${agents}`;
     if (key !== lastKey) {
       lastKey = key;
@@ -244,6 +360,7 @@
       if (message) showBubble(message, current.source, current.state, undefined, agents);
       else hideBubble();
     }
+    renderSessions(sessions);
   }
 
   window.buffy.onState((payload) => {

@@ -30,14 +30,14 @@ the always-on-top overlay draws it.
 
 ## Status
 
-Steps 1–4 of five are implemented, with step 5 partly done:
+Buffy is at **v1.0.0**. All five build steps are complete:
 
 - [x] daemon, CLI, state machine, placeholder sprite, overlay window
 - [x] Claude Code hooks, `/buffy` command and `buffy install claude`
 - [x] Freebuff repo watcher (dependable) and best-effort AGENTS.md events
 - [x] `buffy hatch` with generated sprites
-- [x] multi-session arbitration
-- [ ] richer bubbles and final polish
+- [x] multi-session arbitration and a per-session overlay rail
+- [x] desktop lifecycle (tray, launch at login, first-run setup) and update-ready releases
 
 ## Requirements
 
@@ -49,31 +49,36 @@ Steps 1–4 of five are implemented, with step 5 partly done:
 
 ### Desktop installer
 
-**Windows 10/11 (x64):** [Download Buffy 0.1.0](https://github.com/slayyyyer/buffy/releases/download/v0.1.0/Buffy-0.1.0-win-x64.exe)
-([SHA-256](https://github.com/slayyyyer/buffy/releases/download/v0.1.0/Buffy-0.1.0-win-x64.exe.sha256)).
+Buffy 1.0.0 ships for Windows, macOS, and Linux:
 
-This build is unsigned, so Windows SmartScreen will warn. The installer includes
-the desktop app and starts its local daemon automatically; the pet itself does
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x64.AppImage.sha256)
+
+The desktop app includes the pet and its local daemon, so the pet itself does
 not need Node installed. The `buffy` CLI, Claude Code hooks, and Freebuff
-instructions still run from the Node checkout described below.
+instructions still run from the Node checkout described below. Installed builds
+open a first-run setup window and can check GitHub Releases for updates from the
+tray.
 
-Only the Windows package is currently prebuilt. Pushing a `v*` tag that matches
-the version in `package.json` runs the release workflow, which builds Windows,
-macOS (x64 and arm64), and Linux installers, writes a SHA-256 file for each, and
-attaches them to the GitHub release. To build locally, use electron-builder on
-each target operating system:
+Builds are unsigned unless signing credentials are configured, so Windows
+SmartScreen and macOS Gatekeeper may ask you to confirm. The release workflow
+supports optional Windows signing and macOS signing/notarization; see
+[Release signing](#release-signing). Pushing a `v*` tag that matches
+`package.json` builds all platforms, smoke-tests each packaged app, writes
+installer checksums, and publishes installers plus update metadata. To build
+locally, use electron-builder on each target operating system:
 
 ```bash
 npm install
 npm run dist:win     # Windows NSIS installer in dist/
-npm run dist:mac     # macOS dmg; build on macOS
+npm run dist:mac     # macOS dmg + zip; build on macOS
 npm run dist:linux   # Linux AppImage; build on Linux
 ```
 
-macOS builds are unsigned too and may require right-clicking the app and choosing
-**Open** unless you add a signing identity. The landing page lives in `docs/` and
-is published at [slayyyyer.github.io/buffy](https://slayyyyer.github.io/buffy/) via
-GitHub Pages.
+The landing page lives in `docs/` and is published at
+[slayyyyer.github.io/buffy](https://slayyyyer.github.io/buffy/) via GitHub Pages.
 
 ### From source
 
@@ -87,10 +92,17 @@ buffy overlay        # starts the daemon on demand and shows the pet
 ```
 
 The overlay is frameless, transparent and always on top. Drag it anywhere for a
-tiny heart-and-sparkle trail, click the pet to wave, right-click for the menu
-(wardrobe, move to a screen corner, hide for 10 minutes, quit). Her eyes follow
-your cursor, and she naps after 30 seconds of quiet idle; hover or click to wake
-her. Her position is remembered in `~/.buffy/window.json`.
+tiny heart-and-sparkle trail, click the pet to wave, right-click or use the tray
+icon for the menu (show/hide, wardrobe, move to a screen corner, setup guide,
+launch at login, update checks, hide for 10 minutes, quit). Her eyes follow your
+cursor, and she naps after 30 seconds of quiet idle; hover or click to wake her.
+Her position is remembered in `~/.buffy/window.json`.
+
+The packaged app opens a first-run setup window that explains the desktop pet,
+the `buffy install claude` and `buffy install freebuff` commands, and where
+state lives. Reopen it from the tray or with `buffy overlay --onboarding`.
+Installed builds can enable launch at login from the tray; development builds
+show those packaging-only controls as disabled.
 
 Use the **Wardrobe** menu to change her bow, hat, wand, and pastel theme. Those
 choices are saved in `~/.buffy/wardrobe.json`.
@@ -115,8 +127,9 @@ Without `npm link`, use `node bin/buffy.js …` in place of `buffy`.
 | `buffy daemon` | Run the daemon in the foreground |
 | `buffy event <state> [--msg "text"] [--source name] [--session id]` | Send a state change; `--source` shows in the bubble and `--session` keeps concurrent agents separate |
 | `buffy pet` | Happy reaction, +2 XP, +8 mood |
+| `buffy dismiss <session>` | Clear one active agent session |
 | `buffy status [--json]` | State, mood, XP, daemon health |
-| `buffy overlay [--dev] [--shot file.png]` | Show the pet window |
+| `buffy overlay [--dev] [--onboarding] [--shot file.png]` | Show the pet window and optional setup guide |
 | `buffy hatch "<prompt>"` | Generate a custom sprite with OpenAI Images (needs `OPENAI_API_KEY`) |
 | `buffy install claude [--global]` | Merge Claude Code hooks and the `/buffy` command |
 | `buffy uninstall claude [--global]` | Remove only buffy-managed entries |
@@ -168,6 +181,11 @@ A `working`, `done` or `idle` event from one session cannot clear another
 session's `needs-you`. Sessions expire after `sessionTtlMs` (30 minutes by
 default), while a finished session's `done` bubble still holds for
 `doneHoldMs`.
+
+When more than one session is active, the overlay adds a compact rail showing
+each source, state, and age. If two sessions need you, the bubble includes the
+count and the rail keeps both visible. Use the × on a rail row or
+`buffy dismiss <session>` to clear one session without clearing the others.
 
 ## Freebuff
 
@@ -329,15 +347,17 @@ state (used by the tests).
 | `~/.buffy/config.json` | port, timing, watcher and hatch settings |
 | `~/.buffy/runtime.json` | daemon pid/port while it runs |
 | `~/.buffy/window.json` | overlay position |
+| `~/.buffy/onboarding.json` | first-run setup acknowledgement |
 | `~/.buffy/installs.json` | installer manifest (scope, files, backups) |
 | `~/.buffy/sprites/` | generated hatch PNGs |
 
 ## Security and privacy
 
 - The daemon binds to `127.0.0.1` only.
-- No telemetry. The only outbound request is `buffy hatch`, which sends your
-  prompt to the configured image API using `OPENAI_API_KEY`; the key is read
-  from the environment, never written to `~/.buffy` or the repo.
+- No telemetry. Installed builds check GitHub Releases for updates; the only
+  other outbound request is `buffy hatch`, which sends your prompt to the
+  configured image API using `OPENAI_API_KEY`; the key is read from the
+  environment, never written to `~/.buffy` or the repo.
 - The watcher is local: `fs.watch` plus a periodic `git status`. It never reads
   file contents and does not send anything off the machine.
 - Nothing outside `~/.buffy` is written until you run an installer, which backs
@@ -351,8 +371,8 @@ state (used by the tests).
 - **Port already in use.** Change `port` in `~/.buffy/config.json`.
 - **`buffy: unknown state`.** Valid states are `idle`, `thinking`, `working`,
   `needs-you`, `done`, `error`.
-- **Overlay is hidden.** Use `buffy overlay` again; the second launch focuses the
-  existing window and quits itself.
+- **Overlay is hidden.** Use **Show Buffy** in the tray, or run `buffy overlay`
+  again; the second launch focuses the existing window and quits itself.
 - **Watcher does not react.** `buffy status` prints the watched directory and
   whether git polling is on. Set `watch.directory` explicitly if the daemon was
   started from another folder, or `watch.enabled: false` to turn it off.
@@ -368,9 +388,26 @@ state (used by the tests).
 - **New sprite does not appear.** The daemon must be running to serve the PNG.
   Restart `buffy overlay`; confirm the file exists in `~/.buffy/sprites/`.
 
+## Release signing
+
+The release workflow builds unsigned artifacts when the optional secrets are
+absent. To enable signing and notarization, add these repository secrets:
+
+| Platform | Secrets |
+| --- | --- |
+| Windows | `WIN_CSC_LINK`, `WIN_CSC_KEY_PASSWORD` |
+| macOS | `MAC_CSC_LINK`, `MAC_CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` |
+
+The macOS build runs `build/notarize.cjs` after signing and skips notarization
+when the Apple credentials are missing. The release workflow uploads the
+installers, checksums, `latest*.yml` update metadata, and the macOS zip files
+used by `electron-updater`. Installed builds check for updates in the background
+and expose **Check for updates** in the tray; Linux updates require the AppImage
+runtime.
+
 ## Uninstall
 
 Remove agent wiring with `buffy uninstall claude` (add `--global` for user
-scope) and `buffy uninstall freebuff`, quit the overlay from its right-click
-menu, then remove `~/.buffy` and this checkout (and `npm unlink buffy` if you
-linked it).
+scope) and `buffy uninstall freebuff`, turn off launch at login from the tray,
+quit Buffy from the tray, then remove `~/.buffy` and this checkout (and
+`npm unlink buffy` if you linked it).

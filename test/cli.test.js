@@ -120,3 +120,18 @@ test('event --session isolates concurrent CLI sessions', async () => {
   assert.equal(snapshot.current.state, 'working');
   assert.equal(snapshot.current.sessionId, 'cli-b');
 });
+
+test('buffy dismiss clears one concurrent CLI session', async () => {
+  const working = await run(['event', 'working', '--source', 'freebuff', '--session', 'dismiss-a']);
+  assert.equal(working.status, 0, working.stderr);
+  const needs = await run(['event', 'needs-you', '--source', 'claude', '--session', 'dismiss-b', '--msg', 'approve?']);
+  assert.equal(needs.status, 0, needs.stderr);
+
+  const dismissed = await run(['dismiss', 'dismiss-b']);
+  assert.equal(dismissed.status, 0, dismissed.stderr);
+  assert.match(dismissed.stdout, /Dismissed dismiss-b/);
+
+  const snapshot = JSON.parse((await run(['status', '--json'])).stdout);
+  assert.ok(snapshot.sessions.every((session) => session.id !== 'dismiss-b'));
+  assert.equal(snapshot.current.sessionId, 'dismiss-a');
+});

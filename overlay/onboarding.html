@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'"
+    />
+    <title>Welcome to Buffy</title>
+    <link rel="stylesheet" href="onboarding.css" />
+  </head>
+  <body>
+    <main class="setup">
+      <header class="hero">
+        <img class="mark" src="icon.png" width="64" height="64" alt="" />
+        <p class="eyebrow">Buffy 1.0</p>
+        <h1>Your desk has a new coworker.</h1>
+        <p class="lede">She’s already running. This quick setup connects her to your agents and shows where everything lives.</p>
+      </header>
+
+      <section class="card">
+        <div class="step-number">01</div>
+        <div class="step-copy">
+          <h2>She’s already awake</h2>
+          <p>Use the Buffy tray icon to show or hide her, move her to a corner, change her outfit, or open this guide again. Her window stays above other apps.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="step-number">02</div>
+        <div class="step-copy">
+          <h2>Connect Claude Code</h2>
+          <p>From the Buffy checkout, install the hooks once. Then use <code>/buffy</code> inside Claude Code whenever you want to call her.</p>
+          <div class="command-row">
+            <code>buffy install claude</code>
+            <button class="copy" type="button" data-copy="buffy install claude">Copy</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="step-number">03</div>
+        <div class="step-copy">
+          <h2>Connect Freebuff</h2>
+          <p>Add the best-effort instructions to a project’s <code>AGENTS.md</code>. The repo watcher still catches edits even when Freebuff ignores them.</p>
+          <div class="command-row">
+            <code>buffy install freebuff</code>
+            <button class="copy" type="button" data-copy="buffy install freebuff">Copy</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="note">
+        <strong>Installer or checkout?</strong>
+        <p>The desktop installer includes the pet and her local daemon. The <code>buffy</code> commands for Claude and Freebuff run from this Node checkout. Run <code>npm install</code> and <code>npm link</code> there if <code>buffy</code> is not on your PATH.</p>
+      </section>
+
+      <section class="traits" aria-label="Buffy details">
+        <div><span>⌁</span><strong>Local only</strong><small>No telemetry. State lives in <code>~/.buffy</code>.</small></div>
+        <div><span>↻</span><strong>Stays fresh</strong><small>Installed builds can check for updates from the tray.</small></div>
+        <div><span>☾</span><strong>Launch at login</strong><small>Turn it on from the tray when you want her every morning.</small></div>
+      </section>
+
+      <footer class="actions">
+        <button id="setup-docs" class="link" type="button">Read the full setup guide</button>
+        <button id="setup-done" class="primary" type="button">Start hanging out</button>
+      </footer>
+      <p id="copy-status" class="copy-status" aria-live="polite"></p>
+    </main>
+    <script src="onboarding.js"></script>
+  </body>
+</html>

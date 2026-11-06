@@ -12,6 +12,13 @@ asarUnpack:
   - src/**/*
   - package.json
 
+afterSign: build/notarize.cjs
+
+publish:
+  provider: github
+  owner: slayyyyer
+  repo: buffy
+
 files:
   - overlay/**/*
   - src/**/*
@@ -39,6 +46,10 @@ mac:
   category: public.app-category.entertainment
   target:
     - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
       arch:
         - x64
         - arm64

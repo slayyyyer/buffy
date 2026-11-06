@@ -23,8 +23,9 @@ Usage:
       --source claude|freebuff|…   who sent it (shown in the bubble)
       --session <id>               stable identity for concurrent agents
   buffy pet                        scratch behind the ears
+  buffy dismiss <session>          clear one concurrent agent session
   buffy status [--json]            state, mood, XP, daemon health
-  buffy overlay [--dev]            show the always-on-top pet window
+  buffy overlay [--dev] [--onboarding] show the always-on-top pet window
   buffy hatch "<prompt>"           generate a custom sprite with OpenAI Images
   buffy install claude [--global]  wire Claude Code hooks + /buffy command
   buffy install freebuff           add best-effort event instructions to AGENTS.md
@@ -184,6 +185,24 @@ async function petCommand(config) {
   }
 }
 
+async function dismissCommand(rest, config) {
+  const sessionId = rest.join(' ').trim();
+  if (!sessionId) {
+    fail('buffy: dismiss needs a session id. Run `buffy status --json` to list active sessions.');
+    return 2;
+  }
+  try {
+    await client.ensureDaemon({ port: config.port });
+    const snapshot = await client.dismissSession(config.port, sessionId);
+    const active = Array.isArray(snapshot.sessions) ? snapshot.sessions.length : 0;
+    print(`Dismissed ${sessionId}. ${active ? `${active} session${active === 1 ? '' : 's'} still active.` : 'All sessions are clear.'}`);
+    return 0;
+  } catch (error) {
+    fail(`buffy: ${error.message}`);
+    return 1;
+  }
+}
+
 async function overlayCommand(flags, config) {
   try {
     await client.ensureDaemon({ port: config.port });
@@ -202,6 +221,7 @@ async function overlayCommand(flags, config) {
 
   const args = [ROOT];
   if (flags.dev) args.push('--dev');
+  if (flags.onboarding) args.push('--onboarding');
   if (typeof flags.shot === 'string') args.push('--shot', path.resolve(flags.shot));
   if (flags['shot-exit']) args.push('--shot-exit');
 
@@ -364,6 +384,8 @@ export async function main(argv = process.argv.slice(2)) {
       return eventCommand(args.slice(1), flags, config);
     case 'pet':
       return petCommand(config);
+    case 'dismiss':
+      return dismissCommand(args.slice(1), config);
     case 'status':
       return statusCommand(flags, config);
     case 'overlay':

@@ -81,3 +81,119 @@ body.dragging {
 .source:empty {
   display: none;
 }
+
+.sessions {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: top 160ms ease;
+}
+
+.sessions.hidden {
+  display: none;
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 3px 4px 3px 7px;
+  border-radius: 9px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.13);
+  color: #5b5550;
+  font-size: 9.5px;
+  line-height: 1;
+  cursor: default;
+}
+
+.session-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: #b8aea7;
+}
+
+.session[data-state="thinking"] .session-dot {
+  background: #8b7ae8;
+}
+
+.session[data-state="working"] .session-dot {
+  background: #4a9bd8;
+}
+
+.session[data-state="needs-you"] {
+  background: #fff2f8;
+  border-color: rgba(221, 79, 157, 0.35);
+}
+
+.session[data-state="needs-you"] .session-dot {
+  background: #e83b98;
+  box-shadow: 0 0 0 3px rgba(232, 59, 152, 0.13);
+}
+
+.session[data-state="done"] .session-dot {
+  background: #56b68a;
+}
+
+.session[data-state="error"] .session-dot {
+  background: #d84b4b;
+}
+
+.session-name {
+  max-width: 82px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #3d3733;
+  font-weight: 700;
+}
+
+.session-state {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #8b817a;
+}
+
+.session-age {
+  margin-left: auto;
+  color: #a49a93;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-dismiss {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #aa9e98;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.session-dismiss:hover,
+.session-dismiss:focus-visible {
+  background: #f2e7e2;
+  color: #5b4642;
+  outline: none;
+}
+
+.session-more {
+  padding: 2px 7px;
+  color: #8b817a;
+  font-size: 9px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}

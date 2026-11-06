@@ -111,3 +111,19 @@ test('sessions expire after sessionTtlMs', () => {
   assert.equal(machine.tick(2_000), true);
   assert.equal(machine.snapshot(2_001).state, 'idle');
 });
+
+test('dismiss removes only the requested session', () => {
+  const machine = createMachine({ doneHoldMs: 1_000, sessionTtlMs: 60_000 });
+  machine.dispatch({ state: 'needs-you', source: 'claude', sessionId: 'session-a' }, 1_000);
+  machine.dispatch({ state: 'working', source: 'freebuff', sessionId: 'session-b' }, 2_000);
+
+  const result = machine.dismiss('session-a', 3_000);
+  assert.equal(result.removed, true);
+  assert.equal(result.snapshot.state, 'working');
+  assert.equal(result.snapshot.sessionId, 'session-b');
+  assert.equal(result.snapshot.sessions.length, 1);
+
+  const missing = machine.dismiss('session-a', 4_000);
+  assert.equal(missing.removed, false);
+  assert.equal(missing.snapshot.sessionId, 'session-b');
+});

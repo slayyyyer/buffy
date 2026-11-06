@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('buffy', {
   onWardrobe: (callback) => subscribe('wardrobe', callback),
   onPetRequest: (callback) => subscribe('pet-request', callback),
   pet: () => ipcRenderer.send('pet'),
+  dismissSession: (sessionId) => ipcRenderer.invoke('dismiss-session', sessionId),
   dragStart: (screenX, screenY) => ipcRenderer.send('drag-start', screenX, screenY),
   dragMove: (screenX, screenY) => ipcRenderer.send('drag-move', screenX, screenY),
   dragEnd: () => ipcRenderer.send('drag-end'),

@@ -206,5 +206,12 @@ export function createMachine({ doneHoldMs = 4000, sessionTtlMs = DEFAULT_SESSIO
     return session ? publicSession(session) : null;
   }
 
-  return { dispatch, tick, snapshot, getSession };
+  function dismiss(id, now = Date.now()) {
+    const key = normalizeSessionId(id);
+    const removed = sessions.delete(key);
+    if (removed && sessions.size === 0) markIdle(now, lastSource);
+    return { removed, snapshot: snapshot(now) };
+  }
+
+  return { dispatch, tick, snapshot, getSession, dismiss };
 }
