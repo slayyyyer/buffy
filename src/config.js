@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-export const VERSION = '0.1.0';
+const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+
+export const VERSION = PACKAGE.version;
 export const DEFAULT_PORT = 4517;
 
 /** The six states the pet can be in. Everything else is mapped onto these. */

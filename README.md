@@ -56,8 +56,11 @@ the desktop app and starts its local daemon automatically; the pet itself does
 not need Node installed. The `buffy` CLI, Claude Code hooks, and Freebuff
 instructions still run from the Node checkout described below.
 
-Only the Windows package is prebuilt. Build macOS and Linux installers on their
-target operating systems with electron-builder:
+Only the Windows package is currently prebuilt. Pushing a `v*` tag that matches
+the version in `package.json` runs the release workflow, which builds Windows,
+macOS (x64 and arm64), and Linux installers, writes a SHA-256 file for each, and
+attaches them to the GitHub release. To build locally, use electron-builder on
+each target operating system:
 
 ```bash
 npm install
