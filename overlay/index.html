@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <title>buffy</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="bubble" class="bubble hidden" aria-live="polite">
+      <span id="source" class="source"></span>
+      <span id="text"></span>
+    </div>
+    <canvas id="stage"></canvas>
+    <script src="renderer.js"></script>
+  </body>
+</html>
