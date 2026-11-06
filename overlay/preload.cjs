@@ -8,6 +8,8 @@ function subscribe(channel, callback) {
 
 contextBridge.exposeInMainWorld('buffy', {
   onState: (callback) => subscribe('state', callback),
+  onCursor: (callback) => subscribe('cursor', callback),
+  onWardrobe: (callback) => subscribe('wardrobe', callback),
   onPetRequest: (callback) => subscribe('pet-request', callback),
   pet: () => ipcRenderer.send('pet'),
   dragStart: (screenX, screenY) => ipcRenderer.send('drag-start', screenX, screenY),

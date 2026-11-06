@@ -4,6 +4,10 @@ A small companion that lives on your desktop and reacts to whatever your coding
 agent is doing. Built so that Claude Code, Freebuff and anything else that can
 run a shell command can drive the same pet.
 
+<p align="center">
+  <img src="docs/buffy.png" width="240" alt="Buffy, a pink princess-cloud desktop companion, waving">
+</p>
+
 ```
 Claude Code ──hooks──────────┐
 Freebuff ──AGENTS.md events──┤
@@ -44,9 +48,14 @@ npm link
 buffy overlay        # starts the daemon on demand and shows the pet
 ```
 
-The overlay is frameless, transparent and always on top. Drag it anywhere, click
-the pet to pet it, right-click for the menu (pet, hide for 10 minutes, quit).
-Its position is remembered in `~/.buffy/window.json`.
+The overlay is frameless, transparent and always on top. Drag it anywhere for a
+tiny heart-and-sparkle trail, click the pet to wave, right-click for the menu
+(wardrobe, move to a screen corner, hide for 10 minutes, quit). Her eyes follow
+your cursor, and she naps after 30 seconds of quiet idle; hover or click to wake
+her. Her position is remembered in `~/.buffy/window.json`.
+
+Use the **Wardrobe** menu to change her bow, hat, wand, and pastel theme. Those
+choices are saved in `~/.buffy/wardrobe.json`.
 
 Drive it from a second terminal:
 

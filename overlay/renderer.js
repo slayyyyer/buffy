@@ -8,6 +8,9 @@
   const textEl = document.getElementById('text');
   const sourceEl = document.getElementById('source');
   const PET_SCALE = 1.2;
+  const WAVE_MS = 1800;
+  const SLEEP_AFTER_MS = 30000;
+  const WAKE_MS = 900;
 
   const DEFAULT_MESSAGES = {
     'needs-you': 'I need you for something.',
@@ -18,9 +21,78 @@
   };
 
   // Buffy's default look: a pink princess-cloud mascot with a pixel-screen face.
-  const GIRLY = {
-    hue: 338,
-    hue2: 278,
+  const THEMES = {
+    rose: {
+      hue: 338,
+      hue2: 278,
+      mascot: {},
+    },
+    lavender: {
+      hue: 272,
+      hue2: 310,
+      mascot: {
+        outline: '#5a3a73',
+        screen: '#2f1b3b',
+        cloudTop: '#eadcff',
+        cloudMid: '#d2b5f8',
+        cloudLow: '#b18ce8',
+        cloudShadow: '#5a3a73',
+        pink: '#c9a7f2',
+        pinkLight: '#eadcff',
+        pinkDeep: '#a77ae0',
+        blue: '#b8c8ff',
+        blueLight: '#e7edff',
+        blueDeep: '#8e9fe6',
+        red: '#d879b1',
+        redDeep: '#a55788',
+      },
+    },
+    mint: {
+      hue: 158,
+      hue2: 190,
+      mascot: {
+        outline: '#2f6557',
+        screen: '#172f2a',
+        cloudTop: '#d9fff1',
+        cloudMid: '#b7f2dc',
+        cloudLow: '#83d3b6',
+        cloudShadow: '#2f6557',
+        pink: '#a8e6cf',
+        pinkLight: '#d9fff1',
+        pinkDeep: '#66bfa0',
+        blue: '#bfe6ff',
+        blueLight: '#e8f8ff',
+        blueDeep: '#7eb8d9',
+        red: '#e88fa9',
+        redDeep: '#b35b78',
+      },
+    },
+    sky: {
+      hue: 205,
+      hue2: 265,
+      mascot: {
+        outline: '#2f5472',
+        screen: '#172b3d',
+        cloudTop: '#dff2ff',
+        cloudMid: '#b9e4ff',
+        cloudLow: '#7fc7ee',
+        cloudShadow: '#2f5472',
+        pink: '#a9d8ff',
+        pinkLight: '#dff2ff',
+        pinkDeep: '#74b6e6',
+        blue: '#c9c1ff',
+        blueLight: '#ece8ff',
+        blueDeep: '#9a90d8',
+        red: '#e88fa9',
+        redDeep: '#b35b78',
+      },
+    },
+  };
+  const WARDROBE_DEFAULTS = { bow: 'none', hat: 'none', wand: false, theme: 'rose' };
+  const BOW_COLORS = {
+    pink: '#ff76b9',
+    lavender: '#b488ee',
+    mint: '#66d2a8',
   };
 
   const MASCOT = {
@@ -30,6 +102,10 @@
     pink: '#f47fbd',
     pinkLight: '#ffc0e1',
     pinkDeep: '#dd4f9d',
+    cloudTop: '#ffd3eb',
+    cloudMid: '#fb9dd1',
+    cloudLow: '#ee69b0',
+    cloudShadow: '#8e235f',
     blue: '#82cdf2',
     blueLight: '#d0f1ff',
     blueDeep: '#4b9ac9',
@@ -41,10 +117,20 @@
     redDeep: '#ad2757',
   };
 
+  const MASCOT_BASE = { ...MASCOT };
+
   let snapshot = null;
   let offline = false;
   let lastKey = '';
-  let reactAt = 0;
+  let waveAt = 0;
+  let wakeAt = 0;
+  let lastActivityAt = performance.now();
+  let cursorLocal = null;
+  let cursorInside = false;
+  let gazeX = 0;
+  let gazeY = 0;
+  let wardrobe = { ...WARDROBE_DEFAULTS };
+  let dragTrail = [];
   let bubbleUntil = 0;
   let customImage = null;
   let customImageKey = '';
@@ -70,6 +156,14 @@
     return { hue, hue2, variant };
   }
 
+  function applyWardrobe(next) {
+    wardrobe = { ...WARDROBE_DEFAULTS, ...(next && typeof next === 'object' ? next : {}) };
+    const theme = THEMES[wardrobe.theme] || THEMES.rose;
+    Object.assign(MASCOT, MASCOT_BASE, theme.mascot);
+  }
+
+  applyWardrobe(WARDROBE_DEFAULTS);
+
   function currentPalette() {
     const sprite = snapshot && snapshot.pet && snapshot.pet.sprite;
     const seed = (sprite && sprite.seed) || (snapshot && snapshot.pet && snapshot.pet.seed) || 7;
@@ -77,7 +171,8 @@
     const variant = sprite && sprite.palette && Number.isFinite(sprite.palette.variant)
       ? sprite.palette.variant
       : fallback.variant;
-    return { hue: GIRLY.hue, hue2: GIRLY.hue2, variant };
+    const theme = THEMES[wardrobe.theme] || THEMES.rose;
+    return { hue: theme.hue, hue2: theme.hue2, variant };
   }
 
   function syncSpriteImage(sprite, port) {
@@ -125,6 +220,8 @@
 
   function applySnapshot(next) {
     if (!next) return;
+    const now = performance.now();
+    const wasSleepy = stateAt(now) === 'sleepy';
     offline = false;
     snapshot = next;
     syncSpriteImage(next.pet && next.pet.sprite, next.port);
@@ -133,6 +230,8 @@
     const key = `${current.seq || 0}|${current.state || 'idle'}|${message || ''}`;
     if (key !== lastKey) {
       lastKey = key;
+      lastActivityAt = now;
+      if (wasSleepy) wakeAt = now;
       if (message) showBubble(message, current.source, current.state);
       else hideBubble();
     }
@@ -146,19 +245,53 @@
     applySnapshot(payload);
   });
 
-  function petIt() {
-    reactAt = performance.now();
-    showBubble('That tickles.', 'you', 'idle', 2200);
-    window.buffy.pet();
+  function baseState() {
+    return (snapshot && snapshot.current && snapshot.current.state) || 'idle';
   }
 
-  window.buffy.onPetRequest(() => petIt());
+  function sleepDue(now) {
+    return baseState() === 'idle' && now - lastActivityAt > SLEEP_AFTER_MS;
+  }
 
   function stateAt(now) {
     if (offline) return 'offline';
-    if (now - reactAt < 2200) return 'pet';
-    return (snapshot && snapshot.current && snapshot.current.state) || 'idle';
+    if (now - waveAt < WAVE_MS) return 'wave';
+    const base = baseState();
+    if (base !== 'idle') return base;
+    if (now - wakeAt < WAKE_MS) return 'wake';
+    if (sleepDue(now) && !cursorInside) return 'sleepy';
+    return base;
   }
+
+  function wakeUp(now = performance.now()) {
+    const wasSleepy = sleepDue(now) && !cursorInside;
+    lastActivityAt = now;
+    if (wasSleepy) wakeAt = now;
+  }
+
+  function waveIt() {
+    const now = performance.now();
+    wakeUp(now);
+    waveAt = now;
+    showBubble('Hi!', 'you', 'wave', WAVE_MS);
+  }
+
+  window.buffy.onPetRequest(() => waveIt());
+
+  window.buffy.onCursor((point) => {
+    if (!point) return;
+    const now = performance.now();
+    const inside = point.x >= 0 && point.x <= window.innerWidth && point.y >= 0 && point.y <= window.innerHeight;
+    const wasSleepy = sleepDue(now) && !cursorInside;
+    cursorLocal = point;
+    cursorInside = inside;
+    if (inside) {
+      lastActivityAt = now;
+      if (wasSleepy) wakeAt = now;
+    }
+  });
+
+  window.buffy.onWardrobe((next) => applyWardrobe(next));
 
   function drawShadow(centerX, baseY, bob) {
     ctx.save();
@@ -423,9 +556,9 @@
   function drawCloudHead() {
     ctx.save();
     const gradient = ctx.createLinearGradient(0, -54, 0, 14);
-    gradient.addColorStop(0, '#ffd3eb');
-    gradient.addColorStop(0.55, '#fb9dd1');
-    gradient.addColorStop(1, '#ee69b0');
+    gradient.addColorStop(0, MASCOT.cloudTop);
+    gradient.addColorStop(0.55, MASCOT.cloudMid);
+    gradient.addColorStop(1, MASCOT.cloudLow);
     cloudPath(0, -20, 45, 33, 12);
     ctx.fillStyle = gradient;
     ctx.fill();
@@ -435,7 +568,7 @@
 
     ctx.save();
     ctx.globalAlpha = 0.16;
-    ctx.fillStyle = '#8e235f';
+    ctx.fillStyle = MASCOT.cloudShadow;
     ctx.beginPath();
     ctx.ellipse(0, 1, 32, 14, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -467,30 +600,18 @@
       ctx.save();
       ctx.shadowColor = 'rgba(255, 62, 162, 0.8)';
       ctx.shadowBlur = 10;
-      ctx.fillStyle = '#e82b83';
-      ctx.strokeStyle = MASCOT.outline;
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.ellipse(x, -17, 10.5, 10.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      drawJewelHeart(x, -19, 11.8, '#e82b83', MASCOT.outline);
       ctx.restore();
 
-      ctx.fillStyle = '#ff9ed4';
-      ctx.strokeStyle = '#b82870';
-      ctx.lineWidth = 1.4;
+      drawJewelHeart(x, -19, 8, '#ff9ed4', '#b82870');
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
       ctx.beginPath();
-      ctx.ellipse(x, -17, 7, 7, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-      ctx.beginPath();
-      ctx.ellipse(x - 2.5, -20.5, 2.2, 1.5, -0.5, 0, Math.PI * 2);
+      ctx.ellipse(x - 2.3, -21.5, 1.8, 1.2, -0.5, 0, Math.PI * 2);
       ctx.fill();
     });
   }
 
-  function drawPixelFace(now, state) {
+  function drawPixelFace(now, state, centerX, centerY) {
     ctx.save();
     ctx.fillStyle = MASCOT.screen;
     ctx.strokeStyle = MASCOT.outline;
@@ -513,15 +634,35 @@
     const glow = '#ff4da3';
     const muted = '#8e657e';
     const happy = state === 'pet' || state === 'done';
-    const blink = now % 4300 < 120 && !['needs-you', 'error', 'pet', 'done', 'offline'].includes(state);
+    const blink = now % 4300 < 120 && !['needs-you', 'error', 'pet', 'done', 'offline', 'sleepy'].includes(state);
     const eyeY = -31;
+    const faceY = centerY - 26 * PET_SCALE;
+    const gazeDistance = cursorLocal
+      ? Math.hypot(cursorLocal.x - centerX, cursorLocal.y - faceY)
+      : 0;
+    const gazeReach = cursorLocal && gazeDistance > 1 ? Math.min(1, gazeDistance / 90) : 0;
+    const targetGazeX = cursorLocal && gazeDistance > 1
+      ? ((cursorLocal.x - centerX) / gazeDistance) * 2 * gazeReach
+      : 0;
+    const targetGazeY = cursorLocal && gazeDistance > 1
+      ? ((cursorLocal.y - faceY) / gazeDistance) * 1.2 * gazeReach
+      : 0;
+    gazeX += (targetGazeX - gazeX) * 0.18;
+    gazeY += (targetGazeY - gazeY) * 0.18;
+    const lookX = Math.round(gazeX);
+    const lookY = Math.round(gazeY);
 
-    const openEye = (side, wide) => {
+    const openEye = (side, wide, offsetX, offsetY) => {
       const x = side * 13;
       px(x - 4, eyeY - 5, 8, 9, white);
       px(x - 5, eyeY - 3, 10, 5, white);
-      px(x - 2, eyeY - 4, 4, 6, glow);
-      px(x - 1, eyeY - 4, 2, 2, '#ffffff');
+      px(x - 2 + offsetX, eyeY - 4 + offsetY, 2, 2, glow);
+      px(x + 1 + offsetX, eyeY - 4 + offsetY, 2, 2, glow);
+      px(x - 3 + offsetX, eyeY - 2 + offsetY, 6, 2, glow);
+      px(x - 2 + offsetX, eyeY + offsetY, 5, 2, glow);
+      px(x - 1 + offsetX, eyeY + 2 + offsetY, 3, 1, glow);
+      px(x - 1 + offsetX, eyeY - 4 + offsetY, 1, 1, '#ffffff');
+      px(x + 2 + offsetX, eyeY - 1 + offsetY, 1, 1, '#ffffff');
       px(x - 5, eyeY - 7, 2, 2, pink);
       px(x + 3, eyeY - 7, 2, 2, pink);
       if (wide) px(x - 6, eyeY - 1, 2, 2, pink);
@@ -539,6 +680,12 @@
       px(x - 4, eyeY, 8, 2, pink);
       px(x - 2, eyeY - 1, 4, 2, pink);
     };
+    const sleepingEye = (side) => {
+      const x = side * 13;
+      px(x - 4, eyeY, 8, 2, pink);
+      px(x - 2, eyeY - 1, 4, 1, pink);
+      px(x + side * 6, eyeY - 2, 2, 1, pink);
+    };
     const crossEye = (side) => {
       const x = side * 13;
       for (let i = 0; i < 4; i += 1) {
@@ -547,7 +694,10 @@
       }
     };
 
-    if (state === 'error') {
+    if (state === 'sleepy') {
+      sleepingEye(-1);
+      sleepingEye(1);
+    } else if (state === 'error') {
       crossEye(-1);
       crossEye(1);
     } else if (state === 'offline') {
@@ -562,13 +712,28 @@
       closedEye(-1);
       closedEye(1);
     } else {
-      openEye(-1, state === 'needs-you');
-      openEye(1, state === 'needs-you');
+      const wide = state === 'needs-you' || state === 'wake';
+      openEye(-1, wide, lookX, lookY);
+      openEye(1, wide, lookX, lookY);
+    }
+
+    if (state !== 'error' && state !== 'offline' && state !== 'sleepy' && !blink && !happy) {
+      [-1, 1].forEach((side) => {
+        const x = side * 13;
+        px(x + side * 6, eyeY - 7, 3, 1, pink);
+        px(x + side * 8, eyeY - 9, 2, 1, pink);
+        px(x + side * 6, eyeY - 4, 2, 1, pink);
+      });
     }
 
     [-1, 1].forEach((side) => {
-      px(side * 20 - 3, -20, 5, 2, 'rgba(255, 104, 176, 0.65)');
-      px(side * 20 - 1, -18, 3, 2, 'rgba(255, 104, 176, 0.55)');
+      const x = side * 20;
+      px(x - 3, -22, 2, 2, 'rgba(255, 104, 176, 0.78)');
+      px(x + 1, -22, 2, 2, 'rgba(255, 104, 176, 0.78)');
+      px(x - 4, -20, 8, 2, 'rgba(255, 104, 176, 0.68)');
+      px(x - 3, -18, 6, 2, 'rgba(255, 104, 176, 0.6)');
+      px(x - 2, -16, 4, 2, 'rgba(255, 104, 176, 0.52)');
+      px(x - 1, -14, 2, 2, 'rgba(255, 104, 176, 0.44)');
     });
 
     if (state === 'error') {
@@ -577,6 +742,12 @@
       px(2, -15, 2, 2, pink);
     } else if (state === 'offline') {
       px(-4, -16, 8, 2, muted);
+    } else if (state === 'sleepy') {
+      px(-1, -16, 2, 2, pink);
+      px(0, -15, 1, 1, MASCOT.screen);
+    } else if (state === 'wake') {
+      px(-2, -17, 4, 4, pink);
+      px(-1, -16, 2, 2, MASCOT.screen);
     } else if (state === 'thinking') {
       px(-4, -17, 8, 2, pink);
     } else if (state === 'needs-you') {
@@ -611,6 +782,48 @@
     }
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fillRect(x - size * 0.25, y - size * 0.3, Math.max(1, size * 0.2), Math.max(1, size * 0.2));
+    ctx.restore();
+  }
+
+  function drawMiniBow(x, y, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 1;
+
+    [-1, 1].forEach((side) => {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(side * size * 0.55, size * 1.15, side * size * 0.95, size * 1.4);
+      ctx.lineTo(side * size * 0.18, size * 0.95);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    [-1, 1].forEach((side) => {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(side * size * 1.3, -size, side * size * 1.6, size * 0.8, 0, size * 0.45);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    [-1, 1].forEach((side) => {
+      ctx.beginPath();
+      ctx.ellipse(side * size * 0.75, -size * 0.18, size * 0.25, size * 0.12, side * -0.35, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.fillStyle = MASCOT.gold;
+    ctx.strokeStyle = MASCOT.goldDeep;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size * 0.35, size * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -652,6 +865,102 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
     ctx.fillRect(-8, -55, 2, 2);
+    ctx.restore();
+  }
+
+  function drawBeret() {
+    ctx.save();
+    ctx.translate(-28, -54);
+    ctx.rotate(-0.18);
+    ctx.fillStyle = MASCOT.pinkDeep;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 13.5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = MASCOT.pinkLight;
+    ctx.beginPath();
+    ctx.ellipse(-3.5, -2, 6.5, 2.5, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = MASCOT.cream;
+    ctx.strokeStyle = MASCOT.creamDeep;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(0, 5.5, 12, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = MASCOT.gold;
+    ctx.strokeStyle = MASCOT.goldDeep;
+    ctx.beginPath();
+    ctx.arc(1, -7, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPartyHat() {
+    ctx.save();
+    ctx.translate(-30, -48);
+    ctx.rotate(-0.16);
+    ctx.beginPath();
+    ctx.moveTo(-10, 7);
+    ctx.quadraticCurveTo(-4, -10, 2, -30);
+    ctx.quadraticCurveTo(7, -10, 11, 7);
+    ctx.closePath();
+    ctx.fillStyle = MASCOT.cream;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.lineWidth = 1.6;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = MASCOT.pink;
+    for (let y = -12; y < 10; y += 10) {
+      ctx.beginPath();
+      ctx.moveTo(-15, y);
+      ctx.lineTo(15, y - 10);
+      ctx.lineTo(15, y - 5);
+      ctx.lineTo(-15, y + 5);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = MASCOT.blue;
+    ctx.strokeStyle = MASCOT.outline;
+    ctx.beginPath();
+    ctx.ellipse(1, 7, 11, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = MASCOT.gold;
+    ctx.strokeStyle = MASCOT.goldDeep;
+    ctx.beginPath();
+    ctx.arc(2, -32, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawHat() {
+    if (wardrobe.hat === 'beret') drawBeret();
+    else if (wardrobe.hat === 'party') drawPartyHat();
+  }
+
+  function drawWardrobeBow() {
+    const color = BOW_COLORS[wardrobe.bow];
+    if (!color) return;
+    ctx.save();
+    ctx.translate(35, -38);
+    ctx.rotate(0.18);
+    ctx.shadowColor = 'rgba(122, 37, 86, 0.24)';
+    ctx.shadowBlur = 2;
+    drawMiniBow(0, 0, 7, color);
     ctx.restore();
   }
 
@@ -777,29 +1086,90 @@
     ctx.restore();
   }
 
-  function drawHands() {
+  function drawWand(handX, handY, tilt) {
+    ctx.save();
+    ctx.translate(handX, handY);
+    ctx.rotate(-0.55 + tilt);
+    ctx.strokeStyle = MASCOT.goldDeep;
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(1, 4);
+    ctx.lineTo(-16, -20);
+    ctx.stroke();
+    ctx.strokeStyle = MASCOT.cream;
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(0, 2);
+    ctx.lineTo(-15, -19);
+    ctx.stroke();
+    drawSparkle(-18, -23, 6.5, MASCOT.gold, 0.95);
+    drawSparkle(-18, -23, 3.5, MASCOT.pink, 1);
+    ctx.restore();
+  }
+
+  function drawHands(now, state) {
+    const waking = state === 'wake';
+    const wakeProgress = waking ? Math.min(1, Math.max(0, (now - wakeAt) / WAKE_MS)) : 0;
+    const stretch = waking ? Math.sin(wakeProgress * Math.PI) : 0;
     [-1, 1].forEach((side) => {
-      const x = side * 31;
+      const waving = state === 'wave' && side === 1;
+      const swing = Math.sin(now / 120);
+      const handX = waving ? 39 + swing * 1.5 : side * (31 + stretch * 7);
+      const handY = waving ? 6 + Math.cos(now / 110) * 1.2 : 28 - stretch * 16;
+      const tilt = waving ? -0.3 + swing * 0.12 : waking ? side * stretch * 0.16 : 0;
+
       ctx.strokeStyle = MASCOT.creamDeep;
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(side * 23, 18);
-      ctx.lineTo(x, 26);
+      if (waving) ctx.quadraticCurveTo(31, 14, handX - 2, handY + 2);
+      else if (waking) ctx.quadraticCurveTo(side * 30, 17, handX, handY + 2);
+      else ctx.lineTo(handX, 26);
       ctx.stroke();
 
+      if (side === -1 && wardrobe.wand) drawWand(handX, handY, tilt);
+
+      ctx.save();
+      ctx.translate(handX, handY);
+      ctx.rotate(tilt);
       ctx.fillStyle = MASCOT.pink;
       ctx.strokeStyle = MASCOT.outline;
       ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.ellipse(x, 28, 6.5, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 6.5, 6, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
+      if (waving) {
+        ctx.beginPath();
+        ctx.arc(4.4, -4.4, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(6.4, -1.2, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
       ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
       ctx.beginPath();
-      ctx.arc(x - 2, 25.5, 1.8, 0, Math.PI * 2);
+      ctx.arc(-2, -2.5, 1.8, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+
+      if (waving) {
+        ctx.strokeStyle = 'rgba(255, 116, 181, 0.7)';
+        ctx.lineWidth = 1.4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(handX + 8, handY - 1, 5.5, -0.7, 0.35);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(handX + 11, handY - 5, 3.8, -0.65, 0.2);
+        ctx.stroke();
+      }
     });
   }
 
@@ -903,6 +1273,7 @@
     ctx.fill();
     ctx.stroke();
 
+    drawMiniBow(0, 23, 6, '#ff6fb0');
     drawJewelHeart(0, 15, 4.2, '#66c9ff', MASCOT.cream);
 
     ctx.fillStyle = MASCOT.cream;
@@ -927,6 +1298,8 @@
       roundRect(x - 8, 42, 16, 11, 5);
       ctx.fill();
       ctx.stroke();
+
+      drawJewelHeart(x, 45, 2.7, MASCOT.gold, MASCOT.goldDeep);
 
       ctx.fillStyle = MASCOT.cream;
       ctx.strokeStyle = MASCOT.creamDeep;
@@ -979,10 +1352,10 @@
     ctx.restore();
   }
 
-  function drawHeart(x, y, size, alpha) {
+  function drawHeart(x, y, size, alpha, color = '#ff7b93') {
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#ff7b93';
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(x, y + size * 0.7);
     ctx.bezierCurveTo(x - size * 1.4, y - size * 0.35, x - size * 0.4, y - size, x, y - size * 0.35);
@@ -991,11 +1364,79 @@
     ctx.restore();
   }
 
+  function spawnDragTrail(moveX, moveY) {
+    const now = performance.now();
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const side = Math.abs(moveX) > 1 ? -Math.sign(moveX) : (Math.random() < 0.5 ? -1 : 1);
+    const kind = Math.random() < 0.55 ? 'heart' : 'sparkle';
+    const palette = kind === 'heart'
+      ? [MASCOT.pink, '#ff9bcb', MASCOT.pinkDeep]
+      : [MASCOT.gold, MASCOT.cream, MASCOT.blueLight];
+
+    dragTrail.push({
+      kind,
+      x: width / 2 + side * (42 + Math.random() * 16),
+      y: height - 95 + (Math.random() - 0.5) * 55 - Math.sign(moveY || 0) * 10,
+      vx: Math.max(-30, Math.min(30, -moveX * 0.35)) + (Math.random() - 0.5) * 4,
+      vy: -9 - Math.random() * 10 - Math.max(-10, Math.min(10, moveY * 0.25)),
+      size: 2.8 + Math.random() * 2.4,
+      color: palette[Math.floor(Math.random() * palette.length)],
+      bornAt: now,
+      ttl: 480 + Math.random() * 280,
+      phase: Math.random() * Math.PI * 2,
+    });
+
+    if (dragTrail.length > 48) dragTrail.splice(0, dragTrail.length - 48);
+  }
+
+  function drawDragTrail(now) {
+    if (!dragTrail.length) return;
+    dragTrail = dragTrail.filter((particle) => now - particle.bornAt < particle.ttl);
+    dragTrail.forEach((particle) => {
+      const progress = (now - particle.bornAt) / particle.ttl;
+      const ease = 1 - (1 - progress) * (1 - progress);
+      const x = particle.x + particle.vx * ease;
+      const y = particle.y + particle.vy * ease;
+      const alpha = (1 - progress) * 0.7;
+
+      if (particle.kind === 'heart') {
+        drawHeart(x, y, particle.size * (0.8 + (1 - progress) * 0.25), alpha, particle.color);
+      } else {
+        const twinkle = 0.65 + 0.35 * Math.sin(now / 90 + particle.phase);
+        drawSparkle(x, y, particle.size * (0.9 + 0.2 * twinkle), particle.color, alpha * twinkle);
+      }
+    });
+  }
+
   function drawEffects(now, state, centerX, centerY) {
     if (state === 'idle') {
-      const pulse = 0.18 + 0.12 * Math.sin(now / 900);
-      drawSparkle(centerX - 52, centerY - 36, 3, '#ffc2da', pulse);
-      drawSparkle(centerX + 54, centerY - 30, 2.2, '#fff0b8', pulse * 0.9);
+      const pulse = 0.26 + 0.16 * Math.sin(now / 900);
+      drawSparkle(centerX - 55, centerY - 40, 4, '#ffb3dc', pulse);
+      drawSparkle(centerX + 57, centerY - 32, 3, '#fff0b8', pulse * 0.9);
+      drawHeart(centerX + 63, centerY - 47, 3.8, 0.2 + 0.12 * Math.sin(now / 700));
+    }
+
+    if (state === 'wave') {
+      drawSparkle(centerX + 55, centerY + 4, 3.2, '#ffd36a', 0.45 + 0.2 * Math.sin(now / 130));
+    }
+
+    if (state === 'wake') {
+      drawSparkle(centerX - 48, centerY - 28, 3.6, '#ffe5a5', 0.75);
+      drawSparkle(centerX + 48, centerY - 28, 3.6, '#ffb3dc', 0.75);
+    }
+
+    if (state === 'sleepy') {
+      ctx.save();
+      ctx.fillStyle = '#8f5f80';
+      const drift = (now / 2200) % 1;
+      for (let i = 0; i < 3; i += 1) {
+        const progress = (drift + i * 0.32) % 1;
+        ctx.globalAlpha = (1 - progress) * 0.65;
+        ctx.font = `700 ${9 + progress * 5}px "Segoe UI", system-ui, sans-serif`;
+        ctx.fillText('z', centerX + 46 + progress * 13, centerY - 40 - progress * 28);
+      }
+      ctx.restore();
     }
 
     if (state === 'thinking') {
@@ -1059,6 +1500,9 @@
       done: Math.abs(Math.sin(now / 200)) * 9,
       error: 0,
       pet: Math.sin(now / 180) * 4,
+      wave: Math.sin(now / 180) * 2,
+      sleepy: Math.sin(now / 1600) * 2,
+      wake: Math.abs(Math.sin(now / 110)) * 2.5,
       offline: Math.sin(now / 1800) * 1,
     };
     const bob = bobTable[state] || 0;
@@ -1085,11 +1529,13 @@
       ctx.scale(PET_SCALE, PET_SCALE);
       drawCloudHead();
       drawHeadphones();
-      drawPixelFace(now, state);
+      drawPixelFace(now, state, centerX, centerY);
+      drawHat();
       drawTiara();
+      drawWardrobeBow();
       drawPrincessDress();
       drawPrincessShoes();
-      if (state !== 'working') drawHands();
+      if (state !== 'working') drawHands(now, state);
       if (state === 'working') drawKeyboard(now, palette.hue);
     }
     ctx.restore();
@@ -1103,6 +1549,7 @@
     const height = window.innerHeight;
     ctx.clearRect(0, 0, width, height);
     drawPet(now, stateAt(now));
+    drawDragTrail(now);
     if (bubbleUntil && now > bubbleUntil) hideBubble();
   }
 
@@ -1113,17 +1560,48 @@
 
   document.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
-    pointer = { startX: event.screenX, startY: event.screenY, moved: false };
+    wakeUp();
+    cursorInside = true;
+    cursorLocal = { x: event.clientX, y: event.clientY };
+    pointer = {
+      startX: event.screenX,
+      startY: event.screenY,
+      lastX: event.screenX,
+      lastY: event.screenY,
+      lastTrailAt: 0,
+      moved: false,
+    };
     window.buffy.dragStart(event.screenX, event.screenY);
   });
 
   document.addEventListener('pointermove', (event) => {
+    wakeUp();
+    cursorInside = true;
+    cursorLocal = { x: event.clientX, y: event.clientY };
     if (!pointer) return;
+
+    const now = performance.now();
+    const moveX = event.screenX - pointer.lastX;
+    const moveY = event.screenY - pointer.lastY;
+    pointer.lastX = event.screenX;
+    pointer.lastY = event.screenY;
+
     if (!pointer.moved && Math.hypot(event.screenX - pointer.startX, event.screenY - pointer.startY) > 4) {
       pointer.moved = true;
       document.body.classList.add('dragging');
     }
-    if (pointer.moved) window.buffy.dragMove(event.screenX, event.screenY);
+
+    if (pointer.moved) {
+      if (now - pointer.lastTrailAt > 32 && (moveX !== 0 || moveY !== 0)) {
+        spawnDragTrail(moveX, moveY);
+        pointer.lastTrailAt = now;
+      }
+      window.buffy.dragMove(event.screenX, event.screenY);
+    }
+  });
+
+  document.addEventListener('pointerleave', () => {
+    cursorInside = false;
   });
 
   document.addEventListener('pointerup', () => {
@@ -1132,7 +1610,7 @@
     pointer = null;
     document.body.classList.remove('dragging');
     window.buffy.dragEnd();
-    if (!moved) petIt();
+    if (!moved) waveIt();
   });
 
   document.addEventListener('pointercancel', () => {

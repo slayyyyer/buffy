@@ -7,8 +7,14 @@ const path = require('node:path');
 const ROOT = path.resolve(__dirname, '..');
 const HOME = process.env.BUFFY_HOME ? path.resolve(process.env.BUFFY_HOME) : path.join(os.homedir(), '.buffy');
 const WINDOW_FILE = path.join(HOME, 'window.json');
+const WARDROBE_FILE = path.join(HOME, 'wardrobe.json');
 const WIDTH = 240;
 const HEIGHT = 250;
+const EDGE_GAP = 24;
+const WARDROBE_DEFAULTS = { bow: 'none', hat: 'none', wand: false, theme: 'rose' };
+const BOWS = ['none', 'pink', 'lavender', 'mint'];
+const HATS = ['none', 'beret', 'party'];
+const THEMES = ['rose', 'lavender', 'mint', 'sky'];
 
 function readJson(file, fallback) {
   try {
@@ -20,6 +26,18 @@ function readJson(file, fallback) {
 
 const config = readJson(path.join(HOME, 'config.json'), {});
 const PORT = Number(process.env.BUFFY_PORT || config.port || 4517);
+
+function normalizeWardrobe(value) {
+  const next = value && typeof value === 'object' ? value : {};
+  return {
+    bow: BOWS.includes(next.bow) ? next.bow : WARDROBE_DEFAULTS.bow,
+    hat: HATS.includes(next.hat) ? next.hat : WARDROBE_DEFAULTS.hat,
+    wand: Boolean(next.wand),
+    theme: THEMES.includes(next.theme) ? next.theme : WARDROBE_DEFAULTS.theme,
+  };
+}
+
+let wardrobe = normalizeWardrobe(readJson(WARDROBE_FILE, {}));
 
 function argValue(name) {
   const index = process.argv.indexOf(name);
@@ -34,11 +52,13 @@ let win = null;
 let drag = null;
 let saveTimer = null;
 let pollTimer = null;
+let cursorTimer = null;
 let failures = 0;
+let lastCursor = '';
 
 function defaultBounds() {
   const area = screen.getPrimaryDisplay().workArea;
-  return { x: area.x + area.width - WIDTH - 24, y: area.y + area.height - HEIGHT - 24 };
+  return { x: area.x + area.width - WIDTH - EDGE_GAP, y: area.y + area.height - HEIGHT - EDGE_GAP };
 }
 
 function savedBounds() {
@@ -65,6 +85,71 @@ function saveBounds() {
   } catch {
     /* position persistence is best effort */
   }
+}
+
+function saveWardrobe() {
+  try {
+    fs.mkdirSync(HOME, { recursive: true });
+    fs.writeFileSync(WARDROBE_FILE, `${JSON.stringify(wardrobe, null, 2)}\n`);
+  } catch {
+    /* wardrobe persistence is best effort */
+  }
+}
+
+function updateWardrobe(patch) {
+  wardrobe = normalizeWardrobe({ ...wardrobe, ...patch });
+  saveWardrobe();
+  if (win && !win.isDestroyed()) win.webContents.send('wardrobe', wardrobe);
+}
+
+function wardrobeMenu() {
+  return {
+    label: 'Wardrobe',
+    submenu: [
+      {
+        label: 'Bow',
+        submenu: [
+          { label: 'No bow', type: 'radio', checked: wardrobe.bow === 'none', click: () => updateWardrobe({ bow: 'none' }) },
+          { label: 'Pink bow', type: 'radio', checked: wardrobe.bow === 'pink', click: () => updateWardrobe({ bow: 'pink' }) },
+          { label: 'Lavender bow', type: 'radio', checked: wardrobe.bow === 'lavender', click: () => updateWardrobe({ bow: 'lavender' }) },
+          { label: 'Mint bow', type: 'radio', checked: wardrobe.bow === 'mint', click: () => updateWardrobe({ bow: 'mint' }) },
+        ],
+      },
+      {
+        label: 'Hat',
+        submenu: [
+          { label: 'No hat', type: 'radio', checked: wardrobe.hat === 'none', click: () => updateWardrobe({ hat: 'none' }) },
+          { label: 'Pastel beret', type: 'radio', checked: wardrobe.hat === 'beret', click: () => updateWardrobe({ hat: 'beret' }) },
+          { label: 'Party hat', type: 'radio', checked: wardrobe.hat === 'party', click: () => updateWardrobe({ hat: 'party' }) },
+        ],
+      },
+      {
+        label: 'Wand',
+        type: 'checkbox',
+        checked: wardrobe.wand,
+        click: () => updateWardrobe({ wand: !wardrobe.wand }),
+      },
+      { type: 'separator' },
+      {
+        label: 'Theme',
+        submenu: [
+          { label: 'Rose', type: 'radio', checked: wardrobe.theme === 'rose', click: () => updateWardrobe({ theme: 'rose' }) },
+          { label: 'Lavender', type: 'radio', checked: wardrobe.theme === 'lavender', click: () => updateWardrobe({ theme: 'lavender' }) },
+          { label: 'Mint', type: 'radio', checked: wardrobe.theme === 'mint', click: () => updateWardrobe({ theme: 'mint' }) },
+          { label: 'Sky', type: 'radio', checked: wardrobe.theme === 'sky', click: () => updateWardrobe({ theme: 'sky' }) },
+        ],
+      },
+    ],
+  };
+}
+
+function moveToCorner(corner) {
+  if (!win || win.isDestroyed()) return;
+  const area = screen.getDisplayMatching(win.getBounds()).workArea;
+  const x = corner.endsWith('left') ? area.x + EDGE_GAP : area.x + area.width - WIDTH - EDGE_GAP;
+  const y = corner.startsWith('top') ? area.y + EDGE_GAP : area.y + area.height - HEIGHT - EDGE_GAP;
+  win.setBounds({ x, y, width: WIDTH, height: HEIGHT });
+  saveBounds();
 }
 
 function getJson(pathname) {
@@ -102,6 +187,17 @@ async function poll() {
     failures += 1;
     if (failures >= 3) win.webContents.send('offline');
   }
+}
+
+function sendCursor() {
+  if (!win || win.isDestroyed() || !win.isVisible()) return;
+  const point = screen.getCursorScreenPoint();
+  const bounds = win.getBounds();
+  const payload = { x: point.x - bounds.x, y: point.y - bounds.y };
+  const key = `${payload.x},${payload.y}`;
+  if (key === lastCursor) return;
+  lastCursor = key;
+  win.webContents.send('cursor', payload);
 }
 
 function createWindow() {
@@ -145,6 +241,11 @@ function createWindow() {
 
   win.loadFile(path.join(__dirname, 'index.html'));
 
+  win.webContents.on('did-finish-load', () => {
+    if (!win || win.isDestroyed()) return;
+    win.webContents.send('wardrobe', wardrobe);
+  });
+
   win.once('ready-to-show', () => {
     win.showInactive();
     if (dev) win.webContents.openDevTools({ mode: 'detach' });
@@ -161,6 +262,9 @@ function createWindow() {
 
   pollTimer = setInterval(poll, 350);
   poll();
+
+  cursorTimer = setInterval(sendCursor, 80);
+  sendCursor();
 
   if (shotPath) {
     win.webContents.once('did-finish-load', () => {
@@ -210,7 +314,16 @@ ipcMain.on('drag-end', () => {
 ipcMain.on('menu', () => {
   if (!win) return;
   Menu.buildFromTemplate([
-    { label: 'Pet', click: () => win.webContents.send('pet-request') },
+    {
+      label: 'Move to corner',
+      submenu: [
+        { label: 'Top left', click: () => moveToCorner('top-left') },
+        { label: 'Top right', click: () => moveToCorner('top-right') },
+        { label: 'Bottom left', click: () => moveToCorner('bottom-left') },
+        { label: 'Bottom right', click: () => moveToCorner('bottom-right') },
+      ],
+    },
+    wardrobeMenu(),
     { type: 'separator' },
     {
       label: 'Hide for 10 minutes',
@@ -237,6 +350,7 @@ if (!gotLock) {
   app.on('window-all-closed', () => app.quit());
   app.on('before-quit', () => {
     clearInterval(pollTimer);
+    clearInterval(cursorTimer);
     saveBounds();
   });
 }

@@ -32,7 +32,7 @@ Usage:
   buffy help | buffy version
 
 States: ${STATES.join(', ')}
-Overlay: drag to move, click to pet, right-click for the menu.
+Overlay: drag to move, click to wave, right-click for the menu.
 Docs: README.md
 `;
 
@@ -197,7 +197,7 @@ async function overlayCommand(flags, config) {
     env: { ...process.env, BUFFY_PORT: String(config.port) },
   });
   child.unref();
-  print('buffy overlay starting… (drag to move, click to pet, right-click for menu)');
+  print('buffy overlay starting… (drag to move, click to wave, right-click for menu)');
   return 0;
 }
 
