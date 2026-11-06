@@ -10,7 +10,7 @@ export const DAEMON_SCRIPT = path.resolve(HERE, 'daemon.js');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Tiny JSON-over-HTTP helper for the loopback daemon. */
-export function httpJson({ port, method = 'GET', path: pathname = '/', body, timeout = 1200, source } = {}) {
+export function httpJson({ port, method = 'GET', path: pathname = '/', body, timeout = 1200, source, session } = {}) {
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? null : Buffer.from(JSON.stringify(body));
     const headers = { accept: 'application/json' };
@@ -19,6 +19,7 @@ export function httpJson({ port, method = 'GET', path: pathname = '/', body, tim
       headers['content-length'] = payload.length;
     }
     if (source) headers['x-buffy-source'] = source;
+    if (session) headers['x-buffy-session'] = session;
 
     const req = http.request({ host: '127.0.0.1', port, method, path: pathname, headers, timeout }, (res) => {
       const chunks = [];
@@ -94,7 +95,15 @@ export async function ensureDaemon({ port, env = process.env, waitMs = 6000 } = 
 }
 
 export async function postEvent(port, event) {
-  const { status, data } = await httpJson({ port, method: 'POST', path: '/event', body: event, timeout: 1500, source: event.source });
+  const { status, data } = await httpJson({
+    port,
+    method: 'POST',
+    path: '/event',
+    body: event,
+    timeout: 1500,
+    source: event.source,
+    session: event.sessionId || event.session,
+  });
   if (status !== 200 || !data?.ok) throw new Error(data?.error || `daemon returned ${status}`);
   return data.state;
 }

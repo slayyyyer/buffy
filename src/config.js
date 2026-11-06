@@ -6,6 +6,7 @@ const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.met
 
 export const VERSION = PACKAGE.version;
 export const DEFAULT_PORT = 4517;
+export const DEFAULT_SESSION_TTL_MS = 30 * 60 * 1000;
 
 /** The six states the pet can be in. Everything else is mapped onto these. */
 export const STATES = ['idle', 'thinking', 'working', 'needs-you', 'done', 'error'];
@@ -27,6 +28,7 @@ export function ensureBuffyDir(env = process.env) {
 const BUILTIN = {
   port: DEFAULT_PORT,
   doneHoldMs: 4000,
+  sessionTtlMs: DEFAULT_SESSION_TTL_MS,
   watch: {
     enabled: true,
     directory: null,
@@ -79,6 +81,7 @@ export function readConfig(env = process.env) {
     ...raw,
     port: clampNumber(env.BUFFY_PORT ?? raw.port, BUILTIN.port, 0, 65535),
     doneHoldMs: clampNumber(raw.doneHoldMs, BUILTIN.doneHoldMs, 250, 120_000),
+    sessionTtlMs: clampNumber(raw.sessionTtlMs, BUILTIN.sessionTtlMs, 60_000, 86_400_000),
     watch: {
       ...BUILTIN.watch,
       ...watch,

@@ -61,6 +61,7 @@ export function createWatcher({
   let quietTimer = null;
   let lastEmit = 0;
   let gitSignature = null;
+  const gitChildren = new Set();
 
   function relativeOf(filename) {
     if (!filename) return '';
@@ -88,17 +89,20 @@ export function createWatcher({
   }
 
   function pollGit() {
-    execFile(
+    if (closed) return;
+    const child = execFile(
       'git',
       GIT_ARGS,
       { cwd: root, timeout: 2000, windowsHide: true, maxBuffer: 1024 * 1024 },
       (error, stdout) => {
+        gitChildren.delete(child);
         if (closed || error) return;
         const next = String(stdout);
         if (gitSignature !== null && next !== gitSignature) markChurn(null);
         gitSignature = next;
       },
     );
+    gitChildren.add(child);
   }
 
   function start() {
@@ -120,7 +124,7 @@ export function createWatcher({
     }
   }
 
-  function close() {
+  async function close() {
     closed = true;
     clearTimeout(quietTimer);
     clearInterval(pollTimer);
@@ -132,6 +136,33 @@ export function createWatcher({
       /* already closed */
     }
     fsWatcher = null;
+
+    const children = [...gitChildren];
+    gitChildren.clear();
+    for (const child of children) {
+      try {
+        child.kill();
+      } catch {
+        /* already exited */
+      }
+    }
+    await Promise.all(
+      children.map(
+        (child) =>
+          new Promise((resolve) => {
+            if (child.exitCode !== null || child.signalCode !== null) {
+              resolve();
+              return;
+            }
+            const timer = setTimeout(resolve, 1000);
+            timer.unref?.();
+            child.once('close', () => {
+              clearTimeout(timer);
+              resolve();
+            });
+          }),
+      ),
+    );
   }
 
   return {

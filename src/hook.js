@@ -95,9 +95,13 @@ export async function runClaudeHook(eventName, { env = process.env } = {}) {
   if (!mapped) return 0;
 
   const config = readConfig(env);
+  const sessionId = clean(payload.session_id || payload.sessionId, 80);
   try {
     await ensureDaemon({ port: config.port, env, waitMs: 2500 });
-    await postEvent(config.port, mapped);
+    await postEvent(config.port, {
+      ...mapped,
+      ...(sessionId ? { sessionId: `claude:${sessionId}` } : {}),
+    });
   } catch (error) {
     process.stderr.write(`buffy hook: ${error.message}\n`);
   }

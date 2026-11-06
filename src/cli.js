@@ -21,6 +21,7 @@ Usage:
   buffy event <state> [options]    send a state change
       --msg "text"                 speech bubble text
       --source claude|freebuff|…   who sent it (shown in the bubble)
+      --session <id>               stable identity for concurrent agents
   buffy pet                        scratch behind the ears
   buffy status [--json]            state, mood, XP, daemon health
   buffy overlay [--dev]            show the always-on-top pet window
@@ -88,7 +89,8 @@ function offlineSnapshot() {
     xp: stored?.xp ?? 0,
     level: levelFromXp(stored?.xp ?? 0),
     mood: Math.round(stored?.mood ?? 70),
-    current: { state: 'idle', message: null, source: null, since: null, seq: 0 },
+    current: { state: 'idle', message: null, source: null, since: null, seq: 0, sessionId: null },
+    sessions: [],
     reaction: null,
   };
 }
@@ -103,6 +105,11 @@ function printStatus(snapshot, config) {
   print(`state   ${snapshot.current?.state ?? 'idle'}${source ? ` (${source}${since})` : ''}`);
   print(`mood    ${snapshot.mood}/100`);
   if (snapshot.current?.message) print(`message ${snapshot.current.message}`);
+  const sessions = Array.isArray(snapshot.sessions) ? snapshot.sessions : [];
+  if (sessions.length > 1) {
+    const summary = sessions.map((session) => `${session.source || session.id}: ${session.state}`).join(' · ');
+    print(`agents  ${sessions.length} active (${summary})`);
+  }
   print(
     snapshot.online
       ? `daemon  online at 127.0.0.1:${config.port}${snapshot.pid ? ` (pid ${snapshot.pid})` : ''}`
@@ -147,9 +154,17 @@ async function eventCommand(rest, flags, config) {
   }
   const message = typeof flags.msg === 'string' ? flags.msg : null;
   const source = (typeof flags.source === 'string' ? flags.source : process.env.BUFFY_SOURCE || 'cli').slice(0, 40);
+  const sessionId = (typeof flags.session === 'string' ? flags.session : process.env.BUFFY_SESSION || '')
+    .trim()
+    .slice(0, 96);
   try {
     await client.ensureDaemon({ port: config.port });
-    await client.postEvent(config.port, { state, message, source });
+    await client.postEvent(config.port, {
+      state,
+      message,
+      source,
+      ...(sessionId ? { sessionId } : {}),
+    });
   } catch (error) {
     fail(`buffy: ${error.message}`);
     return 1;

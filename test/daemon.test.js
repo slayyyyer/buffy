@@ -46,6 +46,7 @@ test('health and initial state', async () => {
   assert.equal(state.status, 200);
   assert.equal(state.body.online, true);
   assert.equal(state.body.current.state, 'idle');
+  assert.deepEqual(state.body.sessions, []);
   assert.equal(state.body.watch.enabled, false);
   assert.ok(state.body.pet.name);
   assert.equal(state.body.pet.sprite.type, 'placeholder');

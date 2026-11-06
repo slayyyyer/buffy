@@ -60,8 +60,9 @@ function readJsonBody(req, callback) {
 
 /**
  * In-memory runtime (state machine, event history) on top of the persisted pet.
- * Everything is loopback-only and last-event-wins; the source travels with the
- * event so the bubble can say who sent it.
+ * Everything is loopback-only. Each event belongs to a session and the visible
+ * state is the most urgent active session, so concurrent agents cannot stomp
+ * one another. The source travels with the event for the bubble.
  */
 export function createDaemon({ config = readConfig(), env = process.env } = {}) {
   ensureBuffyDir(env);
@@ -69,12 +70,13 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   applyIdleDecay(store, Date.now());
   store.counters.sessions += 1;
 
-  const machine = createMachine({ doneHoldMs: config.doneHoldMs });
+  const machine = createMachine({ doneHoldMs: config.doneHoldMs, sessionTtlMs: config.sessionTtlMs });
   const clients = new Set();
   const startedAt = Date.now();
   let reaction = null;
   let lastDispatchAt = 0;
   let lastDispatchState = null;
+  let lastDispatchSession = null;
   let server = null;
   let watcher = null;
   let watchInfo = {
@@ -86,6 +88,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   };
 
   function snapshot(now = Date.now()) {
+    const current = machine.snapshot(now);
     return {
       version: VERSION,
       online: true,
@@ -96,7 +99,8 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       xp: store.xp,
       level: levelFromXp(store.xp),
       mood: Math.round(store.mood),
-      current: machine.snapshot(now),
+      current,
+      sessions: current.sessions,
       reaction: reaction && now - reaction.at < 10_000 ? reaction : null,
       watch: watchInfo,
     };
@@ -115,17 +119,16 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
 
   function dispatch(input, now = Date.now()) {
     const state = normalizeState(input.state);
+    const source = cleanText(input.source, 40) || 'manual';
+    const sessionId = cleanText(input.sessionId ?? input.session, 96) || source;
     const previous = machine.snapshot(now);
-    const current = machine.dispatch(
-      {
-        state,
-        message: cleanText(input.message),
-        source: cleanText(input.source, 40) || 'manual',
-      },
-      now,
-    );
+    const current = machine.dispatch({ state, message: cleanText(input.message), source, sessionId }, now);
 
-    const repeated = previous.state === state && lastDispatchState === state && now - lastDispatchAt < 800;
+    const repeated =
+      previous.state === state &&
+      lastDispatchState === state &&
+      lastDispatchSession === sessionId &&
+      now - lastDispatchAt < 800;
     if (!repeated) {
       store.xp += XP[state] ?? 0;
       store.mood = clamp(store.mood + (MOOD[state] ?? 0), 0, 100);
@@ -134,6 +137,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     store.lastSeen = new Date(now).toISOString();
     lastDispatchAt = now;
     lastDispatchState = state;
+    lastDispatchSession = sessionId;
 
     saveState(store, env);
     broadcast();
@@ -208,17 +212,17 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       pollMs: watchConfig.pollMs,
       ignore: watchConfig.ignore,
       onWorking: ({ file }) => {
-        if (machine.snapshot().state === 'needs-you') return;
         dispatch({
           state: 'working',
           message: file ? `editing ${file}` : `watching ${path.basename(directory)}`,
           source: 'watcher',
+          sessionId: 'watcher',
         });
       },
       onQuiet: () => {
-        const current = machine.snapshot();
-        if (current.state === 'needs-you' || current.source !== 'watcher') return;
-        dispatch({ state: 'done', message: 'changes settled', source: 'watcher' });
+        const watcherSession = machine.getSession('watcher');
+        if (!watcherSession || watcherSession.state !== 'working') return;
+        dispatch({ state: 'done', message: 'changes settled', source: 'watcher', sessionId: 'watcher' });
       },
       onError: (error) => {
         watchInfo = { ...watchInfo, degraded: true, error: cleanText(error?.message, 80) };
@@ -246,7 +250,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       res.writeHead(204, {
         'access-control-allow-origin': '*',
         'access-control-allow-methods': 'GET, POST, OPTIONS',
-        'access-control-allow-headers': 'content-type, x-buffy-source',
+        'access-control-allow-headers': 'content-type, x-buffy-source, x-buffy-session',
         'access-control-max-age': '600',
       });
       res.end();
@@ -316,7 +320,16 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       readJsonBody(req, (err, body) => {
         if (err) return sendJson(res, err.status || 400, { ok: false, error: err.message });
         try {
-          const current = dispatch({ ...body, source: body.source || req.headers['x-buffy-source'] });
+          const headerSession = req.headers['x-buffy-session'];
+          const sessionId =
+            body.sessionId ??
+            body.session ??
+            (Array.isArray(headerSession) ? headerSession[0] : headerSession);
+          const current = dispatch({
+            ...body,
+            sessionId,
+            source: body.source || req.headers['x-buffy-source'],
+          });
           sendJson(res, 200, { ok: true, current, state: snapshot() });
         } catch (error) {
           sendJson(res, 400, { ok: false, error: error.message });
@@ -366,8 +379,9 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   }
 
   async function close() {
-    watcher?.close();
+    const currentWatcher = watcher;
     watcher = null;
+    await currentWatcher?.close();
     clearInterval(doneTimer);
     for (const res of clients) {
       try {

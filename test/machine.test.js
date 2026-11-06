@@ -53,3 +53,61 @@ test('done timestamp is exposed only while holding', () => {
   machine.dispatch({ state: 'working' }, 1_200);
   assert.equal(machine.snapshot(1_200).until, null);
 });
+
+test('concurrent sessions aggregate by urgency', () => {
+  const machine = createMachine({ doneHoldMs: 1_000, sessionTtlMs: 60_000 });
+  machine.dispatch({ state: 'working', source: 'claude', sessionId: 'session-a', message: 'editing' }, 1_000);
+
+  const needs = machine.dispatch(
+    { state: 'needs-you', source: 'claude', sessionId: 'session-b', message: 'approve?' },
+    2_000,
+  );
+  assert.equal(needs.state, 'needs-you');
+  assert.equal(needs.sessionId, 'session-b');
+  assert.equal(needs.sessions.length, 2);
+
+  const stillNeeds = machine.dispatch(
+    { state: 'working', source: 'claude', sessionId: 'session-a', message: 'still editing' },
+    3_000,
+  );
+  assert.equal(stillNeeds.state, 'needs-you');
+  assert.equal(stillNeeds.message, 'approve?');
+
+  const afterDone = machine.dispatch({ state: 'done', source: 'claude', sessionId: 'session-b' }, 4_000);
+  assert.equal(afterDone.state, 'working');
+  assert.equal(afterDone.sessionId, 'session-a');
+});
+
+test('idle and untagged events do not clear other sessions', () => {
+  const machine = createMachine({ doneHoldMs: 1_000, sessionTtlMs: 60_000 });
+  machine.dispatch({ state: 'working', source: 'claude', sessionId: 'session-a' }, 1_000);
+  machine.dispatch({ state: 'thinking', source: 'freebuff', sessionId: 'session-b' }, 2_000);
+
+  const afterIdle = machine.dispatch({ state: 'idle', source: 'claude', sessionId: 'session-a' }, 3_000);
+  assert.equal(afterIdle.state, 'thinking');
+  assert.equal(afterIdle.sessionId, 'session-b');
+
+  const afterAll = machine.dispatch({ state: 'idle', source: 'freebuff', sessionId: 'session-b' }, 4_000);
+  assert.equal(afterAll.state, 'idle');
+  assert.equal(afterAll.sessions.length, 0);
+});
+
+test('untagged events use their source as the session', () => {
+  const machine = createMachine({ doneHoldMs: 1_000, sessionTtlMs: 60_000 });
+  machine.dispatch({ state: 'needs-you', source: 'freebuff' }, 1_000);
+
+  const snapshot = machine.dispatch({ state: 'working', source: 'claude' }, 2_000);
+  assert.equal(snapshot.state, 'needs-you');
+  assert.equal(snapshot.source, 'freebuff');
+  assert.deepEqual(snapshot.sessions.map((session) => session.id).sort(), ['claude', 'freebuff']);
+});
+
+test('sessions expire after sessionTtlMs', () => {
+  const machine = createMachine({ doneHoldMs: 1_000, sessionTtlMs: 1_000 });
+  machine.dispatch({ state: 'needs-you', sessionId: 'session-a' }, 1_000);
+
+  assert.equal(machine.tick(1_500), false);
+  assert.equal(machine.snapshot(1_500).state, 'needs-you');
+  assert.equal(machine.tick(2_000), true);
+  assert.equal(machine.snapshot(2_001).state, 'idle');
+});

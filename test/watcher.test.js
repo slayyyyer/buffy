@@ -72,8 +72,9 @@ async function waitFor(predicate, timeout = 4000) {
 
 test.after(async () => {
   await daemon.close();
-  fs.rmSync(project, { recursive: true, force: true });
-  fs.rmSync(home, { recursive: true, force: true });
+  // Windows can hold watcher handles briefly after close; retry the cleanup.
+  await fs.promises.rm(project, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  await fs.promises.rm(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
 test('ignore patterns match path segments and globs', () => {
@@ -96,6 +97,7 @@ test('file churn sets working, quiet sets done, then idle', async () => {
 
   const working = await waitFor((state) => state.current.state === 'working');
   assert.equal(working.current.source, 'watcher');
+  assert.equal(working.current.sessionId, 'watcher');
   assert.match(working.current.message, /src\.txt|watching/);
 
   const done = await waitFor((state) => state.current.state === 'done');
@@ -126,10 +128,12 @@ test('needs-you is not cleared by file churn', async () => {
   const state = await getState();
   assert.equal(state.current.state, 'needs-you');
   assert.equal(state.current.message, 'approve?');
+  assert.equal(state.current.sessionId, 'freebuff');
 });
 
 test('git index changes are picked up by the poll', { skip: !hasGit }, async () => {
   await post({ state: 'idle', source: 'test' });
+  await post({ state: 'idle', source: 'freebuff' });
   await sleep(250);
 
   execFileSync('git', ['add', 'staged.txt'], { cwd: project });

@@ -30,13 +30,14 @@ the always-on-top overlay draws it.
 
 ## Status
 
-Steps 1–4 of five are implemented:
+Steps 1–4 of five are implemented, with step 5 partly done:
 
 - [x] daemon, CLI, state machine, placeholder sprite, overlay window
 - [x] Claude Code hooks, `/buffy` command and `buffy install claude`
 - [x] Freebuff repo watcher (dependable) and best-effort AGENTS.md events
 - [x] `buffy hatch` with generated sprites
-- [ ] polish (richer bubbles, multi-session arbitration)
+- [x] multi-session arbitration
+- [ ] richer bubbles and final polish
 
 ## Requirements
 
@@ -112,7 +113,7 @@ Without `npm link`, use `node bin/buffy.js …` in place of `buffy`.
 | Command | Purpose |
 | --- | --- |
 | `buffy daemon` | Run the daemon in the foreground |
-| `buffy event <state> [--msg "text"] [--source name]` | Send a state change; `--source` shows in the bubble |
+| `buffy event <state> [--msg "text"] [--source name] [--session id]` | Send a state change; `--source` shows in the bubble and `--session` keeps concurrent agents separate |
 | `buffy pet` | Happy reaction, +2 XP, +8 mood |
 | `buffy status [--json]` | State, mood, XP, daemon health |
 | `buffy overlay [--dev] [--shot file.png]` | Show the pet window |
@@ -149,6 +150,24 @@ path, so it works even when `buffy` is not on your PATH.
 `--global` writes `~/.claude/settings.json` and `~/.claude/commands/buffy.md`,
 which applies to every Claude Code project on the machine. Project scope is the
 default. Remove either with `buffy uninstall claude [--global]`.
+
+## Concurrent agents
+
+Every event belongs to a session. Claude Code hooks use the hook payload's
+`session_id`; the watcher has its own session; CLI callers can pass
+`--session <id>` (or set `BUFFY_SESSION`). When no session is supplied, the
+event falls back to its `source`, which keeps Claude, Freebuff and the watcher
+from overwriting one another. Freebuff sessions that share the `freebuff`
+source still need an explicit `--session` to stay independent.
+
+The visible state is the highest-priority active session:
+
+`needs-you` > `error` > `working` > `thinking` > `done` > `idle`
+
+A `working`, `done` or `idle` event from one session cannot clear another
+session's `needs-you`. Sessions expire after `sessionTtlMs` (30 minutes by
+default), while a finished session's `done` bubble still holds for
+`doneHoldMs`.
 
 ## Freebuff
 
@@ -265,8 +284,9 @@ still `OPENAI_API_KEY`.
 | `done` | hops and sparkles | after 4s, falls back to `idle` |
 | `error` | shake, crossed eyes | another event arrives |
 
-Last event wins. Every event carries a `source` (`claude`, `freebuff`, `watcher`,
-`cli`, …) that is shown in the speech bubble.
+Within a session, the last event wins. The pet shows the most urgent active
+session. Every event carries a `source` (`claude`, `freebuff`, `watcher`, `cli`,
+…) that is shown in the speech bubble.
 
 ## Configuration
 
@@ -276,6 +296,7 @@ Last event wins. Every event carries a `source` (`claude`, `freebuff`, `watcher`
 {
   "port": 4517,
   "doneHoldMs": 4000,
+  "sessionTtlMs": 1800000,
   "watch": {
     "enabled": true,
     "directory": null,

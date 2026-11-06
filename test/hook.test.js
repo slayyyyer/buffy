@@ -102,3 +102,24 @@ test('unknown events and malformed input stay silent and successful', async () =
   assert.equal(malformed.status, 0, malformed.stderr);
   assert.equal(malformed.stdout, '');
 });
+
+test('Claude session ids keep concurrent conversations isolated', async () => {
+  const needs = await runHook('Notification', {
+    hook_event_name: 'Notification',
+    notification_type: 'permission_prompt',
+    message: 'approve deployment',
+    session_id: 'session-a',
+  });
+  assert.equal(needs.status, 0, needs.stderr);
+
+  const done = await runHook('Stop', {
+    hook_event_name: 'Stop',
+    session_id: 'session-b',
+  });
+  assert.equal(done.status, 0, done.stderr);
+
+  const snapshot = await state();
+  assert.equal(snapshot.current.state, 'needs-you');
+  assert.equal(snapshot.current.sessionId, 'claude:session-a');
+  assert.ok(snapshot.sessions.some((session) => session.id === 'claude:session-b'));
+});

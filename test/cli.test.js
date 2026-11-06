@@ -91,3 +91,32 @@ test('status falls back to persisted state when the daemon is down', async () =>
   assert.equal(snapshot.pet.name, 'Offline Momo');
   fs.rmSync(offlineHome, { recursive: true, force: true });
 });
+
+test('event --session isolates concurrent CLI sessions', async () => {
+  const needs = await run([
+    'event',
+    'needs-you',
+    '--source',
+    'claude',
+    '--session',
+    'cli-a',
+    '--msg',
+    'approve?',
+  ]);
+  assert.equal(needs.status, 0, needs.stderr);
+
+  const working = await run(['event', 'working', '--source', 'claude', '--session', 'cli-b', '--msg', 'still working']);
+  assert.equal(working.status, 0, working.stderr);
+
+  let snapshot = JSON.parse((await run(['status', '--json'])).stdout);
+  assert.equal(snapshot.current.state, 'needs-you');
+  assert.equal(snapshot.current.sessionId, 'cli-a');
+  assert.ok(snapshot.sessions.some((session) => session.id === 'cli-b'));
+
+  const done = await run(['event', 'done', '--source', 'claude', '--session', 'cli-a']);
+  assert.equal(done.status, 0, done.stderr);
+
+  snapshot = JSON.parse((await run(['status', '--json'])).stdout);
+  assert.equal(snapshot.current.state, 'working');
+  assert.equal(snapshot.current.sessionId, 'cli-b');
+});

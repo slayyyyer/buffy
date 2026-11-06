@@ -204,10 +204,13 @@
   window.addEventListener('resize', resize);
   resize();
 
-  function showBubble(text, source, state, durationMs) {
+  function showBubble(text, source, state, durationMs, agents = 1) {
     if (!text) return;
     textEl.textContent = text;
-    sourceEl.textContent = source ? String(source).slice(0, 18) : '';
+    const label = source ? String(source).slice(0, 18) : '';
+    sourceEl.textContent = agents > 1
+      ? `${label ? `${label} · ` : ''}${agents} agents`.slice(0, 32)
+      : label;
     bubbleEl.classList.remove('hidden');
     const sticky = state === 'needs-you' || state === 'error';
     bubbleUntil = sticky ? Infinity : performance.now() + (durationMs || 6500);
@@ -226,13 +229,19 @@
     snapshot = next;
     syncSpriteImage(next.pet && next.pet.sprite, next.port);
     const current = next.current || {};
+    const sessions = Array.isArray(next.sessions)
+      ? next.sessions
+      : Array.isArray(current.sessions)
+        ? current.sessions
+        : [];
+    const agents = sessions.length;
     const message = current.message || DEFAULT_MESSAGES[current.state] || null;
-    const key = `${current.seq || 0}|${current.state || 'idle'}|${message || ''}`;
+    const key = `${current.seq || 0}|${current.state || 'idle'}|${message || ''}|${agents}`;
     if (key !== lastKey) {
       lastKey = key;
       lastActivityAt = now;
       if (wasSleepy) wakeAt = now;
-      if (message) showBubble(message, current.source, current.state);
+      if (message) showBubble(message, current.source, current.state, undefined, agents);
       else hideBubble();
     }
   }
