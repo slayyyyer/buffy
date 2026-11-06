@@ -54,7 +54,7 @@ Buffy 1.0.0 ships for Windows, macOS, and Linux:
 - **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-win-x64.exe.sha256)
 - **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-arm64.dmg.sha256)
 - **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x64.AppImage.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.0.0/Buffy-1.0.0-linux-x86_64.AppImage.sha256)
 
 The desktop app includes the pet and its local daemon, so the pet itself does
 not need Node installed. The `buffy` CLI, Claude Code hooks, and Freebuff
