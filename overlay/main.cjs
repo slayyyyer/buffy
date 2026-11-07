@@ -1515,29 +1515,31 @@ ipcMain.handle('alerts:snooze', (_event, durationMs) => {
 ipcMain.on('drag-start', (_event, screenX, screenY) => {
   if (!win || win.isDestroyed()) return;
   const [x, y] = win.getPosition();
-  drag = { screenX, screenY, x, y, mode };
+  // Pin the size for the whole drag. Feeding getBounds() output back into
+  // setBounds() makes a frameless window grow a pixel per call on Windows at
+  // display scales above 100% (electron/electron#27651), and drag-move runs on
+  // every pointer event.
+  drag = { screenX, screenY, x, y, mode, size: WINDOW_stateSize(mode) };
 });
 
 ipcMain.on('drag-move', (_event, screenX, screenY) => {
   if (!win || !drag) return;
-  const bounds = win.getBounds();
+  const { size } = drag;
   const nextX = drag.x + (screenX - drag.screenX);
   const nextY = drag.y + (screenY - drag.screenY);
   const display = screen.getDisplayNearestPoint({
-    x: nextX + Math.round(bounds.width / 2),
-    y: nextY + Math.round(bounds.height / 2),
+    x: nextX + Math.round(size.width / 2),
+    y: nextY + Math.round(size.height / 2),
   });
   const area = display.workArea;
-  const x = Math.min(Math.max(nextX, area.x - bounds.width + 70), area.x + area.width - 70);
+  const x = Math.min(Math.max(nextX, area.x - size.width + 70), area.x + area.width - 70);
   const y = Math.min(Math.max(nextY, area.y), area.y + area.height - 70);
-  win.setBounds({ x: Math.round(x), y: Math.round(y), width: bounds.width, height: bounds.height });
+  win.setBounds({ x: Math.round(x), y: Math.round(y), width: size.width, height: size.height });
 });
 
 ipcMain.on('drag-end', () => {
   if (!win || win.isDestroyed()) return;
   drag = null;
-  const bounds = win.getBounds();
-  win.setBounds(bounds);
   savePosition(mode === 'compact' ? 'compact' : 'full');
 });
 

@@ -28,6 +28,7 @@
   const compactBadge = $('compact-badge');
   const compactCount = $('compact-count');
   const toastEl = $('toast');
+  const PILL_GAP = 8;
 
   const STATE_LABELS = {
     idle: 'Idle',
@@ -95,6 +96,9 @@
     toastTimer: null,
     pointer: null,
     trail: [],
+    pillTop: null,
+    pillDirty: false,
+    pillBlocked: false,
   };
 
   const personality = () => state.prefs?.personality || {};
@@ -171,6 +175,7 @@
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     layoutHit();
+    schedulePillLayout();
   }
 
   function layoutHit() {
@@ -187,6 +192,53 @@
       hit.style.width = `${Math.round(width * 0.7)}px`;
       hit.style.height = `${Math.round(height * 0.6)}px`;
     }
+  }
+
+  function schedulePillLayout() {
+    state.pillDirty = true;
+    state.pillBlocked = false;
+  }
+
+  function measureHeadTop() {
+    try {
+      const dpr = window.devicePixelRatio || 1;
+      const { width, height } = canvas;
+      const data = ctx.getImageData(0, 0, width, height).data;
+      for (let y = 0; y < height; y += 1) {
+        const row = y * width * 4;
+        for (let x = 0; x < width; x += 1) {
+          if (data[row + x * 4 + 3] > 12) return y / dpr;
+        }
+      }
+      return null;
+    } catch {
+      state.pillBlocked = true;
+      return null;
+    }
+  }
+
+  function updatePillTop(local) {
+    if (state.mode === 'compact') {
+      state.pillDirty = false;
+      if (state.pillTop !== null) {
+        state.pillTop = null;
+        pill.style.removeProperty('top');
+        bubble.style.removeProperty('bottom');
+        bubble.style.removeProperty('top');
+      }
+      return;
+    }
+    if (!state.pillDirty || state.pillBlocked || local !== 'idle') return;
+    const headTop = measureHeadTop();
+    if (headTop === null) return;
+    state.pillDirty = false;
+    const top = Math.max(8, Math.round(headTop - pill.offsetHeight - PILL_GAP));
+    state.pillTop = top;
+    pill.style.top = `${top}px`;
+    // Hang the speech bubble just above the pill so it grows upward into the
+    // empty header instead of covering her head.
+    bubble.style.top = 'auto';
+    bubble.style.bottom = `${Math.max(0, Math.round(window.innerHeight - top + PILL_GAP))}px`;
   }
 
   function categoryLabel(category) {
@@ -437,6 +489,7 @@
     state.scale = payload.scale || 1;
     app.dataset.mode = mode;
     layoutHit();
+    schedulePillLayout();
     const dictation = payload.dictation;
     if (dictation) {
       state.dictationAvailable = dictation.available === true;
@@ -596,7 +649,7 @@
       idleHobbies: state.prefs.personality?.idleHobbies !== false,
       sleepAfterMs: state.prefs.personality?.sleepy === false ? 24 * 60 * 60 * 1000 : state.prefs.personality?.sleepAfterMs || 120000,
     });
-    BuffyCharacters.preload(characterId());
+    BuffyCharacters.preload(characterId()).then(schedulePillLayout, schedulePillLayout);
     document.documentElement.style.setProperty('--accent', BuffyCharacters.themeAccent(look().theme));
     updatePill();
     if (state.cardsOpen) renderCards();
@@ -604,7 +657,7 @@
 
   function applyCatalog(catalog) {
     state.catalog = catalog;
-    BuffyCharacters.preload(characterId());
+    BuffyCharacters.preload(characterId()).then(schedulePillLayout, schedulePillLayout);
   }
 
   function applySnapshot(next) {
@@ -673,7 +726,9 @@
     const image = new Image();
     image.crossOrigin = 'anonymous';
     image.onload = () => {
-      if (state.customKey === key) state.customImage = image;
+      if (state.customKey !== key) return;
+      state.customImage = image;
+      schedulePillLayout();
     };
     image.src = `http://127.0.0.1:${port}/sprite?v=${encodeURIComponent(sprite.id || Date.now())}`;
   }
@@ -761,6 +816,7 @@
       customImage: state.customImage,
     });
     drawTrail(now);
+    updatePillTop(local);
     if (state.bubbleUntil && now > state.bubbleUntil) hideBubble();
     if (now - state.lastPillAt > 500) {
       state.lastPillAt = now;
