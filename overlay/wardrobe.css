@@ -31,8 +31,8 @@ button {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
-  gap: 16px;
-  padding: 22px 26px 18px;
+  gap: 18px;
+  padding: 24px 28px 20px;
 }
 
 .topbar {
@@ -90,7 +90,7 @@ h1 {
   min-height: 0;
   flex: 1;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 20px;
+  gap: 22px;
 }
 
 .preview-card {
@@ -99,9 +99,9 @@ h1 {
   align-items: center;
   align-self: start;
   justify-content: flex-start;
-  padding: 12px 10px 10px;
+  padding: 14px 12px 12px;
   border: 1px solid rgba(127, 83, 108, 0.12);
-  border-radius: 20px;
+  border-radius: 22px;
   background:
     radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.9), transparent 55%),
     rgba(255, 255, 255, 0.58);
@@ -118,11 +118,11 @@ h1 {
 }
 
 .look-name {
-  margin: 2px 0 8px;
+  margin: 4px 0 10px;
   color: #6d4a5d;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.015em;
 }
 
 .preview-hobbies {
@@ -165,12 +165,12 @@ h1 {
 }
 
 .tab {
-  padding: 6px 11px;
+  padding: 7px 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: #846374;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 
@@ -213,18 +213,18 @@ h1 {
 
 .chips {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-  gap: 7px;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
 }
 
 .chip {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 7px;
-  padding: 7px 8px;
+  gap: 8px;
+  padding: 8px 10px;
   border: 1px solid rgba(127, 83, 108, 0.13);
-  border-radius: 10px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.74);
   color: #614555;
   text-align: left;

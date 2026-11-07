@@ -35,12 +35,12 @@ body.dragging {
   left: 10px;
   right: 10px;
   top: 8px;
-  padding: 8px 10px 9px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.96);
-  color: #1d1c1a;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  padding: 11px 13px 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(46, 28, 52, 0.92), rgba(28, 18, 36, 0.92));
+  color: #fff5f9;
+  border: 1px solid rgba(255, 111, 176, 0.28);
+  box-shadow: 0 12px 32px rgba(216, 70, 143, 0.18), 0 6px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transition: opacity 160ms ease, transform 160ms ease;
   overflow-wrap: anywhere;
 }
@@ -50,13 +50,13 @@ body.dragging {
   position: absolute;
   left: 50%;
   bottom: -6px;
-  width: 11px;
-  height: 11px;
-  background: rgba(255, 255, 255, 0.96);
-  border-right: 1px solid rgba(0, 0, 0, 0.07);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  width: 12px;
+  height: 12px;
+  background: #2a1a33;
+  border-right: 1px solid rgba(255, 111, 176, 0.28);
+  border-bottom: 1px solid rgba(255, 111, 176, 0.28);
   transform: translateX(-50%) rotate(45deg);
-  border-radius: 0 0 2px 0;
+  border-radius: 0 0 3px 0;
 }
 
 .bubble.hidden {
@@ -68,12 +68,13 @@ body.dragging {
 .source {
   display: inline-block;
   margin-right: 6px;
-  padding: 1px 6px 2px;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: #efece6;
-  color: #6b655c;
-  font-size: 9px;
-  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #ffd36a, #ffb86a);
+  color: #1a0f18;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   vertical-align: 1px;
 }
@@ -89,7 +90,7 @@ body.dragging {
   top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   transition: top 160ms ease;
 }
 
@@ -100,15 +101,15 @@ body.dragging {
 .session {
   display: flex;
   align-items: center;
-  gap: 5px;
-  min-height: 24px;
-  padding: 3px 4px 3px 7px;
-  border-radius: 9px;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.13);
-  color: #5b5550;
-  font-size: 9.5px;
+  gap: 8px;
+  min-height: 28px;
+  padding: 7px 6px 7px 9px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(46, 28, 52, 0.88);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  color: #efe0ea;
+  font-size: 10.5px;
   line-height: 1;
   cursor: default;
 }
@@ -130,8 +131,8 @@ body.dragging {
 }
 
 .session[data-state="needs-you"] {
-  background: #fff2f8;
-  border-color: rgba(221, 79, 157, 0.35);
+  background: rgba(255, 111, 176, 0.16);
+  border-color: rgba(255, 111, 176, 0.45);
 }
 
 .session[data-state="needs-you"] .session-dot {
@@ -152,7 +153,7 @@ body.dragging {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #3d3733;
+  color: #fff;
   font-weight: 700;
 }
 
@@ -160,40 +161,40 @@ body.dragging {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #8b817a;
+  color: #c9b3c4;
 }
 
 .session-age {
   margin-left: auto;
-  color: #a49a93;
+  color: #8d7489;
   font-variant-numeric: tabular-nums;
 }
 
 .session-dismiss {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: #aa9e98;
+  color: #c9b3c4;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
 }
 
 .session-dismiss:hover,
 .session-dismiss:focus-visible {
-  background: #f2e7e2;
-  color: #5b4642;
+  background: rgba(255, 111, 176, 0.2);
+  color: #fff;
   outline: none;
 }
 
 .session-more {
   padding: 2px 7px;
-  color: #8b817a;
+  color: #c9b3c4;
   font-size: 9px;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
