@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <title>Buffy settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div id="settings-app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <div>
+            <strong>Buffy</strong>
+            <span>settings</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Settings sections">
+          <button type="button" data-section="companion" aria-current="page"><span>01</span>Companion & wardrobe</button>
+          <button type="button" data-section="personality"><span>02</span>Personality</button>
+          <button type="button" data-section="shortcuts"><span>03</span>Shortcuts</button>
+          <button type="button" data-section="alerts"><span>04</span>Alerts</button>
+          <button type="button" data-section="connection"><span>05</span>Connection</button>
+          <button type="button" data-section="updates"><span>06</span>Updates</button>
+        </nav>
+        <div class="sidebar-foot">
+          <span id="version">Buffy</span>
+          <button type="button" id="close-settings">Close</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="content-head">
+          <div>
+            <p class="eyebrow" id="section-eyebrow">Make her yours</p>
+            <h1 id="section-title">Companion & wardrobe</h1>
+          </div>
+          <span class="saved-note" id="save-state">Saved locally</span>
+        </header>
+        <div id="panel" class="panel" aria-live="polite"></div>
+      </main>
+
+      <aside class="preview-pane" aria-label="Live character preview">
+        <div class="preview-frame">
+          <canvas id="preview"></canvas>
+          <div class="preview-glow" aria-hidden="true"></div>
+          <span class="preview-tag" id="preview-name">Nimbus</span>
+        </div>
+        <div class="pose-row" id="pose-buttons" role="group" aria-label="Preview pose">
+          <button type="button" data-pose="idle" aria-pressed="true">Idle</button>
+          <button type="button" data-pose="typingLeft" aria-pressed="false">Typing</button>
+          <button type="button" data-pose="happy" aria-pressed="false">Happy</button>
+          <button type="button" data-pose="wave" aria-pressed="false">Wave</button>
+          <button type="button" data-pose="sleepy" aria-pressed="false">Sleepy</button>
+          <button type="button" data-pose="reading" aria-pressed="false">Reading</button>
+          <button type="button" data-pose="tea" aria-pressed="false">Tea</button>
+          <button type="button" data-pose="gardening" aria-pressed="false">Garden</button>
+        </div>
+        <p class="preview-note">A live preview of the layered art. Outfits are drawn to the same anchors in every pose.</p>
+        <div class="preview-look" id="preview-look"></div>
+      </aside>
+
+      <div id="settings-toast" class="settings-toast hidden" role="status" aria-live="polite"></div>
+    </div>
+
+    <script src="character.js"></script>
+    <script src="characters/manifest.js"></script>
+    <script src="character-system.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>

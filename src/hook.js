@@ -1,40 +1,15 @@
-import { readConfig } from './config.js';
+import fs from 'node:fs';
+
+import { buffyFile, ensureBuffyDir, readConfig } from './config.js';
 import { ensureDaemon, postEvent } from './client.js';
+import { mapClaudeHook, mapClaudeEvent } from './events.js';
+
+export { mapClaudeHook, mapClaudeEvent };
 
 function clean(value, max = 180) {
   if (typeof value !== 'string') return null;
   const text = value.replace(/[\r\n\t]+/g, ' ').trim();
   return text ? text.slice(0, max) : null;
-}
-
-/**
- * Pure mapping from a Claude Code hook event (plus its stdin payload) to the
- * state buffy should show. Kept separate so it is easy to test.
- */
-export function mapClaudeHook(eventName, payload = {}) {
-  const event = String(eventName || payload.hook_event_name || '').toLowerCase();
-  const tool = clean(payload.tool_name || payload.toolName, 40) || 'a tool';
-
-  switch (event) {
-    case 'userpromptsubmit':
-    case 'user-prompt-submit':
-      return { state: 'thinking', message: 'thinking about your prompt', source: 'claude' };
-    case 'pretooluse':
-    case 'pre-tool-use':
-      return { state: 'working', message: `using ${tool}`, source: 'claude' };
-    case 'posttooluse':
-    case 'post-tool-use':
-      return { state: 'working', message: `${tool} finished`, source: 'claude' };
-    case 'notification': {
-      const type = clean(payload.notification_type, 40);
-      const message = clean(payload.message) || `Claude needs you${type ? ` (${type})` : ''}`;
-      return { state: 'needs-you', message, source: 'claude' };
-    }
-    case 'stop':
-      return { state: 'done', message: 'turn finished', source: 'claude' };
-    default:
-      return null;
-  }
 }
 
 /**
@@ -75,6 +50,26 @@ export function readHookInput({ timeoutMs = 1500 } = {}) {
   });
 }
 
+function recordHookSeen(event, payload, env) {
+  try {
+    ensureBuffyDir(env);
+    fs.writeFileSync(
+      buffyFile('hook-last.json', env),
+      `${JSON.stringify(
+        {
+          at: new Date().toISOString(),
+          event,
+          sessionId: clean(payload.session_id || payload.sessionId, 80),
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  } catch {
+    /* health reporting must never break the hook */
+  }
+}
+
 /**
  * Run one Claude Code hook. Always exits 0 with no stdout: stderr is the only
  * place for diagnostics, so a broken daemon can never block the agent loop.
@@ -94,14 +89,16 @@ export async function runClaudeHook(eventName, { env = process.env } = {}) {
   const mapped = mapClaudeHook(event, payload);
   if (!mapped) return 0;
 
+  const sessionId = clean(mapped.sessionId, 80);
+  const { sessionId: _rawSession, ...rest } = mapped;
   const config = readConfig(env);
-  const sessionId = clean(payload.session_id || payload.sessionId, 80);
   try {
     await ensureDaemon({ port: config.port, env, waitMs: 2500 });
     await postEvent(config.port, {
-      ...mapped,
+      ...rest,
       ...(sessionId ? { sessionId: `claude:${sessionId}` } : {}),
     });
+    recordHookSeen(event, payload, env);
   } catch (error) {
     process.stderr.write(`buffy hook: ${error.message}\n`);
   }

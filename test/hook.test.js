@@ -48,19 +48,38 @@ test.after(async () => {
   fs.rmSync(home, { recursive: true, force: true });
 });
 
-test('maps the five Claude Code events', () => {
-  assert.deepEqual(mapClaudeHook('UserPromptSubmit', {}), {
-    state: 'thinking',
-    message: 'thinking about your prompt',
-    source: 'claude',
-  });
+test('maps the Claude Code hook vocabulary onto six states', () => {
+  const prompt = mapClaudeHook('UserPromptSubmit', {});
+  assert.equal(prompt.state, 'thinking');
+  assert.equal(prompt.message, 'thinking about your prompt');
+  assert.equal(prompt.source, 'claude');
+  assert.equal(prompt.category, 'thinking');
+  assert.equal(prompt.observed, 'explicit');
+
   assert.equal(mapClaudeHook('PreToolUse', { tool_name: 'Edit' }).state, 'working');
   assert.equal(mapClaudeHook('PreToolUse', { tool_name: 'Edit' }).message, 'using Edit');
+  assert.equal(mapClaudeHook('PreToolUse', { tool_name: 'Read' }).category, 'reading');
   assert.equal(mapClaudeHook('PostToolUse', { tool_name: 'Bash' }).message, 'Bash finished');
+  assert.equal(mapClaudeHook('PostToolUseFailure', { tool_name: 'Bash', error: 'tests failed' }).state, 'error');
+  assert.equal(mapClaudeHook('PreCompact', {}).state, 'working');
+  assert.equal(mapClaudeHook('PreCompact', {}).category, 'compacting');
+  assert.equal(mapClaudeHook('SessionEnd', {}).resolveAllRequests, true);
+
+  const permission = mapClaudeHook('PermissionRequest', { tool_name: 'Bash', permission_request_id: 'r1' });
+  assert.equal(permission.state, 'needs-you');
+  assert.equal(permission.request.kind, 'permission');
+  assert.equal(permission.request.id, 'r1');
+  assert.equal(permission.category, 'permission');
+
+  const idle = mapClaudeHook('Notification', { notification_type: 'idle_prompt', message: 'still there' });
+  assert.equal(idle.state, 'idle');
+  assert.equal(idle.informational, true);
+  assert.equal(idle.category, 'idle-reminder');
+
   assert.equal(mapClaudeHook('Notification', { message: 'Allow Bash?' }).state, 'needs-you');
   assert.equal(mapClaudeHook('Notification', { message: 'Allow Bash?' }).message, 'Allow Bash?');
   assert.equal(mapClaudeHook('Stop', {}).state, 'done');
-  assert.equal(mapClaudeHook('PreCompact', {}), null);
+  assert.equal(mapClaudeHook('SomethingElse', {}), null);
   assert.equal(mapClaudeHook(undefined, { hook_event_name: 'Stop' }).state, 'done');
 });
 
@@ -94,7 +113,7 @@ test('Stop moves the pet to done', async () => {
 });
 
 test('unknown events and malformed input stay silent and successful', async () => {
-  const unknown = await runHook('PreCompact', { hook_event_name: 'PreCompact' });
+  const unknown = await runHook('SomethingElse', { hook_event_name: 'SomethingElse' });
   assert.equal(unknown.status, 0, unknown.stderr);
   assert.equal(unknown.stdout, '');
 

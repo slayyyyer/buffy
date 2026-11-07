@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="knit" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#f7e8d3"/>
+      <stop offset="0.65" stop-color="#efd6b9"/>
+      <stop offset="1" stop-color="#dfc0a1"/>
+    </linearGradient>
+  </defs>
+  <g id="nimbus-cozy">
+    <!-- body of the sweater -->
+    <path d="M162 392 C150 430 148 478 158 520 C196 542 316 542 354 520 C364 478 362 430 350 392 C320 372 192 372 162 392 Z"
+      fill="url(#knit)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- collar -->
+    <path d="M196 386 C208 406 232 416 256 416 C280 416 304 406 316 386 C302 376 282 372 256 372 C230 372 210 376 196 386 Z"
+      fill="#fbf1e1" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
+    <!-- cable knit -->
+    <g stroke="#e2c3a4" stroke-width="4" stroke-linecap="round" fill="none">
+      <path d="M216 430 C206 456 208 486 216 510"/>
+      <path d="M256 426 C246 456 246 490 256 518"/>
+      <path d="M296 430 C306 456 304 486 296 510"/>
+      <path d="M232 438 Q256 452 280 438"/>
+      <path d="M232 472 Q256 486 280 472"/>
+      <path d="M232 506 Q256 520 280 506"/>
+    </g>
+    <!-- ribbed hem -->
+    <path d="M158 514 C196 534 316 534 354 514 L356 536 C314 556 196 556 156 536 Z"
+      fill="#e6c9ab" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
+    <g stroke="#cba886" stroke-width="3" opacity="0.8">
+      <path d="M176 528 V542"/><path d="M208 536 V550"/><path d="M240 540 V554"/>
+      <path d="M272 540 V554"/><path d="M304 536 V550"/><path d="M336 528 V542"/>
+    </g>
+    <!-- buttons -->
+    <circle cx="256" cy="436" r="5" fill="#f8ede0" stroke="#b99a78" stroke-width="2"/>
+    <circle cx="256" cy="466" r="5" fill="#f8ede0" stroke="#b99a78" stroke-width="2"/>
+    <circle cx="256" cy="496" r="5" fill="#f8ede0" stroke="#b99a78" stroke-width="2"/>
+    <!-- slippers -->
+    <ellipse cx="202" cy="556" rx="38" ry="24" fill="#e9b6a4" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="310" cy="556" rx="38" ry="24" fill="#e9b6a4" stroke="#5c3150" stroke-width="7"/>
+    <path d="M176 552 Q202 566 228 552" fill="none" stroke="#f7d9c9" stroke-width="6" stroke-linecap="round"/>
+    <path d="M284 552 Q310 566 336 552" fill="none" stroke="#f7d9c9" stroke-width="6" stroke-linecap="round"/>
+    <!-- tiny stitched heart -->
+    <path d="M300 470 C300 462 312 461 312 470 C312 461 324 462 324 470 C324 479 312 486 312 486 C312 486 300 479 300 470 Z" fill="#dc9a8e"/>
+  </g>
+</svg>

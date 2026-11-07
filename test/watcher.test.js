@@ -102,7 +102,9 @@ test('file churn sets working, quiet sets done, then idle', async () => {
 
   const done = await waitFor((state) => state.current.state === 'done');
   assert.equal(done.current.source, 'watcher');
-  assert.equal(done.current.message, 'changes settled');
+  assert.equal(done.current.message, 'activity settled');
+  assert.equal(done.current.category, 'settled-inferred');
+  assert.equal(done.current.observed, 'inferred');
 
   const idle = await waitFor((state) => state.current.state === 'idle');
   assert.equal(idle.current.state, 'idle');
@@ -110,7 +112,7 @@ test('file churn sets working, quiet sets done, then idle', async () => {
 
 test('ignored paths do not disturb the pet', async () => {
   await post({ state: 'idle', source: 'test' });
-  await sleep(200);
+  await waitFor((state) => state.current.state === 'idle');
 
   fs.writeFileSync(path.join(project, 'ignored.txt'), 'noise\n');
   fs.mkdirSync(path.join(project, 'node_modules', 'pkg'), { recursive: true });

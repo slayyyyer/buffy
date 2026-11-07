@@ -21,7 +21,10 @@ function readJson(file) {
 }
 
 function isOurs(entry) {
-  return (entry.hooks || []).some((hook) => String(hook.command).includes('bin/buffy.js'));
+  return (entry.hooks || []).some((hook) => {
+    const command = String(hook.command);
+    return command.includes('bin/buffy.js') || command.includes('buffy-hook');
+  });
 }
 
 function runCli(args, cwd, env) {
@@ -98,7 +101,7 @@ test('install merges hooks, preserves user settings and is idempotent', () => {
     assert.equal(backupsAfter.length, 1, 'a no-op install must not create another backup');
 
     const removed = uninstallClaude({ cwd: project, env });
-    assert.equal(removed.removedHooks, 5);
+    assert.equal(removed.removedHooks, CLAUDE_HOOKS.length);
     assert.equal(removed.removedCommand, true);
 
     const after = readJson(settingsFile);
@@ -109,6 +112,57 @@ test('install merges hooks, preserves user settings and is idempotent', () => {
     assert.equal(after.hooks.Notification, undefined);
     assert.equal(fs.existsSync(commandFile), false);
     assert.deepEqual(readJson(path.join(home, 'installs.json')), []);
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('install respects Claude Code disableAllHooks and leaves settings untouched', () => {
+  const project = tempDir('buffy-disabled-');
+  const home = tempDir('buffy-disabled-home-');
+  const settingsFile = path.join(project, '.claude', 'settings.json');
+  fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+  fs.writeFileSync(settingsFile, `${JSON.stringify({ disableAllHooks: true, hooks: { Stop: [] } }, null, 2)}\n`);
+
+  try {
+    const result = installClaude({ cwd: project, env: { ...process.env, BUFFY_HOME: home } });
+    assert.equal(result.skipped, true);
+    assert.match(result.notes[0], /disableAllHooks/);
+    assert.equal(readJson(settingsFile).disableAllHooks, true);
+    assert.equal(fs.readdirSync(path.dirname(settingsFile)).filter((name) => name.includes('.buffy-backup-')).length, 0);
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true });
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('packaged installs use a stable launcher and uninstall only Buffy hooks', () => {
+  const project = tempDir('buffy-packaged-');
+  const home = tempDir('buffy-packaged-home-');
+  const env = { ...process.env, BUFFY_HOME: home };
+
+  try {
+    const result = installClaude({ cwd: project, env, packaged: true, now: NOW });
+    assert.ok(result.launcher, 'stable launcher path is returned');
+    assert.ok(fs.existsSync(result.launcher), 'stable launcher exists');
+    assert.match(fs.readFileSync(result.launcher, 'utf8'), /hook claude/);
+    const settings = readJson(path.join(project, '.claude', 'settings.json'));
+    assert.match(settings.hooks.Stop.find(isOurs).hooks[0].command, /buffy-hook/);
+
+    assert.ok(result.commandLauncher, 'packaged command launcher path is returned');
+    assert.ok(fs.existsSync(result.commandLauncher), 'packaged command launcher exists');
+    const launcherText = fs.readFileSync(result.commandLauncher, 'utf8');
+    assert.match(launcherText, /ELECTRON_RUN_AS_NODE=1/);
+    assert.doesNotMatch(launcherText, /hook claude/);
+    const commandMarkdown = fs.readFileSync(path.join(project, '.claude', 'commands', 'buffy.md'), 'utf8');
+    assert.ok(
+      commandMarkdown.replace(/\\/g, '/').includes(result.commandLauncher.replace(/\\/g, '/')),
+      '/buffy command points at the stable CLI launcher',
+    );
+
+    const removed = uninstallClaude({ cwd: project, env });
+    assert.equal(removed.removedHooks, CLAUDE_HOOKS.length);
   } finally {
     fs.rmSync(project, { recursive: true, force: true });
     fs.rmSync(home, { recursive: true, force: true });

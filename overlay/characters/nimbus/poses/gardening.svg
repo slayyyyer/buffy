@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-gardening" stroke-linecap="round" stroke-linejoin="round">
+    <!-- left arm holding a little pot -->
+    <path d="M146 402 C134 432 140 462 160 480" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C134 432 140 462 160 480" stroke="#fbe6d9" stroke-width="10"/>
+    <!-- right arm with watering can -->
+    <path d="M366 402 C390 424 398 454 392 478" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C390 424 398 454 392 478" stroke="#fbe6d9" stroke-width="10"/>
+    <!-- pot and sprout -->
+    <g transform="translate(146 502)">
+      <path d="M-28 -6 H28 L20 32 H-20 Z" fill="#d19a7a" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M-30 -6 H30" stroke="#5c3150" stroke-width="6"/>
+      <path d="M0 -8 C0 -28 -10 -40 -20 -44 C-12 -54 4 -50 8 -32 C8 -20 4 -10 0 -8 Z" fill="#9fbb92" stroke="#4f6b4b" stroke-width="4"/>
+      <path d="M0 -10 C4 -26 18 -34 26 -34 C24 -20 12 -12 0 -10 Z" fill="#b6d2a8" stroke="#4f6b4b" stroke-width="4"/>
+    </g>
+    <ellipse cx="162" cy="492" rx="17" ry="15" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <!-- watering can -->
+    <g transform="translate(392 492)">
+      <rect x="-24" y="-8" width="44" height="34" rx="10" fill="#9fb9c9" stroke="#5c3150" stroke-width="6"/>
+      <path d="M-24 -2 C-44 -10 -52 -24 -54 -34" fill="none" stroke="#5c3150" stroke-width="6"/>
+      <path d="M-54 -34 L-68 -40" stroke="#5c3150" stroke-width="6" stroke-linecap="round"/>
+      <path d="M20 2 C36 0 40 14 26 20" fill="none" stroke="#5c3150" stroke-width="6"/>
+      <path d="M-58 -38 Q-64 -50 -70 -52 M-58 -38 Q-52 -52 -46 -54" stroke="#a9d4e8" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <!-- tiny sparkle -->
+    <path d="M210 458 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1 Z" fill="#f6cf7d" opacity="0.85"/>
+  </g>
+</svg>

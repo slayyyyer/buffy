@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="rose" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#f0bfc9"/>
+      <stop offset="0.6" stop-color="#e3a3b4"/>
+      <stop offset="1" stop-color="#cd8a9f"/>
+    </linearGradient>
+  </defs>
+  <g id="nimbus-overalls">
+    <!-- trousers -->
+    <path d="M174 470 C160 504 156 542 162 566 C190 576 236 576 250 566 L252 500 L260 500 L262 566 C276 576 322 576 350 566 C356 542 352 504 338 470 Z"
+      fill="url(#rose)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- rolled cuffs -->
+    <path d="M160 552 C186 564 232 564 254 552 L254 578 C230 590 184 590 160 578 Z"
+      fill="#f5d2d8" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M258 552 C280 564 326 564 352 552 L352 578 C328 590 282 590 258 578 Z"
+      fill="#f5d2d8" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <!-- bib -->
+    <path d="M208 382 C204 400 202 428 204 450 C226 462 286 462 308 450 C310 428 308 400 304 382 C284 374 228 374 208 382 Z"
+      fill="url(#rose)" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
+    <!-- straps -->
+    <path d="M212 386 C202 360 196 344 190 332" fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <path d="M300 386 C310 360 316 344 322 332" fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="212" cy="404" r="5" fill="#f6cf7d" stroke="#8a6224" stroke-width="2"/>
+    <circle cx="300" cy="404" r="5" fill="#f6cf7d" stroke="#8a6224" stroke-width="2"/>
+    <!-- leaf pocket -->
+    <path d="M262 404 C282 398 298 410 296 430 C282 442 262 434 256 420 Z"
+      fill="#9fbb92" stroke="#4f6b4b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M264 428 C274 420 286 414 294 412" fill="none" stroke="#4f6b4b" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- front pocket -->
+    <path d="M222 430 C236 424 276 424 290 430 L288 452 C272 458 240 458 224 452 Z"
+      fill="#f3c8d1" stroke="#b97f93" stroke-width="3" stroke-linejoin="round"/>
+    <!-- tiny leaf pin -->
+    <path d="M238 392 C244 382 256 384 258 394 C250 402 240 400 238 392 Z" fill="#9fbb92" stroke="#4f6b4b" stroke-width="2"/>
+    <!-- garden boots -->
+    <path d="M174 566 C174 552 188 546 202 546 C218 546 230 554 230 568 L230 590 H174 Z"
+      fill="#7d9d72" stroke="#3f543c" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M282 568 C282 554 294 546 310 546 C324 546 338 552 338 566 L338 590 H282 Z"
+      fill="#7d9d72" stroke="#3f543c" stroke-width="6" stroke-linejoin="round"/>
+  </g>
+</svg>

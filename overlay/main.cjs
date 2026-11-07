@@ -9,6 +9,8 @@ const {
   dialog,
   shell,
   clipboard,
+  globalShortcut,
+  Notification,
 } = require('electron');
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
@@ -18,17 +20,20 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const ROOT = path.resolve(__dirname, '..');
+const SOURCE_ROOT = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked') : ROOT;
 const HOME = process.env.BUFFY_HOME ? path.resolve(process.env.BUFFY_HOME) : path.join(os.homedir(), '.buffy');
 const WINDOW_FILE = path.join(HOME, 'window.json');
-const WARDROBE_FILE = path.join(HOME, 'wardrobe.json');
 const CONFIG_FILE = path.join(HOME, 'config.json');
 const ONBOARDING_FILE = path.join(HOME, 'onboarding.json');
+const LEGACY_WARDROBE_FILE = path.join(HOME, 'wardrobe.json');
 const DOCS_URL = 'https://github.com/slayyyyer/buffy#install-and-run';
-const WIDTH = 300;
-const HEIGHT = 330;
+const SETTINGS_WIDTH = 1080;
+const SETTINGS_HEIGHT = 780;
 const EDGE_GAP = 24;
-const WARDROBE = require('./wardrobe-catalog.cjs');
-const { normalizeOverlaySettings } = require('./settings.cjs');
+const WINDOW_STATE = require('./window-state.cjs');
+const LOOKS = require('./catalog.cjs');
+const { createDraftStore, buildClaudeCodeUrl } = require('./handoff.cjs');
+const { createAlertPlanner } = require('./alerts.cjs');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function readJson(file, fallback) {
@@ -56,35 +61,37 @@ function writeJson(file, value) {
   }
 }
 
-const config = readJson(CONFIG_FILE, {});
-const PORT = Number(process.env.BUFFY_PORT || config.port || 4517);
-let overlaySettings = normalizeOverlaySettings(config.overlay);
-let wardrobe = WARDROBE.normalizeWardrobe(readJson(WARDROBE_FILE, {}));
-
 function argValue(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : null;
 }
 
 const shotPath = argValue('--shot');
+const shotMode = argValue('--shot-mode') || 'full';
 const shotExit = process.argv.includes('--shot-exit');
-const shotHobby = argValue('--shot-hobby');
-const wardrobeShotPath = argValue('--wardrobe-shot');
-const wardrobeShotExit = process.argv.includes('--wardrobe-shot-exit');
-const wardrobePreview = argValue('--wardrobe-preview');
+const settingsShotPath = argValue('--settings-shot') || argValue('--wardrobe-shot');
+const settingsShotExit = process.argv.includes('--settings-shot-exit') || process.argv.includes('--wardrobe-shot-exit');
 const dev = process.argv.includes('--dev');
 const smokeTest = process.argv.includes('--smoke-test');
 const forceOnboarding = process.argv.includes('--onboarding');
+const CONFIG = readJson(CONFIG_FILE, {});
+const PORT = Number(process.env.BUFFY_PORT || CONFIG.port || 4517);
+const DRAFT = createDraftStore('');
+const ALERTS = createAlertPlanner();
 
 let win = null;
+let settingsWindow = null;
 let setupWindow = null;
-let wardrobeWindow = null;
 let tray = null;
 let drag = null;
 let saveTimer = null;
 let hideTimer = null;
-let pollTimer = null;
 let cursorTimer = null;
+let pollTimer = null;
+let streamRequest = null;
+let streamResponse = null;
+let streamTimer = null;
+let streamConnected = false;
 let failures = 0;
 let lastCursor = '';
 let embeddedDaemon = null;
@@ -93,148 +100,267 @@ let quitting = false;
 let autoUpdater = null;
 let updateReady = null;
 let updatePromptOpen = false;
+let updateDeferred = false;
 let manualUpdateCheck = false;
+let handoffInFlight = false;
+let composerOpen = false;
+let pendingRestoreFocus = false;
+let mode = 'full';
+let windowState = WINDOW_STATE.normalizeWindowState(readJson(WINDOW_FILE, {}));
+let prefs = null;
+let prefsApi = null;
+let rotationApi = null;
+let installApi = null;
+let snapshot = null;
+let shortcutStatus = { accelerator: null, ok: false, error: 'Shortcut not registered yet.' };
+let connectionCache = null;
 
-function defaultBounds() {
-  const area = screen.getPrimaryDisplay().workArea;
-  return { x: area.x + area.width - WIDTH - EDGE_GAP, y: area.y + area.height - HEIGHT - EDGE_GAP };
+function sourceModule(name) {
+  return import(pathToFileURL(path.join(SOURCE_ROOT, 'src', name)).href);
 }
 
-function savedBounds() {
-  const saved = readJson(WINDOW_FILE, null);
-  if (!saved || !Number.isFinite(saved.x) || !Number.isFinite(saved.y)) return null;
-  const visible = screen.getAllDisplays().some((display) => {
-    const area = display.workArea;
-    return (
-      saved.x + WIDTH - 40 > area.x &&
-      saved.x + 40 < area.x + area.width &&
-      saved.y + HEIGHT - 40 > area.y &&
-      saved.y + 40 < area.y + area.height
-    );
+async function loadSupportModules() {
+  [prefsApi, rotationApi, installApi] = await Promise.all([
+    sourceModule('prefs.js'),
+    sourceModule('rotation.js'),
+    sourceModule('install.js'),
+  ]);
+  const legacyWardrobe = readJson(LEGACY_WARDROBE_FILE, null);
+  prefs = prefsApi.loadPrefs({
+    env: process.env,
+    legacyWardrobe,
+    legacyOverlay: CONFIG.overlay,
   });
-  return visible ? { x: saved.x, y: saved.y } : null;
+  for (const character of LOOKS.CHARACTERS) {
+    if (!prefs.characters[character.id]) {
+      prefs.characters[character.id] = prefsApi.defaultCharacterPrefs(character.defaultLook);
+    }
+  }
+  prefsApi.savePrefs(prefs);
 }
 
-function saveBounds() {
-  if (!win) return;
+function ensureCharacterPrefs(characterId) {
+  if (!prefs.characters[characterId]) {
+    prefs.characters[characterId] = prefsApi.defaultCharacterPrefs(LOOKS.getCharacter(characterId).defaultLook);
+  }
+  return prefs.characters[characterId];
+}
+
+function normalizeAndSavePrefs(next) {
+  prefs = prefsApi.normalizePrefs(next, { now: Date.now() });
+  for (const character of LOOKS.CHARACTERS) {
+    if (!prefs.characters[character.id]) {
+      prefs.characters[character.id] = prefsApi.defaultCharacterPrefs(character.defaultLook);
+    }
+  }
+  prefsApi.savePrefs(prefs);
+  broadcastPrefs();
+  refreshTrayMenu();
+  return prefs;
+}
+
+function catalogPayload() {
+  return {
+    ...LOOKS.CATALOG,
+    characters: LOOKS.CATALOG.characters.map((character) => ({ ...character })),
+    builtinPresets: LOOKS.CATALOG.builtinPresets.map((preset) => ({ ...preset })),
+  };
+}
+
+function dictationCapability() {
+  return {
+    available: false,
+    reason:
+      process.platform === 'darwin'
+        ? 'Local dictation needs the signed on-device helper, which is not installed in this build. Typing still works.'
+        : 'On-device dictation is unavailable on this platform; Buffy will not send audio to a cloud service. Typing still works.',
+  };
+}
+
+function modePayload() {
+  return { mode, scale: windowState.scale, dictation: dictationCapability() };
+}
+
+function broadcastPrefs() {
+  if (!prefs) return;
+  const payload = { prefs, ...modePayload() };
+  for (const target of [win, settingsWindow]) {
+    if (target && !target.isDestroyed()) target.webContents.send('prefs', payload);
+  }
+}
+
+function broadcastCatalog() {
+  if (!win || win.isDestroyed()) return;
+  win.webContents.send('catalog', catalogPayload());
+}
+
+function currentDisplay() {
+  if (win && !win.isDestroyed()) return screen.getDisplayMatching(win.getBounds());
+  return screen.getPrimaryDisplay();
+}
+
+function defaultBounds(size = WINDOW_stateSize('full')) {
+  return WINDOW_STATE.defaultPosition(screen.getPrimaryDisplay().workArea, size, EDGE_GAP);
+}
+
+function WINDOW_stateSize(name) {
+  return WINDOW_STATE.sizeFor(name, windowState.scale);
+}
+
+function savedPosition(name) {
+  const saved = name === 'compact' ? windowState.compact : windowState.full;
+  if (!saved) return null;
+  const size = WINDOW_stateSize(name);
+  const bounds = { ...saved, ...size };
+  return WINDOW_STATE.visibleOn(bounds, screen.getAllDisplays()) ? saved : null;
+}
+
+function anchoredPosition(previous, size) {
+  const area = previous ? screen.getDisplayMatching(previous).workArea : screen.getPrimaryDisplay().workArea;
+  if (!previous) return WINDOW_STATE.defaultPosition(area, size, EDGE_GAP);
+  return {
+    x: Math.round(previous.x + previous.width - size.width),
+    y: Math.round(previous.y + previous.height - size.height),
+  };
+}
+
+function clampBounds(bounds) {
+  const area = screen.getDisplayNearestPoint({
+    x: bounds.x + Math.round(bounds.width / 2),
+    y: bounds.y + Math.round(bounds.height / 2),
+  }).workArea;
+  return WINDOW_STATE.clampToDisplay(bounds, area);
+}
+
+function savePosition(name = mode) {
+  if (!win || win.isDestroyed()) return;
   try {
     const [x, y] = win.getPosition();
-    writeJson(WINDOW_FILE, { x, y });
+    if (name === 'compact') windowState.compact = { x, y };
+    else windowState.full = { x, y };
+    writeJson(WINDOW_FILE, {
+      full: windowState.full,
+      compact: windowState.compact,
+      scale: windowState.scale,
+    });
   } catch {
     /* position persistence is best effort */
   }
 }
 
-function saveWardrobe() {
-  try {
-    writeJson(WARDROBE_FILE, wardrobe);
-    return { ok: true, error: null };
-  } catch (error) {
-    return { ok: false, error: error.message };
+function setMode(next, { position = null, force = false } = {}) {
+  const valid = ['full', 'compose', 'cards', 'compact'].includes(next) ? next : 'full';
+  if (!win || win.isDestroyed()) {
+    mode = valid;
+    return modePayload();
   }
-}
-
-function broadcastWardrobe() {
-  if (win && !win.isDestroyed()) win.webContents.send('wardrobe', wardrobe);
-  if (wardrobeWindow && !wardrobeWindow.isDestroyed()) {
-    wardrobeWindow.webContents.send('wardrobe:changed', wardrobe);
+  if (valid === mode && !position && !force) {
+    if (valid !== 'compact') composerOpen = valid === 'compose' || composerOpen;
+    return modePayload();
   }
-}
-
-function updateWardrobe(patch) {
-  wardrobe = WARDROBE.applyLook(wardrobe, patch);
-  const saved = saveWardrobe();
-  broadcastWardrobe();
-  refreshTrayMenu();
-  return { ok: saved.ok, error: saved.error, wardrobe };
-}
-
-function saveOverlaySettings(patch) {
-  const raw = readJson(CONFIG_FILE, {});
-  const base = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
-  const current = base.overlay && typeof base.overlay === 'object' && !Array.isArray(base.overlay)
-    ? base.overlay
-    : {};
-  const overlay = { ...current, ...(patch && typeof patch === 'object' ? patch : {}) };
-  overlaySettings = normalizeOverlaySettings(overlay);
-  try {
-    writeJson(CONFIG_FILE, { ...base, overlay });
-  } catch (error) {
-    return { ok: false, error: error.message, settings: overlaySettings };
-  }
-  if (win && !win.isDestroyed()) win.webContents.send('settings', overlaySettings);
-  refreshTrayMenu();
-  return { ok: true, error: null, settings: overlaySettings };
-}
-
-async function openWardrobe({ show = true } = {}) {
-  if (wardrobeWindow && !wardrobeWindow.isDestroyed()) {
-    if (show) {
-      wardrobeWindow.show();
-      wardrobeWindow.focus();
+  const previousMode = mode;
+  const previousBounds = win.getBounds();
+  savePosition(previousMode === 'compact' ? 'compact' : 'full');
+  mode = valid;
+  const size = WINDOW_stateSize(valid);
+  let nextPosition = position;
+  if (!nextPosition) {
+    if (valid === 'compact') {
+      nextPosition = savedPosition('compact') || anchoredPosition(previousBounds, size);
+    } else if (previousMode === 'compact') {
+      nextPosition = savedPosition('full') || anchoredPosition(previousBounds, size);
+    } else {
+      nextPosition = anchoredPosition(previousBounds, size);
     }
-    return wardrobeWindow;
   }
-
-  wardrobeWindow = new BrowserWindow({
-    width: 760,
-    height: 660,
-    minWidth: 640,
-    minHeight: 560,
-    center: true,
-    show: false,
-    title: "Buffy's wardrobe",
-    backgroundColor: '#fff8f4',
-    autoHideMenuBar: true,
-    webPreferences: {
-      preload: path.join(__dirname, 'wardrobe-preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  });
-  wardrobeWindow.setMenuBarVisibility(false);
-  wardrobeWindow.once('ready-to-show', () => {
-    if (show && wardrobeWindow && !wardrobeWindow.isDestroyed()) wardrobeWindow.show();
-  });
-  wardrobeWindow.on('closed', () => {
-    wardrobeWindow = null;
-  });
-  const loadOptions = wardrobePreview ? { query: { preview: wardrobePreview } } : undefined;
-  await wardrobeWindow.loadFile(path.join(__dirname, 'wardrobe.html'), loadOptions).catch((error) => {
-    console.error(`buffy wardrobe: ${error.message}`);
-  });
-  return wardrobeWindow;
+  const bounds = clampBounds({ ...nextPosition, ...size });
+  win.setMinimumSize(size.width, size.height);
+  win.setMaximumSize(size.width, size.height);
+  win.setBounds(bounds, true);
+  win.webContents.send('mode', modePayload());
+  if (valid === 'compose' || valid === 'cards') {
+    if (!win.isVisible()) win.show();
+    win.focus();
+  } else if (pendingRestoreFocus) {
+    pendingRestoreFocus = false;
+    win.blur();
+  }
+  return modePayload();
 }
 
-function moveToCorner(corner) {
-  if (!win || win.isDestroyed()) return;
-  const area = screen.getDisplayMatching(win.getBounds()).workArea;
-  const x = corner.endsWith('left') ? area.x + EDGE_GAP : area.x + area.width - WIDTH - EDGE_GAP;
-  const y = corner.startsWith('top') ? area.y + EDGE_GAP : area.y + area.height - HEIGHT - EDGE_GAP;
-  win.setBounds({ x, y, width: WIDTH, height: HEIGHT });
-  saveBounds();
+function applyDailyRotation() {
+  if (!prefs || !rotationApi || !win) return;
+  const characterId = prefs.companion.characterId;
+  const plan = rotationApi.planRotation({
+    prefs,
+    catalog: LOOKS.CATALOG,
+    characterId,
+    now: Date.now(),
+    resting: !snapshot || ['idle', 'done'].includes(snapshot.current?.state || 'idle'),
+    busy: Boolean(drag) || handoffInFlight,
+    composing: composerOpen || mode === 'compose',
+    recording: false,
+    settingsOpen: Boolean(settingsWindow && !settingsWindow.isDestroyed()),
+    cardsOpen: mode === 'cards',
+    isAvailable: () => true,
+  });
+  if (!plan.rotate) return;
+  const character = ensureCharacterPrefs(characterId);
+  prefs.characters[characterId] = rotationApi.rotationAfterApply(
+    { ...character, look: LOOKS.normalizeLook(plan.look, characterId) },
+    plan,
+  );
+  normalizeAndSavePrefs(prefs);
+  win.webContents.send('toast', `Daily look: ${plan.name}.`);
 }
 
-function getJson(pathname) {
-  return new Promise((resolve, reject) => {
-    const req = http.get({ host: '127.0.0.1', port: PORT, path: pathname, timeout: 600 }, (res) => {
-      const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
-      res.on('end', () => {
+function syncShortcut() {
+  if (!prefs) return shortcutStatus;
+  const accelerator = prefs.shortcuts.summon;
+  const previous = shortcutStatus.accelerator;
+  try {
+    if (previous) globalShortcut.unregister(previous);
+    const ok = globalShortcut.register(accelerator, summonCompanion);
+    if (!ok) {
+      if (previous) {
         try {
-          resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
-        } catch (error) {
-          reject(error);
+          globalShortcut.register(previous, summonCompanion);
+        } catch {
+          /* old shortcut could not be restored */
         }
-      });
-    });
-    req.on('timeout', () => req.destroy(new Error('daemon timeout')));
-    req.on('error', reject);
-  });
+      }
+      shortcutStatus = {
+        accelerator: previous || null,
+        ok: false,
+        error: `${accelerator} is already used by another app. Choose another shortcut.`,
+      };
+    } else {
+      shortcutStatus = { accelerator, ok: true, error: null };
+    }
+  } catch (error) {
+    shortcutStatus = { accelerator: previous || null, ok: false, error: error.message };
+  }
+  return shortcutStatus;
 }
 
-function postJson(pathname, body) {
+async function summonCompanion() {
+  if (!win || win.isDestroyed()) createWindow();
+  const wasVisible = win.isVisible();
+  const size = WINDOW_stateSize('compose');
+  const shouldPlace = !wasVisible;
+  let position = null;
+  if (shouldPlace) {
+    position = WINDOW_STATE.placeNearCursor(screen.getCursorScreenPoint(), size, screen.getAllDisplays());
+  }
+  setMode('compose', { position });
+  win.show();
+  win.focus();
+  composerOpen = true;
+  await sleep(120);
+  if (win && !win.isDestroyed()) win.webContents.send('summon');
+}
+
+async function postJson(pathname, body, timeout = 1500) {
   return new Promise((resolve, reject) => {
     const payload = Buffer.from(JSON.stringify(body ?? {}));
     const req = http.request(
@@ -243,7 +369,7 @@ function postJson(pathname, body) {
         port: PORT,
         path: pathname,
         method: 'POST',
-        timeout: 1200,
+        timeout,
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
@@ -269,31 +395,43 @@ function postJson(pathname, body) {
   });
 }
 
+function getJson(pathname, timeout = 1200) {
+  return new Promise((resolve, reject) => {
+    const req = http.get({ host: '127.0.0.1', port: PORT, path: pathname, timeout }, (res) => {
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('daemon timeout')));
+    req.on('error', reject);
+  });
+}
+
 async function ensureDaemon() {
   try {
-    await getJson('/health');
+    await getJson('/health', 400);
     return;
   } catch {
     /* no daemon is listening yet */
   }
   if (daemonStarting) return daemonStarting;
-
   daemonStarting = (async () => {
     try {
       const daemonRoot = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked') : ROOT;
-      const daemonUrl = pathToFileURL(path.join(daemonRoot, 'src', 'daemon.js')).href;
-      const { startDaemon } = await import(daemonUrl);
-      let daemonConfig;
-      if (smokeTest) {
-        const { readConfig } = await import(pathToFileURL(path.join(daemonRoot, 'src', 'config.js')).href);
-        const base = readConfig();
-        daemonConfig = { ...base, watch: { ...base.watch, enabled: false } };
-      }
-      embeddedDaemon = await startDaemon({ port: PORT, quiet: true, ...(daemonConfig ? { config: daemonConfig } : {}) });
+      const { startDaemon } = await import(pathToFileURL(path.join(daemonRoot, 'src', 'daemon.js')).href);
+      const { readConfig } = await import(pathToFileURL(path.join(daemonRoot, 'src', 'config.js')).href);
+      const base = readConfig();
+      const watchEnabled = smokeTest ? false : prefs?.connection?.freebuffWatcher !== false;
+      const daemonConfig = { ...base, watch: { ...base.watch, enabled: watchEnabled } };
+      embeddedDaemon = await startDaemon({ port: PORT, quiet: true, config: daemonConfig });
     } catch (error) {
-      if (error.code !== 'EADDRINUSE') {
-        console.error(`buffy daemon: ${error.message}`);
-      }
+      if (error.code !== 'EADDRINUSE') console.error(`buffy daemon: ${error.message}`);
     }
   })();
   try {
@@ -315,23 +453,152 @@ async function restartDaemon() {
     }
   }
   await ensureDaemon();
-  if (win && !win.isDestroyed()) poll();
+  disconnectStream();
+  connectStream();
+  await poll();
+  refreshTrayMenu();
+  return { ok: true };
+}
+
+function showNotification(alert) {
+  if (!Notification.isSupported()) return false;
+  try {
+    const notification = new Notification({
+      title: alert.title,
+      body: alert.body,
+      silent: true,
+    });
+    notification.on('click', () => {
+      if (!win || win.isDestroyed()) createWindow();
+      setMode('cards');
+      win.show();
+      win.focus();
+      win.webContents.send('open-panel', 'cards');
+    });
+    notification.show();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function processAlerts(next) {
+  if (!prefs) return;
+  const result = ALERTS.ingest(next, {
+    requests: prefs.alerts.requests,
+    completions: prefs.alerts.completions,
+    sounds: prefs.alerts.sounds,
+    snoozeUntil: prefs.alerts.snoozeUntil,
+  });
+  if (result.startup) return;
+  for (const alert of result.notifications) showNotification(alert);
+  if (result.sounds && prefs.alerts.sounds) {
+    try {
+      shell.beep();
+    } catch {
+      /* sound is optional */
+    }
+  }
+}
+
+function handleSnapshot(next) {
+  if (!next) return;
+  snapshot = next;
+  failures = 0;
+  if (win && !win.isDestroyed()) win.webContents.send('state', next);
+  processAlerts(next);
+  applyDailyRotation();
   refreshTrayMenu();
 }
 
-function postPet() {
-  const req = http.request({ host: '127.0.0.1', port: PORT, path: '/pet', method: 'POST', timeout: 800 }, (res) => res.resume());
-  req.on('error', () => {});
-  req.on('timeout', () => req.destroy());
-  req.end();
+function disconnectStream() {
+  clearTimeout(streamTimer);
+  streamTimer = null;
+  if (streamResponse) {
+    try {
+      streamResponse.destroy();
+    } catch {
+      /* already closed */
+    }
+    streamResponse = null;
+  }
+  if (streamRequest) {
+    try {
+      streamRequest.destroy();
+    } catch {
+      /* already closed */
+    }
+    streamRequest = null;
+  }
+  streamConnected = false;
+}
+
+function scheduleStream(delay = 1200) {
+  if (quitting) return;
+  clearTimeout(streamTimer);
+  streamTimer = setTimeout(connectStream, delay);
+}
+
+function connectStream() {
+  if (quitting || !win || win.isDestroyed()) return;
+  disconnectStream();
+  streamRequest = http.get(
+    { host: '127.0.0.1', port: PORT, path: '/events', timeout: 0, headers: { accept: 'text/event-stream' } },
+    (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        streamConnected = false;
+        failures += 1;
+        if (failures >= 3 && win && !win.isDestroyed()) win.webContents.send('offline');
+        scheduleStream(1800);
+        return;
+      }
+      streamResponse = res;
+      streamConnected = true;
+      failures = 0;
+      res.setEncoding('utf8');
+      let buffer = '';
+      res.on('data', (chunk) => {
+        buffer += chunk;
+        let split = buffer.indexOf('\n\n');
+        while (split !== -1) {
+          const block = buffer.slice(0, split);
+          buffer = buffer.slice(split + 2);
+          for (const line of block.split('\n')) {
+            if (!line.startsWith('data:')) continue;
+            try {
+              handleSnapshot(JSON.parse(line.slice(5).trim()));
+            } catch {
+              /* ignore a partial or malformed snapshot */
+            }
+          }
+          split = buffer.indexOf('\n\n');
+        }
+      });
+      res.on('end', () => {
+        streamConnected = false;
+        streamResponse = null;
+        scheduleStream(1200);
+      });
+      res.on('error', () => {
+        streamConnected = false;
+        streamResponse = null;
+        scheduleStream(1200);
+      });
+    },
+  );
+  streamRequest.on('error', () => {
+    streamConnected = false;
+    failures += 1;
+    if (failures >= 3 && win && !win.isDestroyed()) win.webContents.send('offline');
+    scheduleStream(1800);
+  });
 }
 
 async function poll() {
-  if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed() || streamConnected) return;
   try {
-    const snapshot = await getJson('/state');
-    failures = 0;
-    win.webContents.send('state', snapshot);
+    handleSnapshot(await getJson('/state'));
   } catch {
     failures += 1;
     if (failures >= 3) win.webContents.send('offline');
@@ -350,11 +617,12 @@ function sendCursor() {
 }
 
 function createWindow() {
-  const bounds = savedBounds() || defaultBounds();
-
+  const size = WINDOW_stateSize('full');
+  const saved = savedPosition('full');
+  const bounds = clampBounds({ ...(saved || defaultBounds(size)), ...size });
   win = new BrowserWindow({
-    width: WIDTH,
-    height: HEIGHT,
+    width: size.width,
+    height: size.height,
     x: bounds.x,
     y: bounds.y,
     frame: false,
@@ -368,7 +636,7 @@ function createWindow() {
     alwaysOnTop: true,
     hasShadow: false,
     show: false,
-    title: 'buffy',
+    title: 'Buffy',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -377,14 +645,11 @@ function createWindow() {
       backgroundThrottling: false,
     },
   });
-
   win.setMenuBarVisibility(false);
   win.setAlwaysOnTop(true, 'floating');
-  // Frameless transparent windows can still be hit-tested as resizable on
-  // Windows. Pin both dimensions so a drag cannot turn into a resize.
   win.setResizable(false);
-  win.setMinimumSize(WIDTH, HEIGHT);
-  win.setMaximumSize(WIDTH, HEIGHT);
+  win.setMinimumSize(size.width, size.height);
+  win.setMaximumSize(size.width, size.height);
   win.on('will-resize', (event) => event.preventDefault());
   if (process.platform !== 'win32') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
@@ -392,9 +657,13 @@ function createWindow() {
 
   win.webContents.on('did-finish-load', () => {
     if (!win || win.isDestroyed()) return;
-    win.webContents.send('wardrobe', wardrobe);
-    win.webContents.send('settings', overlaySettings);
-    if (shotHobby) win.webContents.send('demo-hobby', shotHobby);
+    broadcastCatalog();
+    if (prefs) win.webContents.send('prefs', { prefs, ...modePayload() });
+    win.webContents.send('mode', modePayload());
+    win.webContents.send('draft', DRAFT.snapshot());
+    win.setIgnoreMouseEvents(true, { forward: true });
+    connectStream();
+    poll();
   });
 
   win.once('ready-to-show', () => {
@@ -403,12 +672,18 @@ function createWindow() {
     if (dev) win.webContents.openDevTools({ mode: 'detach' });
   });
 
-  win.on('show', refreshTrayMenu);
-  win.on('hide', refreshTrayMenu);
+  win.on('show', () => {
+    refreshTrayMenu();
+    win.webContents.send('visibility', true);
+  });
+  win.on('hide', () => {
+    refreshTrayMenu();
+    win.webContents.send('visibility', false);
+  });
 
   win.on('moved', () => {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveBounds, 400);
+    saveTimer = setTimeout(() => savePosition(), 400);
   });
 
   win.on('close', (event) => {
@@ -425,11 +700,10 @@ function createWindow() {
     clearInterval(cursorTimer);
     pollTimer = null;
     cursorTimer = null;
+    disconnectStream();
   });
 
-  pollTimer = setInterval(poll, 350);
-  poll();
-
+  pollTimer = setInterval(poll, 2200);
   cursorTimer = setInterval(sendCursor, 80);
   sendCursor();
 
@@ -437,26 +711,39 @@ function createWindow() {
     win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         try {
-          const image = await win.webContents.capturePage();
-          const target = path.resolve(shotPath);
-          fs.mkdirSync(path.dirname(target), { recursive: true });
-          fs.writeFileSync(target, image.toPNG());
-          console.log(`buffy overlay screenshot: ${target}`);
+          if (shotMode === 'settings') {
+            await openSettings();
+            await sleep(900);
+            const targetWindow = settingsWindow;
+            const image = await targetWindow.webContents.capturePage();
+            const target = path.resolve(shotPath);
+            fs.mkdirSync(path.dirname(target), { recursive: true });
+            fs.writeFileSync(target, image.toPNG());
+            console.log(`buffy settings screenshot: ${target}`);
+          } else {
+            if (shotMode === 'compose') {
+              setMode('compose');
+              win.webContents.send('summon');
+              await sleep(500);
+            }
+            const image = await win.webContents.capturePage();
+            const target = path.resolve(shotPath);
+            fs.mkdirSync(path.dirname(target), { recursive: true });
+            fs.writeFileSync(target, image.toPNG());
+            console.log(`buffy overlay screenshot: ${target}`);
+          }
         } catch (error) {
           console.error(`buffy overlay screenshot failed: ${error.message}`);
         }
         if (shotExit) app.quit();
-      }, 2200);
+      }, 2600);
     });
   }
 }
 
 function showWindow() {
-  if (!win || win.isDestroyed()) {
-    createWindow();
-  } else {
-    win.showInactive();
-  }
+  if (!win || win.isDestroyed()) createWindow();
+  else win.showInactive();
   refreshTrayMenu();
 }
 
@@ -489,10 +776,9 @@ function showOnboarding({ force = false } = {}) {
     return;
   }
   if (!force && onboardingSeen()) return;
-
   setupWindow = new BrowserWindow({
-    width: 540,
-    height: 680,
+    width: 560,
+    height: 700,
     center: true,
     resizable: false,
     minimizable: true,
@@ -517,6 +803,53 @@ function showOnboarding({ force = false } = {}) {
     markOnboardingSeen();
     setupWindow = null;
   });
+}
+
+async function openSettings(section = 'companion') {
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.show();
+    settingsWindow.focus();
+    if (section) settingsWindow.webContents.send('settings:section', section);
+    return settingsWindow;
+  }
+  settingsWindow = new BrowserWindow({
+    width: SETTINGS_WIDTH,
+    height: SETTINGS_HEIGHT,
+    minWidth: 900,
+    minHeight: 640,
+    center: true,
+    show: false,
+    title: 'Buffy settings',
+    backgroundColor: '#fbf4ee',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'settings-preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  settingsWindow.setMenuBarVisibility(false);
+  settingsWindow.once('ready-to-show', () => {
+    if (settingsWindow && !settingsWindow.isDestroyed()) {
+      settingsWindow.show();
+      settingsWindow.focus();
+    }
+  });
+  settingsWindow.webContents.on('did-finish-load', () => {
+    if (section && settingsWindow && !settingsWindow.isDestroyed()) {
+      settingsWindow.webContents.send('settings:section', section);
+    }
+  });
+  settingsWindow.on('closed', () => {
+    settingsWindow = null;
+  });
+  try {
+    await settingsWindow.loadFile(path.join(__dirname, 'settings.html'));
+  } catch (error) {
+    dialog.showErrorBox('Could not open settings', error.message);
+  }
+  return settingsWindow;
 }
 
 function linuxAutostartFile() {
@@ -563,11 +896,11 @@ function setLoginItem(enabled) {
 }
 
 function showUpdateMessage(options) {
-  return dialog.showMessageBox({
-    type: 'info',
-    title: 'Buffy updates',
-    ...options,
-  });
+  return dialog.showMessageBox({ type: 'info', title: 'Buffy updates', ...options });
+}
+
+function updateIsBusy() {
+  return Boolean(composerOpen || DRAFT.text.trim() || handoffInFlight);
 }
 
 function initUpdater() {
@@ -578,53 +911,68 @@ function initUpdater() {
     console.error(`buffy updater: ${error.message}`);
     return;
   }
-
   autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.logger = console;
   autoUpdater.on('update-downloaded', (info) => {
     updateReady = info;
     refreshTrayMenu();
+    if (prefs?.updates?.deferWhileBusy !== false && updateIsBusy()) {
+      updateDeferred = true;
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('update', { kind: 'deferred', version: info.version });
+        win.webContents.send('toast', 'Update ready. It will wait until your draft is finished.');
+      }
+      return;
+    }
+    updateDeferred = false;
     promptInstall();
   });
   autoUpdater.on('update-not-available', () => {
     if (!manualUpdateCheck) return;
     manualUpdateCheck = false;
-    showUpdateMessage({
-      message: 'Buffy is up to date.',
-      detail: `You are running ${app.getVersion()}.`,
-    });
+    showUpdateMessage({ message: 'Buffy is up to date.', detail: `You are running ${app.getVersion()}.` });
   });
   autoUpdater.on('error', (error) => {
     const manual = manualUpdateCheck;
     manualUpdateCheck = false;
     console.error(`buffy updater: ${error.message}`);
     if (manual) {
-      showUpdateMessage({
-        type: 'error',
-        message: 'Could not check for updates.',
-        detail: error.message,
-      });
+      showUpdateMessage({ type: 'error', message: 'Could not check for updates.', detail: error.message });
     }
   });
-
   setTimeout(() => checkForUpdates(false), 20_000).unref?.();
 }
 
 async function promptInstall() {
   if (!autoUpdater || !updateReady || updatePromptOpen) return;
+  if (updateIsBusy()) {
+    updateDeferred = true;
+    if (win && !win.isDestroyed()) win.webContents.send('toast', 'Finish or clear your draft before installing the update.');
+    return;
+  }
   updatePromptOpen = true;
   const result = await dialog.showMessageBox({
     type: 'info',
     title: 'Buffy update ready',
     message: `Buffy ${updateReady.version} is ready to install.`,
-    detail: 'Restart Buffy to finish the update. Your pet and settings stay put.',
+    detail: 'Restart Buffy to finish the update. Your pet, looks, and preferences stay put.',
     buttons: ['Restart and install', 'Later'],
     defaultId: 0,
     cancelId: 1,
   });
   updatePromptOpen = false;
-  if (result.response === 0) autoUpdater.quitAndInstall();
+  if (result.response === 0) installUpdateNow();
+}
+
+function installUpdateNow() {
+  if (!autoUpdater || !updateReady) return { ok: false, error: 'No update is ready yet.' };
+  if (updateIsBusy()) {
+    updateDeferred = true;
+    return { ok: false, error: 'Finish or clear your draft before installing.' };
+  }
+  autoUpdater.quitAndInstall();
+  return { ok: true };
 }
 
 async function checkForUpdates(manual = false) {
@@ -635,7 +983,7 @@ async function checkForUpdates(manual = false) {
         detail: 'Run Buffy from an installed release to receive updates.',
       });
     }
-    return;
+    return { ok: false, error: 'Updates are available in installed builds.' };
   }
   if (process.platform === 'linux' && !process.env.APPIMAGE) {
     if (manual) {
@@ -644,21 +992,251 @@ async function checkForUpdates(manual = false) {
         detail: 'Download the latest AppImage from the Buffy releases page.',
       });
     }
-    return;
+    return { ok: false, error: 'Use the latest AppImage.' };
   }
-
   manualUpdateCheck = Boolean(manual);
   try {
     await autoUpdater.checkForUpdates();
+    return { ok: true };
   } catch (error) {
     if (manual) {
       manualUpdateCheck = false;
-      await showUpdateMessage({
-        type: 'error',
-        message: 'Could not check for updates.',
-        detail: error.message,
-      });
+      await showUpdateMessage({ type: 'error', message: 'Could not check for updates.', detail: error.message });
     }
+    return { ok: false, error: error.message };
+  }
+}
+
+async function connectionStatus() {
+  if (!prefs) return { state: 'unknown', detail: 'Preferences are still loading.' };
+  const settingsPath = path.join(os.homedir(), '.claude', 'settings.json');
+  const launcher = path.join(HOME, 'bin', process.platform === 'win32' ? 'buffy-hook.cmd' : 'buffy-hook');
+  const lastPath = path.join(HOME, 'hook-last.json');
+  let data = null;
+  try {
+    data = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  } catch (error) {
+    return {
+      state: error.code === 'ENOENT' ? 'not-installed' : 'error',
+      detail: error.code === 'ENOENT' ? 'Claude Code settings were not found yet.' : `Could not read Claude Code settings: ${error.message}`,
+      settingsPath,
+      launcher,
+      lastHookAt: null,
+    };
+  }
+  if (data?.disableAllHooks === true) {
+    return {
+      state: 'disabled',
+      detail: 'Claude Code has disableAllHooks enabled, so Buffy hooks will not run. Enable hooks in Claude Code first.',
+      settingsPath,
+      launcher,
+      lastHookAt: null,
+    };
+  }
+  const hooks = data?.hooks && typeof data.hooks === 'object' ? data.hooks : {};
+  const installed = Object.values(hooks).some((entries) =>
+    (Array.isArray(entries) ? entries : []).some((entry) =>
+      (Array.isArray(entry?.hooks) ? entry.hooks : []).some(
+        (hook) =>
+          typeof hook?.command === 'string' &&
+          (hook.command.includes('buffy-hook') || hook.command.replace(/\\/g, '/').includes('bin/buffy.js')),
+      ),
+    ),
+  );
+  const last = readJson(lastPath, null);
+  const lastHookAt = last?.at && Number.isFinite(Date.parse(last.at)) ? last.at : null;
+  if (!installed) {
+    return {
+      state: 'not-installed',
+      detail: 'Connect Claude Code so Buffy can see prompts, tools, and permission requests.',
+      settingsPath,
+      launcher,
+      lastHookAt,
+    };
+  }
+  if (!fs.existsSync(launcher) && app.isPackaged) {
+    return {
+      state: 'repair',
+      detail: 'Hooks are installed, but the stable launcher is missing. Repair the connection.',
+      settingsPath,
+      launcher,
+      lastHookAt,
+    };
+  }
+  if (!lastHookAt) {
+    return {
+      state: 'installed',
+      detail: 'Hooks are installed. No Claude Code event has reached Buffy yet; start a Claude Code session.',
+      settingsPath,
+      launcher,
+      lastHookAt,
+    };
+  }
+  const ageMinutes = Math.round((Date.now() - Date.parse(lastHookAt)) / 60000);
+  return {
+    state: ageMinutes <= 30 ? 'connected' : 'installed',
+    detail:
+      ageMinutes <= 30
+        ? `Claude Code reached Buffy ${ageMinutes <= 0 ? 'just now' : `${ageMinutes}m ago`}.`
+        : 'Hooks are installed but no recent event was seen. Start a Claude Code session to test them.',
+    settingsPath,
+    launcher,
+    lastHookAt,
+  };
+}
+
+function applyPreferencesFromSettings(payload) {
+  if (!prefsApi) return { ok: false, error: 'Preferences are still loading.' };
+  if (!payload?.prefs) return { ok: false, error: 'No preferences were provided.' };
+  const beforeShortcut = prefs?.shortcuts?.summon;
+  normalizeAndSavePrefs(payload.prefs);
+  if (prefs.shortcuts.summon !== beforeShortcut) syncShortcut();
+  if (Array.isArray(payload.characterId)) {
+    /* no-op for malformed callers */
+  }
+  return { ok: true, prefs, shortcut: shortcutStatus };
+}
+
+async function settingsAction(type, payload = {}) {
+  if (!prefs || !prefsApi) return { ok: false, error: 'Preferences are still loading.' };
+  const characterId =
+    LOOKS.getCharacter(payload.characterId || prefs.companion.characterId).id;
+  const character = ensureCharacterPrefs(characterId);
+  const saveCharacter = (nextCharacter) => {
+    prefs.characters[characterId] = nextCharacter;
+    normalizeAndSavePrefs(prefs);
+    return { ok: true, prefs, characterId, character: prefs.characters[characterId] };
+  };
+
+  try {
+    switch (type) {
+      case 'save': {
+        const beforeWatcher = prefs.connection.freebuffWatcher;
+        const result = applyPreferencesFromSettings({ prefs: payload.prefs });
+        if (result.ok && beforeWatcher !== prefs.connection.freebuffWatcher) await restartDaemon();
+        return result;
+      }
+      case 'look': {
+        const look = LOOKS.normalizeLook(payload.look, characterId);
+        const marked = rotationApi.markManualLook(character, Date.now());
+        return saveCharacter({ ...marked, look });
+      }
+      case 'clothing': {
+        return saveCharacter({
+          ...character,
+          clothing: { ...character.clothing, ...(payload.clothing || {}) },
+        });
+      }
+      case 'random': {
+        const look = LOOKS.randomLook(characterId, character);
+        return saveCharacter({ ...rotationApi.markManualLook(character, Date.now()), look });
+      }
+      case 'save-look': {
+        const result = LOOKS.saveLook(character, { name: payload.name, id: payload.id || randomUUID() });
+        if (result.error) return { ok: false, error: result.error, prefs, characterId };
+        return saveCharacter(result.character);
+      }
+      case 'rename-look': {
+        const result = LOOKS.renameLook(character, String(payload.id || ''), payload.name);
+        if (result.error) return { ok: false, error: result.error, prefs, characterId };
+        return saveCharacter(result.character);
+      }
+      case 'replace-look': {
+        const result = LOOKS.replaceLook(character, String(payload.id || ''));
+        if (result.error) return { ok: false, error: result.error, prefs, characterId };
+        return saveCharacter(result.character);
+      }
+      case 'delete-look': {
+        const result = LOOKS.deleteLook(character, String(payload.id || ''));
+        if (result.error) return { ok: false, error: result.error, prefs, characterId };
+        return saveCharacter(result.character);
+      }
+      case 'favorite': {
+        return saveCharacter(LOOKS.toggleFavorite(character, String(payload.id || '')));
+      }
+      case 'rotation-look': {
+        const result = LOOKS.toggleRotationLook(character, String(payload.id || ''), payload.include !== false);
+        if (result.error) return { ok: false, error: result.error, prefs, characterId };
+        return saveCharacter(result.character);
+      }
+      case 'rotation': {
+        return saveCharacter(rotationApi.setRotationEnabled(character, payload.enabled === true, Date.now()));
+      }
+      case 'character': {
+        const next = LOOKS.getCharacter(payload.characterId || prefs.companion.characterId);
+        prefs.companion.characterId = next.id;
+        ensureCharacterPrefs(next.id);
+        return applyPreferencesFromSettings({ prefs });
+      }
+      case 'companion': {
+        if (typeof payload.name === 'string') prefs.companion.name = payload.name;
+        if (typeof payload.pronouns === 'string') prefs.companion.pronouns = payload.pronouns;
+        return applyPreferencesFromSettings({ prefs });
+      }
+      case 'scale': {
+        const scale = Number(payload.scale);
+        if (!WINDOW_STATE.SCALES.includes(scale)) return { ok: false, error: 'Unsupported scale.' };
+        savePosition(mode === 'compact' ? 'compact' : 'full');
+        windowState.scale = scale;
+        writeJson(WINDOW_FILE, {
+          full: windowState.full,
+          compact: windowState.compact,
+          scale,
+        });
+        setMode(mode, { force: true });
+        broadcastPrefs();
+        return { ok: true, scale };
+      }
+      case 'shortcut': {
+        const accelerator = String(payload.accelerator || '').trim();
+        if (!accelerator) return { ok: false, error: 'Shortcut cannot be empty.', shortcut: shortcutStatus };
+        const previous = prefs.shortcuts.summon;
+        prefs.shortcuts.summon = accelerator;
+        const status = syncShortcut();
+        if (!status.ok) {
+          prefs.shortcuts.summon = previous;
+          syncShortcut();
+          return { ok: false, error: status.error, shortcut: shortcutStatus };
+        }
+        prefsApi.savePrefs(prefs);
+        broadcastPrefs();
+        return { ok: true, shortcut: status, prefs };
+      }
+      case 'snooze': {
+        prefsApi.setAlertsSnooze(prefs, Number(payload.durationMs) || 0, Date.now());
+        prefsApi.savePrefs(prefs);
+        broadcastPrefs();
+        return { ok: true, prefs };
+      }
+      case 'connection': {
+        connectionCache = null;
+        if (payload.operation === 'install' || payload.operation === 'repair') {
+          const result = installApi.installClaude({ global: true, env: process.env, packaged: app.isPackaged });
+          connectionCache = await connectionStatus();
+          return { ok: !result.skipped, skipped: result.skipped, notes: result.notes, result, connection: connectionCache };
+        }
+        if (payload.operation === 'uninstall') {
+          const result = installApi.uninstallClaude({ global: true, env: process.env });
+          connectionCache = await connectionStatus();
+          return { ok: true, result, connection: connectionCache };
+        }
+        connectionCache = await connectionStatus();
+        return { ok: true, connection: connectionCache };
+      }
+      case 'restart-daemon': {
+        return { ok: true, ...(await restartDaemon()) };
+      }
+      case 'check-update': {
+        return { ...(await checkForUpdates(true)), update: updateReady, deferred: updateDeferred };
+      }
+      case 'install-update': {
+        return installUpdateNow();
+      }
+      default:
+        return { ok: false, error: `Unknown settings action: ${type}` };
+    }
+  } catch (error) {
+    return { ok: false, error: error.message };
   }
 }
 
@@ -672,6 +1250,20 @@ function menuTemplate(fromTray = false) {
   }
   items.push(
     {
+      label: 'Compose for Claude…',
+      accelerator: prefs?.shortcuts?.summon || undefined,
+      click: () => summonCompanion().catch(() => {}),
+    },
+    {
+      label: 'Activity',
+      click: () => {
+        showWindow();
+        setMode('cards');
+        if (win && !win.isDestroyed()) win.webContents.send('open-panel', 'cards');
+      },
+    },
+    { type: 'separator' },
+    {
       label: 'Move to corner',
       submenu: [
         { label: 'Top left', click: () => moveToCorner('top-left') },
@@ -680,31 +1272,22 @@ function menuTemplate(fromTray = false) {
         { label: 'Bottom right', click: () => moveToCorner('bottom-right') },
       ],
     },
-    {
-      label: 'Wardrobe…',
-      click: () => openWardrobe().catch((error) => dialog.showErrorBox('Could not open the wardrobe', error.message)),
-    },
+    { label: 'Compact mode', type: 'checkbox', checked: mode === 'compact', click: () => setMode(mode === 'compact' ? 'full' : 'compact') },
     {
       label: 'Surprise me',
-      click: () => updateWardrobe(WARDROBE.randomLook()),
+      click: () => {
+        const characterId = prefs?.companion?.characterId || 'nimbus';
+        settingsAction('random', { characterId });
+      },
     },
     {
-      label: 'Idle hobbies',
-      type: 'checkbox',
-      checked: overlaySettings.idleHobbies,
-      click: (item) => saveOverlaySettings({ idleHobbies: item.checked }),
+      label: 'Wardrobe & settings…',
+      click: () => openSettings('companion').catch((error) => dialog.showErrorBox('Could not open settings', error.message)),
     },
     { type: 'separator' },
-    {
-      label: 'Setup guide…',
-      click: () => showOnboarding({ force: true }),
-    },
-    {
-      label: 'Open Buffy folder',
-      click: () => shell.openPath(HOME),
-    },
+    { label: 'Setup guide…', click: () => showOnboarding({ force: true }) },
+    { label: 'Open Buffy folder', click: () => shell.openPath(HOME) },
   );
-
   if (app.isPackaged) {
     items.push({
       label: 'Launch at login',
@@ -720,7 +1303,7 @@ function menuTemplate(fromTray = false) {
       },
     });
     items.push({
-      label: updateReady ? 'Restart to update' : 'Check for updates…',
+      label: updateReady ? (updateDeferred ? 'Update ready (finish draft)…' : 'Restart to update…') : 'Check for updates…',
       click: () => (updateReady ? promptInstall() : checkForUpdates(true)),
     });
   } else {
@@ -729,7 +1312,6 @@ function menuTemplate(fromTray = false) {
       { label: 'Updates (installed builds)', enabled: false },
     );
   }
-
   items.push(
     {
       label: 'Restart local daemon',
@@ -775,6 +1357,16 @@ function createTray() {
   }
 }
 
+function moveToCorner(corner) {
+  if (!win || win.isDestroyed()) return;
+  const area = screen.getDisplayMatching(win.getBounds()).workArea;
+  const size = WINDOW_stateSize(mode);
+  const x = corner.endsWith('left') ? area.x + EDGE_GAP : area.x + area.width - size.width - EDGE_GAP;
+  const y = corner.startsWith('top') ? area.y + EDGE_GAP : area.y + area.height - size.height - EDGE_GAP;
+  win.setBounds({ x, y, ...size });
+  savePosition();
+}
+
 async function runSmokeTest() {
   try {
     const health = await getJson('/health');
@@ -788,20 +1380,20 @@ async function runSmokeTest() {
       sleep(10_000),
     ]);
     const page = await win.webContents.executeJavaScript(
-      "({ stage: Boolean(document.querySelector('#stage')), sessions: Boolean(document.querySelector('#sessions')), api: Boolean(window.buffy), character: Boolean(window.BuffyCharacter), ready: document.readyState })",
+      "({ stage: Boolean(document.querySelector('#stage')), pill: Boolean(document.querySelector('#pill')), composer: Boolean(document.querySelector('#composer')), cards: Boolean(document.querySelector('#cards')), api: Boolean(window.buffy), character: Boolean(window.BuffyCharacters), legacy: Boolean(window.BuffyCharacter), ready: document.readyState })",
     );
-    if (!page.stage || !page.sessions || !page.api || !page.character || page.ready !== 'complete') {
+    if (!page.stage || !page.pill || !page.composer || !page.cards || !page.api || !page.character || page.ready !== 'complete') {
       throw new Error(`renderer check failed: ${JSON.stringify(page)}`);
     }
-    const wardrobeWin = await openWardrobe({ show: false });
-    await sleep(500);
-    const wardrobePage = await wardrobeWin.webContents.executeJavaScript(
-      "({ app: Boolean(document.querySelector('#wardrobe-app')), preview: Boolean(document.querySelector('#preview')), api: Boolean(window.buffyWardrobe), tabs: document.querySelectorAll('[role=tab]').length })",
+    const settings = await openSettings();
+    await sleep(800);
+    const settingsPage = await settings.webContents.executeJavaScript(
+      "({ app: Boolean(document.querySelector('#settings-app')), nav: document.querySelectorAll('[data-section]').length, preview: Boolean(document.querySelector('#preview')), api: Boolean(window.buffySettings) })",
     );
-    if (!wardrobePage.app || !wardrobePage.preview || !wardrobePage.api || wardrobePage.tabs < 4) {
-      throw new Error(`wardrobe renderer check failed: ${JSON.stringify(wardrobePage)}`);
+    if (!settingsPage.app || settingsPage.nav < 6 || !settingsPage.preview || !settingsPage.api) {
+      throw new Error(`settings renderer check failed: ${JSON.stringify(settingsPage)}`);
     }
-    wardrobeWin.close();
+    settings.close();
     console.log(`SMOKE_OK ${health.version} ${page.ready}`);
     app.exit(0);
   } catch (error) {
@@ -810,59 +1402,196 @@ async function runSmokeTest() {
   }
 }
 
-ipcMain.on('pet', () => postPet());
+/* ---------------- IPC ---------------- */
+
+ipcMain.on('ui:ignore-mouse', (_event, ignore) => {
+  if (!win || win.isDestroyed()) return;
+  try {
+    win.setIgnoreMouseEvents(Boolean(ignore), { forward: true });
+  } catch {
+    /* older platforms may not support forwarding */
+  }
+});
+
+ipcMain.handle('pet', async () => {
+  try {
+    const result = await postJson('/pet', {});
+    return { ok: true, state: result.state };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+});
 
 ipcMain.handle('dismiss-session', async (_event, sessionId) => {
-  if (!sessionId) return false;
+  if (!sessionId) return { ok: false, error: 'No session was specified.' };
   try {
-    await postJson('/session/dismiss', { sessionId: String(sessionId) });
-    return true;
-  } catch {
-    return false;
+    const result = await postJson('/session/dismiss', { sessionId: String(sessionId) });
+    return { ok: true, removed: Boolean(result.removed), state: result.state };
+  } catch (error) {
+    return { ok: false, error: error.message };
   }
 });
 
-ipcMain.handle('wardrobe:get', () => ({ catalog: WARDROBE.CATALOG, wardrobe }));
+ipcMain.handle('snapshot:get', () => snapshot);
 
-ipcMain.handle('wardrobe:update', (_event, patch) => {
-  const safe = {};
-  const incoming = patch && typeof patch === 'object' ? patch : {};
-  for (const key of Object.keys(WARDROBE.DEFAULTS)) {
-    if (Object.prototype.hasOwnProperty.call(incoming, key)) safe[key] = incoming[key];
+ipcMain.handle('composer:get', () => DRAFT.snapshot());
+
+ipcMain.handle('composer:update', (_event, text) => DRAFT.set(text));
+
+ipcMain.handle('composer:handoff', async (_event, payload) => {
+  if (handoffInFlight) return { ok: false, error: 'A handoff is already in progress.' };
+  const current = DRAFT.snapshot();
+  const text = typeof payload?.text === 'string' ? payload.text : current.text;
+  const revision = Number.isFinite(payload?.revision) ? payload.revision : current.revision;
+  if (revision !== current.revision) {
+    return { ok: false, code: 'STALE', error: 'The draft changed. Review it and try again.' };
   }
-  return updateWardrobe(safe);
+  if (text !== current.text) DRAFT.set(text);
+  const submitted = DRAFT.submit();
+  if (!submitted.ok) return submitted;
+  const link = buildClaudeCodeUrl(submitted.text);
+  if (!link.ok) return link;
+  handoffInFlight = true;
+  try {
+    await shell.openExternal(link.url);
+  } catch (error) {
+    handoffInFlight = false;
+    return { ok: false, code: 'OPEN_FAILED', error: `Claude could not be opened: ${error.message}`, draft: DRAFT.snapshot() };
+  }
+  handoffInFlight = false;
+  const settled = DRAFT.settle(submitted);
+  if (win && !win.isDestroyed()) win.webContents.send('draft', settled.draft);
+  if (settled.cleared) maybeResumeUpdate();
+  return {
+    ok: true,
+    opened: true,
+    cleared: settled.cleared,
+    reason: settled.reason,
+    revision: settled.draft.revision,
+    draft: settled.draft,
+  };
 });
 
-ipcMain.handle('wardrobe:random', () => updateWardrobe(WARDROBE.randomLook()));
-
-ipcMain.handle('wardrobe:save-preset', (_event, name) => {
-  const result = WARDROBE.addPreset(wardrobe, String(name ?? ''), { id: randomUUID(), now: new Date().toISOString() });
-  if (result.error) return { ok: false, error: result.error, wardrobe };
-  wardrobe = result.wardrobe;
-  const saved = saveWardrobe();
-  broadcastWardrobe();
-  refreshTrayMenu();
-  return { ok: saved.ok, error: saved.error, wardrobe, preset: result.preset };
+ipcMain.handle('composer:close', (_event, options) => {
+  composerOpen = false;
+  pendingRestoreFocus = options?.restoreFocus !== false;
+  maybeResumeUpdate();
+  return { ok: true };
 });
 
-ipcMain.handle('wardrobe:apply-preset', (_event, id) => {
-  const preset = WARDROBE.findPreset(wardrobe, String(id ?? ''));
-  if (!preset) return { ok: false, error: 'That look no longer exists.', wardrobe };
-  return updateWardrobe(preset.look);
+ipcMain.handle('clipboard:write', (_event, text) => {
+  clipboard.writeText(String(text ?? ''));
+  return true;
 });
 
-ipcMain.handle('wardrobe:delete-preset', (_event, id) => {
-  const result = WARDROBE.removePreset(wardrobe, String(id ?? ''));
-  if (result.error) return { ok: false, error: result.error, wardrobe };
-  wardrobe = result.wardrobe;
-  const saved = saveWardrobe();
-  broadcastWardrobe();
-  refreshTrayMenu();
-  return { ok: saved.ok, error: saved.error, wardrobe };
+ipcMain.handle('ui:mode', (_event, next) => {
+  const result = setMode(next);
+  if (next === 'compose') composerOpen = true;
+  if (next === 'compact') composerOpen = false;
+  return result;
 });
 
-ipcMain.on('wardrobe:close', () => {
-  if (wardrobeWindow && !wardrobeWindow.isDestroyed()) wardrobeWindow.close();
+ipcMain.handle('ui:settings', async (_event, section) => {
+  await openSettings(section || 'companion');
+  return true;
+});
+
+ipcMain.handle('ui:open-claude', async () => {
+  try {
+    await shell.openExternal('claude://code/new');
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+});
+
+ipcMain.handle('alerts:snooze', (_event, durationMs) => {
+  prefsApi.setAlertsSnooze(prefs, Number(durationMs) || 0, Date.now());
+  prefsApi.savePrefs(prefs);
+  broadcastPrefs();
+  return { ok: true, prefs };
+});
+
+ipcMain.on('drag-start', (_event, screenX, screenY) => {
+  if (!win || win.isDestroyed()) return;
+  const [x, y] = win.getPosition();
+  drag = { screenX, screenY, x, y, mode };
+});
+
+ipcMain.on('drag-move', (_event, screenX, screenY) => {
+  if (!win || !drag) return;
+  const bounds = win.getBounds();
+  const nextX = drag.x + (screenX - drag.screenX);
+  const nextY = drag.y + (screenY - drag.screenY);
+  const display = screen.getDisplayNearestPoint({
+    x: nextX + Math.round(bounds.width / 2),
+    y: nextY + Math.round(bounds.height / 2),
+  });
+  const area = display.workArea;
+  const x = Math.min(Math.max(nextX, area.x - bounds.width + 70), area.x + area.width - 70);
+  const y = Math.min(Math.max(nextY, area.y), area.y + area.height - 70);
+  win.setBounds({ x: Math.round(x), y: Math.round(y), width: bounds.width, height: bounds.height });
+});
+
+ipcMain.on('drag-end', () => {
+  if (!win || win.isDestroyed()) return;
+  drag = null;
+  const bounds = win.getBounds();
+  win.setBounds(bounds);
+  savePosition(mode === 'compact' ? 'compact' : 'full');
+});
+
+ipcMain.on('menu', () => {
+  if (!win) return;
+  Menu.buildFromTemplate(menuTemplate(false)).popup({ window: win });
+});
+
+ipcMain.handle('settings:get', async () => {
+  if (connectionCache === null) connectionCache = await connectionStatus();
+  return {
+    prefs,
+    catalog: catalogPayload(),
+    version: app.getVersion(),
+    mode,
+    scale: windowState.scale,
+    notificationsSupported: Notification.isSupported(),
+    shortcut: shortcutStatus,
+    connection: connectionCache,
+    dictation: dictationCapability(),
+    health: await getJson('/health', 500).catch(() => null),
+    watch: snapshot?.watch || null,
+    update: {
+      ready: updateReady,
+      deferred: updateDeferred,
+      version: updateReady?.version || null,
+      packaged: app.isPackaged,
+    },
+  };
+});
+
+ipcMain.handle('settings:action', async (_event, payload) => {
+  const type = payload?.type;
+  const result = await settingsAction(type, payload || {});
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.webContents.send('settings:state', {
+      prefs,
+      shortcut: shortcutStatus,
+      connection: connectionCache,
+      update: { ready: updateReady, deferred: updateDeferred, version: updateReady?.version || null },
+    });
+  }
+  return result;
+});
+
+ipcMain.handle('settings:close', () => {
+  if (settingsWindow && !settingsWindow.isDestroyed()) settingsWindow.close();
+  return true;
+});
+
+ipcMain.handle('settings:open-external', (_event, url) => {
+  const target = String(url || '');
+  if (!/^https?:/i.test(target)) return false;
+  return shell.openExternal(target).then(() => true).catch(() => false);
 });
 
 ipcMain.handle('setup-copy', (_event, text) => {
@@ -879,35 +1608,18 @@ ipcMain.on('setup-docs', () => {
   shell.openExternal(DOCS_URL);
 });
 
-ipcMain.on('drag-start', (_event, screenX, screenY) => {
-  if (!win) return;
-  const [x, y] = win.getPosition();
-  drag = { screenX, screenY, x, y };
-});
+function maybeResumeUpdate() {
+  if (!updateReady || !updateDeferred) return;
+  if (updateIsBusy()) return;
+  updateDeferred = false;
+  refreshTrayMenu();
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('update', { kind: 'ready', version: updateReady.version });
+    win.webContents.send('toast', 'Update ready. Use Settings → Updates or the tray to restart when convenient.');
+  }
+}
 
-ipcMain.on('drag-move', (_event, screenX, screenY) => {
-  if (!win || !drag) return;
-  const nextX = drag.x + (screenX - drag.screenX);
-  const nextY = drag.y + (screenY - drag.screenY);
-  const display = screen.getDisplayNearestPoint({ x: nextX + WIDTH / 2, y: nextY + HEIGHT / 2 });
-  const area = display.workArea;
-  const x = Math.min(Math.max(nextX, area.x - 60), area.x + area.width - 40);
-  const y = Math.min(Math.max(nextY, area.y), area.y + area.height - 40);
-  win.setBounds({ x: Math.round(x), y: Math.round(y), width: WIDTH, height: HEIGHT });
-});
-
-ipcMain.on('drag-end', () => {
-  if (!win) return;
-  drag = null;
-  const [x, y] = win.getPosition();
-  win.setBounds({ x, y, width: WIDTH, height: HEIGHT });
-  saveBounds();
-});
-
-ipcMain.on('menu', () => {
-  if (!win) return;
-  Menu.buildFromTemplate(menuTemplate(false)).popup({ window: win });
-});
+/* ---------------- app lifecycle ---------------- */
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -917,16 +1629,19 @@ if (!gotLock) {
     showWindow();
     if (argv.includes('--onboarding')) showOnboarding({ force: true });
   });
-  app.on('activate', () => {
-    showWindow();
-  });
+  app.on('activate', () => showWindow());
   app.whenReady().then(async () => {
     app.setAppUserModelId('com.slayyyyer.buffy');
     try {
-      await ensureDaemon();
+      await loadSupportModules();
     } catch (error) {
-      console.error(`buffy daemon: ${error.message}`);
+      console.error(`buffy preferences: ${error.message}`);
+      dialog.showErrorBox('Buffy could not start', error.message);
+      app.exit(1);
+      return;
     }
+    syncShortcut();
+    await ensureDaemon().catch((error) => console.error(`buffy daemon: ${error.message}`));
     createWindow();
     if (smokeTest) {
       await runSmokeTest();
@@ -934,21 +1649,22 @@ if (!gotLock) {
     }
     createTray();
     initUpdater();
-    if (wardrobeShotPath) {
+    applyDailyRotation();
+    setInterval(applyDailyRotation, 60_000).unref?.();
+    if (settingsShotPath) {
       try {
-        await sleep(700);
-        const wardrobeWin = await openWardrobe({ show: true });
-        await sleep(900);
-        const target = path.resolve(wardrobeShotPath);
-        const image = await wardrobeWin.webContents.capturePage();
+        await sleep(600);
+        const settings = await openSettings('companion');
+        await sleep(1100);
+        const target = path.resolve(settingsShotPath);
         fs.mkdirSync(path.dirname(target), { recursive: true });
-        fs.writeFileSync(target, image.toPNG());
-        console.log(`buffy wardrobe screenshot: ${target}`);
+        fs.writeFileSync(target, (await settings.webContents.capturePage()).toPNG());
+        console.log(`buffy settings screenshot: ${target}`);
       } catch (error) {
-        console.error(`buffy wardrobe screenshot failed: ${error.message}`);
-        if (wardrobeShotExit) app.exit(1);
+        console.error(`buffy settings screenshot failed: ${error.message}`);
+        if (settingsShotExit) app.exit(1);
       }
-      if (wardrobeShotExit) app.quit();
+      if (settingsShotExit) app.quit();
       return;
     }
     if (!shotPath && (forceOnboarding || !onboardingSeen())) {
@@ -963,7 +1679,11 @@ if (!gotLock) {
     clearInterval(pollTimer);
     clearInterval(cursorTimer);
     clearTimeout(hideTimer);
-    saveBounds();
+    clearTimeout(streamTimer);
+    clearTimeout(saveTimer);
+    globalShortcut.unregisterAll();
+    savePosition();
+    disconnectStream();
     if (embeddedDaemon) {
       event.preventDefault();
       const daemon = embeddedDaemon;

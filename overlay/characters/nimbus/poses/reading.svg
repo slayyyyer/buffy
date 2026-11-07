@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-reading" stroke-linecap="round" stroke-linejoin="round">
+    <!-- arms holding the book -->
+    <path d="M146 402 C132 438 150 478 186 500" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C132 438 150 478 186 500" stroke="#fbe6d9" stroke-width="10"/>
+    <path d="M366 402 C380 438 362 478 326 500" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C380 438 362 478 326 500" stroke="#fbe6d9" stroke-width="10"/>
+    <!-- book -->
+    <g transform="translate(256 498) rotate(-3)">
+      <path d="M-88 -34 C-56 -46 -18 -42 0 -30 C18 -42 56 -46 88 -34 L84 36 C54 26 22 30 0 42 C-22 30 -54 26 -84 36 Z"
+        fill="#8f6aa8" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M-80 -26 C-52 -34 -20 -32 0 -22 L0 34 C-22 24 -52 22 -78 30 Z" fill="#fff7ea" stroke="#d8b9a8" stroke-width="2"/>
+      <path d="M80 -26 C52 -34 20 -32 0 -22 L0 34 C22 24 52 22 78 30 Z" fill="#fff7ea" stroke="#d8b9a8" stroke-width="2"/>
+      <g stroke="#c9a7b8" stroke-width="2.5" opacity="0.8">
+        <path d="M-62 -14 L-16 -8"/><path d="M-62 -2 L-16 4"/><path d="M-62 10 L-16 16"/>
+        <path d="M20 -8 L62 -14"/><path d="M20 4 L62 -2"/><path d="M20 16 L62 10"/>
+      </g>
+      <path d="M0 -22 L0 34" stroke="#5c3150" stroke-width="3"/>
+      <rect x="-3" y="-30" width="6" height="70" rx="3" fill="#e78bb0"/>
+    </g>
+    <ellipse cx="180" cy="496" rx="17" ry="15" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="332" cy="496" rx="17" ry="15" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <path d="M174 492 Q180 498 186 492" stroke="#e9b6b8" stroke-width="3"/>
+    <path d="M326 492 Q332 498 338 492" stroke="#e9b6b8" stroke-width="3"/>
+    <!-- page-turn shimmer -->
+    <path d="M300 470 L308 462" stroke="#f6cf7d" stroke-width="3" opacity="0.8"/>
+    <circle cx="312" cy="456" r="3" fill="#f6cf7d" opacity="0.8"/>
+  </g>
+</svg>

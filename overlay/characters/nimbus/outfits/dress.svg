@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="cream" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="0.7" stop-color="#f9ead8"/>
+      <stop offset="1" stop-color="#efd4c0"/>
+    </linearGradient>
+    <linearGradient id="sash" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0" stop-color="#7c375f"/>
+      <stop offset="0.55" stop-color="#a4577f"/>
+      <stop offset="1" stop-color="#6d2e55"/>
+    </linearGradient>
+  </defs>
+
+  <g id="nimbus-dress">
+    <!-- skirt -->
+    <path d="M190 436 C168 478 150 522 142 560 C190 584 322 584 370 560 C362 522 344 478 322 436 Z"
+      fill="url(#cream)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- pleats -->
+    <path d="M214 448 C204 492 198 534 196 566" fill="none" stroke="#edd3bd" stroke-width="4" stroke-linecap="round"/>
+    <path d="M256 448 V572" fill="none" stroke="#edd3bd" stroke-width="4" stroke-linecap="round"/>
+    <path d="M298 448 C308 492 314 534 316 566" fill="none" stroke="#edd3bd" stroke-width="4" stroke-linecap="round"/>
+    <!-- scalloped hem -->
+    <path d="M144 558 Q164 574 184 558 Q204 574 224 558 Q244 574 264 558 Q284 574 304 558 Q324 574 344 558 Q360 570 370 558"
+      fill="none" stroke="#f3dcc4" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- bodice -->
+    <path d="M194 386 C188 416 190 442 200 460 C224 472 288 472 312 460 C322 442 324 416 318 386 C296 374 216 374 194 386 Z"
+      fill="url(#cream)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- straps -->
+    <path d="M202 390 C198 366 204 352 216 346" fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <path d="M310 390 C314 366 308 352 296 346" fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <!-- scalloped collar -->
+    <path d="M200 376 Q218 398 236 380 Q256 402 276 380 Q294 398 312 376" fill="none" stroke="#fffdf5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- sash -->
+    <path d="M190 445 C222 458 290 458 322 445 L324 468 C288 480 224 480 188 468 Z"
+      fill="url(#sash)" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <!-- sash bow -->
+    <g transform="translate(256 466)">
+      <path d="M0 0 C-18 -20 -44 -14 -40 2 C-37 16 -14 18 0 6 Z" fill="#c2759b" stroke="#5c3150" stroke-width="5"/>
+      <path d="M0 0 C18 -20 44 -14 40 2 C37 16 14 18 0 6 Z" fill="#c2759b" stroke="#5c3150" stroke-width="5"/>
+      <path d="M-4 6 L-14 28 L-2 24 Z" fill="#a4577f" stroke="#5c3150" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M4 6 L14 28 L2 24 Z" fill="#a4577f" stroke="#5c3150" stroke-width="4" stroke-linejoin="round"/>
+      <ellipse cx="0" cy="2" rx="7" ry="8" fill="#8f456f" stroke="#5c3150" stroke-width="4"/>
+    </g>
+    <!-- buttons -->
+    <circle cx="230" cy="416" r="4" fill="#b77c93"/>
+    <circle cx="230" cy="434" r="4" fill="#b77c93"/>
+    <!-- pocket heart -->
+    <path d="M286 422 C286 415 297 414 297 422 C297 414 308 415 308 422 C308 430 297 436 297 436 C297 436 286 430 286 422 Z"
+      fill="#e9a7bd" stroke="#b76f8e" stroke-width="2.5"/>
+  </g>
+</svg>

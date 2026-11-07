@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-tea" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M146 402 C126 422 116 446 118 466" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C126 422 116 446 118 466" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="116" cy="478" rx="19" ry="22" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <!-- right arm holding the cup -->
+    <path d="M366 402 C394 410 406 434 396 456" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C394 410 406 434 396 456" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="394" cy="462" rx="18" ry="16" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <!-- cup -->
+    <g transform="translate(386 438)">
+      <path d="M-24 -14 H24 V20 C24 32 -24 32 -24 20 Z" fill="#d98b8f" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M24 -4 C40 -4 40 18 24 18" fill="none" stroke="#5c3150" stroke-width="6"/>
+      <path d="M-19 -14 H19" stroke="#f7d7cf" stroke-width="4" stroke-linecap="round"/>
+      <path d="M-6 -2 Q0 6 6 -2" fill="none" stroke="#fff2e8" stroke-width="3"/>
+      <path d="M-10 -30 Q-16 -42 -8 -52" fill="none" stroke="#f0c9d2" stroke-width="4" opacity="0.85"/>
+      <path d="M4 -28 Q-2 -40 6 -50" fill="none" stroke="#f0c9d2" stroke-width="3" opacity="0.6"/>
+    </g>
+    <path d="M112 470 Q116 476 120 470" stroke="#e9b6b8" stroke-width="3"/>
+  </g>
+</svg>

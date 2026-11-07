@@ -14,18 +14,27 @@ const FREEBUFF_START = '<!-- buffy:start -->';
 const FREEBUFF_END = '<!-- buffy:end -->';
 
 /**
- * The five Claude Code hooks we care about. Notification is filtered to the
- * types that actually want a human; Stop is a per-turn event.
+ * Claude Code hooks we install. PermissionRequest is the explicit permission
+ * signal; Notification still carries idle prompts and elicitation questions.
+ * Every entry is idempotent and owned by Buffy only when the command points at
+ * Buffy's stable launcher or development CLI.
  */
 export const CLAUDE_HOOKS = [
+  { event: 'SessionStart' },
   { event: 'UserPromptSubmit' },
   { event: 'PreToolUse' },
+  { event: 'PermissionRequest' },
   { event: 'PostToolUse' },
+  { event: 'PostToolUseFailure' },
   {
     event: 'Notification',
     matcher: 'permission_prompt|idle_prompt|agent_needs_input|elicitation_dialog',
   },
+  { event: 'PreCompact' },
+  { event: 'PostCompact' },
+  { event: 'SubagentStop' },
   { event: 'Stop' },
+  { event: 'SessionEnd' },
 ];
 
 function quote(value) {
@@ -36,7 +45,77 @@ export function cliPrefix() {
   return `${quote(process.execPath)} ${quote(BIN)}`;
 }
 
-export function hookCommand(event) {
+export function launcherPath(env = process.env) {
+  return buffyFile(path.join('bin', process.platform === 'win32' ? 'buffy-hook.cmd' : 'buffy-hook'), env);
+}
+
+export function commandLauncherPath(env = process.env) {
+  return buffyFile(path.join('bin', process.platform === 'win32' ? 'buffy-cli.cmd' : 'buffy-cli'), env);
+}
+
+function packagedHookEntry() {
+  const unpacked = process.resourcesPath
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'bin', 'buffy.js')
+    : null;
+  if (unpacked && fs.existsSync(unpacked)) return unpacked;
+  return BIN;
+}
+
+/**
+ * A stable launcher survives app updates and works when no system Node is
+ * installed. It runs the packaged Electron binary in Node mode, then the CLI
+ * hook command. The path never changes between versions.
+ */
+function writeLauncher(file, { entry, exe, args = '' }) {
+  const rest = args ? ` ${args}` : '';
+  let text;
+  if (process.platform === 'win32') {
+    text = [
+      '@echo off',
+      'rem buffy-hook-managed',
+      'set "ELECTRON_RUN_AS_NODE=1"',
+      `"${exe}" "${entry}"${rest} %*`,
+      '',
+    ].join('\r\n');
+  } else {
+    text = [
+      '#!/bin/sh',
+      '# buffy-hook-managed',
+      `ELECTRON_RUN_AS_NODE=1 exec "${exe}" "${entry}"${rest} "$@"`,
+      '',
+    ].join('\n');
+  }
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, text, { mode: 0o755 });
+    if (process.platform !== 'win32') fs.chmodSync(file, 0o755);
+    return file;
+  } catch {
+    return null;
+  }
+}
+
+export function ensureLauncher({ env = process.env, packaged = false } = {}) {
+  if (!packaged) return null;
+  return writeLauncher(launcherPath(env), {
+    entry: packagedHookEntry(),
+    exe: process.execPath,
+    args: 'hook claude',
+  });
+}
+
+/** The packaged `/buffy` command uses the same stable Node-mode launcher. */
+export function ensureCommandLauncher({ env = process.env, packaged = false } = {}) {
+  if (!packaged) return null;
+  return writeLauncher(commandLauncherPath(env), {
+    entry: packagedHookEntry(),
+    exe: process.execPath,
+  });
+}
+
+export function hookCommand(event, { env = process.env, packaged = false, launcher = null } = {}) {
+  const stable = launcher || (packaged ? ensureLauncher({ env, packaged }) : null);
+  if (stable) return `${quote(stable)} ${event}`;
   return `${cliPrefix()} hook claude ${event}`;
 }
 
@@ -66,14 +145,15 @@ function readSettings(file) {
   }
 }
 
-function isBuffyHook(entry) {
+function isBuffyHook(entry, env) {
   const hooks = Array.isArray(entry?.hooks) ? entry.hooks : [];
-  return hooks.some(
-    (hook) =>
-      typeof hook?.command === 'string' &&
-      hook.command.replace(/\\/g, '/').includes(BIN_POSIX) &&
-      /hook\s+claude\b/.test(hook.command),
-  );
+  const stable = launcherPath(env).replace(/\\/g, '/');
+  return hooks.some((hook) => {
+    if (typeof hook?.command !== 'string') return false;
+    const command = hook.command.replace(/\\/g, '/');
+    if (command.includes(stable)) return true;
+    return command.includes(BIN_POSIX) && /hook\s+claude\b/.test(hook.command);
+  });
 }
 
 function stamp(now) {
@@ -91,9 +171,26 @@ function backup(file, now) {
   return target;
 }
 
-function writeFile(file, text) {
+function writeAtomic(file, text, mode) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, text);
+  const temp = `${file}.${process.pid}.${Math.random().toString(36).slice(2, 8)}.tmp`;
+  try {
+    fs.writeFileSync(temp, text, mode ? { mode } : undefined);
+    try {
+      fs.renameSync(temp, file);
+    } catch (error) {
+      if (process.platform !== 'win32') throw error;
+      fs.rmSync(file, { force: true });
+      fs.renameSync(temp, file);
+    }
+    if (mode) fs.chmodSync(file, mode);
+  } finally {
+    fs.rmSync(temp, { force: true });
+  }
+}
+
+function writeFile(file, text) {
+  writeAtomic(file, text);
 }
 
 function manifestPath(env) {
@@ -114,7 +211,7 @@ function recordInstall(entry, env) {
     const entries = readManifest(env).filter((item) => !(item.kind === entry.kind && item.scope === entry.scope));
     entries.push(entry);
     ensureBuffyDir(env);
-    fs.writeFileSync(manifestPath(env), `${JSON.stringify(entries, null, 2)}\n`);
+    writeAtomic(manifestPath(env), `${JSON.stringify(entries, null, 2)}\n`);
   } catch {
     /* bookkeeping only */
   }
@@ -124,14 +221,13 @@ function forgetInstall(kind, scope, env) {
   try {
     const entries = readManifest(env).filter((item) => !(item.kind === kind && item.scope === scope));
     ensureBuffyDir(env);
-    fs.writeFileSync(manifestPath(env), `${JSON.stringify(entries, null, 2)}\n`);
+    writeAtomic(manifestPath(env), `${JSON.stringify(entries, null, 2)}\n`);
   } catch {
     /* bookkeeping only */
   }
 }
 
-export function claudeCommandMarkdown() {
-  const prefix = cliPrefix();
+export function claudeCommandMarkdown(prefix = cliPrefix()) {
   return [
     '---',
     'description: Check in with buffy, pet her, or hatch a new sprite',
@@ -157,11 +253,18 @@ export function claudeCommandMarkdown() {
 }
 
 /**
- * Merge buffy hooks into Claude Code settings without touching anything else.
+ * Merge Buffy hooks into Claude Code settings without touching anything else.
  * Existing hooks for the same events are kept; our own entries are replaced so
- * repeated installs stay idempotent.
+ * repeated installs stay idempotent. Writes are atomic, and a failure while
+ * writing the command file rolls the settings file back to its prior bytes.
  */
-export function installClaude({ cwd = process.cwd(), global = false, env = process.env, now = Date.now() } = {}) {
+export function installClaude({
+  cwd = process.cwd(),
+  global = false,
+  env = process.env,
+  now = Date.now(),
+  packaged = false,
+} = {}) {
   const paths = claudePaths({ cwd, global });
   const scope = global ? 'user' : 'project';
   const result = {
@@ -172,9 +275,24 @@ export function installClaude({ cwd = process.cwd(), global = false, env = proce
     changed: [],
     notes: [],
     hooks: CLAUDE_HOOKS.map((hook) => hook.event),
+    launcher: null,
+    commandLauncher: null,
+    skipped: false,
   };
 
   const { text, data } = readSettings(paths.settings);
+  if (data.disableAllHooks === true) {
+    result.skipped = true;
+    result.notes.push('Claude Code has disableAllHooks enabled. Buffy left the settings untouched; enable hooks in Claude Code first.');
+    return result;
+  }
+
+  const launcher = packaged ? ensureLauncher({ env, packaged }) : null;
+  result.launcher = launcher;
+  if (packaged && !launcher) {
+    result.notes.push('The stable hook launcher could not be created; hooks may not run until this is fixed.');
+  }
+
   const settings = { ...data };
   const existingHooks =
     settings.hooks && typeof settings.hooks === 'object' && !Array.isArray(settings.hooks) ? settings.hooks : {};
@@ -182,9 +300,9 @@ export function installClaude({ cwd = process.cwd(), global = false, env = proce
 
   for (const { event, matcher } of CLAUDE_HOOKS) {
     const current = Array.isArray(hooks[event]) ? hooks[event] : [];
-    const kept = current.filter((entry) => !isBuffyHook(entry));
+    const kept = current.filter((entry) => !isBuffyHook(entry, env));
     const entry = {
-      hooks: [{ type: 'command', command: hookCommand(event), timeout: 10 }],
+      hooks: [{ type: 'command', command: hookCommand(event, { env, packaged, launcher }), timeout: 10 }],
     };
     if (matcher) entry.matcher = matcher;
     hooks[event] = [...kept, entry];
@@ -198,7 +316,11 @@ export function installClaude({ cwd = process.cwd(), global = false, env = proce
     result.changed.push(paths.settings);
   }
 
-  const commandText = claudeCommandMarkdown();
+  const commandPrefix = packaged
+    ? ensureCommandLauncher({ env, packaged }) || cliPrefix()
+    : cliPrefix();
+  if (packaged) result.commandLauncher = commandLauncherPath(env);
+  const commandText = claudeCommandMarkdown(commandPrefix);
   let previousCommand = '';
   try {
     previousCommand = fs.readFileSync(paths.command, 'utf8');
@@ -206,9 +328,17 @@ export function installClaude({ cwd = process.cwd(), global = false, env = proce
     /* new command file */
   }
   if (previousCommand !== commandText) {
-    if (previousCommand.trim()) result.backups.push(backup(paths.command, now));
-    writeFile(paths.command, commandText);
-    result.changed.push(paths.command);
+    try {
+      if (previousCommand.trim()) result.backups.push(backup(paths.command, now));
+      writeFile(paths.command, commandText);
+      result.changed.push(paths.command);
+    } catch (error) {
+      if (result.changed.includes(paths.settings)) {
+        if (text) writeFile(paths.settings, text);
+        else fs.rmSync(paths.settings, { force: true });
+      }
+      throw new Error(`could not write ${paths.command}: ${error.message}; Claude settings were restored`);
+    }
   }
 
   recordInstall(
@@ -217,15 +347,15 @@ export function installClaude({ cwd = process.cwd(), global = false, env = proce
       scope,
       settings: paths.settings,
       command: paths.command,
+      launcher,
       backups: result.backups,
       installedAt: new Date(now).toISOString(),
     },
     env,
   );
 
-  if (global) {
-    result.notes.push('user scope applies to every Claude Code project on this machine');
-  }
+  if (global) result.notes.push('user scope applies to every Claude Code project on this machine');
+  if (launcher) result.notes.push(`stable launcher: ${launcher}`);  result.notes.push('Hooks run silently and never block Claude Code; if Buffy is unavailable the hook exits 0.');
   return result;
 }
 
@@ -248,7 +378,7 @@ export function uninstallClaude({ cwd = process.cwd(), global = false, env = pro
       const hooks = { ...data.hooks };
       for (const event of Object.keys(hooks)) {
         const list = Array.isArray(hooks[event]) ? hooks[event] : [];
-        const kept = list.filter((entry) => !isBuffyHook(entry));
+        const kept = list.filter((entry) => !isBuffyHook(entry, env));
         result.removedHooks += list.length - kept.length;
         if (kept.length) hooks[event] = kept;
         else delete hooks[event];
@@ -258,7 +388,7 @@ export function uninstallClaude({ cwd = process.cwd(), global = false, env = pro
 
       const nextSettings = `${JSON.stringify(data, null, 2)}\n`;
       if (nextSettings !== text) {
-        fs.writeFileSync(paths.settings, nextSettings);
+        writeFile(paths.settings, nextSettings);
         result.changed.push(paths.settings);
       }
     }
@@ -349,7 +479,7 @@ function removeManagedBlock(file) {
     return { changed: true, removed: true, removedFile: true };
   }
 
-  fs.writeFileSync(file, `${next}\n`);
+  writeFile(file, `${next}\n`);
   return { changed: true, removed: true, removedFile: false };
 }
 

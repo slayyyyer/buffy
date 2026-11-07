@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="body" x1="0.18" y1="0" x2="0.72" y2="1">
+      <stop offset="0" stop-color="#fff8ec"/>
+      <stop offset="0.44" stop-color="#fbe6d9"/>
+      <stop offset="0.78" stop-color="#f3cdc8"/>
+      <stop offset="1" stop-color="#e7b3b8"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.32" cy="0.22" r="0.72">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#4b2a47"/>
+      <stop offset="0.55" stop-color="#3a2039"/>
+      <stop offset="1" stop-color="#2a1529"/>
+    </linearGradient>
+    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f08fae" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#f08fae" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="bodyShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#5c3150" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <g id="nimbus-base">
+    <!-- feet, tucked behind the body -->
+    <g id="feet">
+      <ellipse cx="202" cy="548" rx="40" ry="27" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
+      <ellipse cx="310" cy="548" rx="40" ry="27" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
+      <path d="M170 560 Q202 578 234 560" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
+      <path d="M278 560 Q310 578 342 560" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="184" cy="542" r="5" fill="#f6cfd8" opacity="0.9"/>
+      <circle cx="292" cy="542" r="5" fill="#f6cfd8" opacity="0.9"/>
+    </g>
+
+    <!-- plush cloud body: one clean silhouette with soft lobes -->
+    <path
+      id="cloud-body"
+      d="M256 128
+         C286 112 320 124 332 150
+         C364 140 396 158 402 188
+         C438 196 458 226 450 258
+         C480 274 490 314 470 340
+         C488 368 476 410 446 424
+         C446 464 414 492 378 484
+         C364 512 330 526 300 514
+         C284 528 254 530 238 516
+         C210 528 178 514 164 486
+         C128 492 96 464 96 426
+         C64 410 52 368 72 340
+         C52 314 62 274 92 258
+         C84 226 104 196 140 188
+         C146 158 178 140 210 150
+         C222 124 256 112 256 128 Z"
+      fill="url(#body)"
+      stroke="#5c3150"
+      stroke-width="9"
+      stroke-linejoin="round"
+      filter="url(#bodyShadow)"
+    />
+    <path
+      d="M256 128
+         C286 112 320 124 332 150
+         C364 140 396 158 402 188
+         C438 196 458 226 450 258
+         C480 274 490 314 470 340
+         C488 368 476 410 446 424
+         C446 464 414 492 378 484
+         C364 512 330 526 300 514
+         C284 528 254 530 238 516
+         C210 528 178 514 164 486
+         C128 492 96 464 96 426
+         C64 410 52 368 72 340
+         C52 314 62 274 92 258
+         C84 226 104 196 140 188
+         C146 158 178 140 210 150
+         C222 124 256 112 256 128 Z"
+      fill="url(#sheen)"
+    />
+
+    <!-- soft inner shadow where the body meets the floor -->
+    <ellipse cx="256" cy="470" rx="154" ry="26" fill="#b97b8c" opacity="0.16"/>
+
+    <!-- plush seam -->
+    <path d="M150 456 Q256 478 362 456" fill="none" stroke="#e0aca9" stroke-width="4" stroke-linecap="round" stroke-dasharray="3 9" opacity="0.75"/>
+
+    <!-- shoulder nubs; the pose layer supplies the arms -->
+    <ellipse cx="120" cy="404" rx="15" ry="19" fill="#f8e0d4" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="392" cy="404" rx="15" ry="19" fill="#f8e0d4" stroke="#5c3150" stroke-width="7"/>
+
+    <!-- little top puff -->
+    <g id="top-puff">
+      <path d="M238 136 C232 112 246 96 264 98 C280 88 302 96 306 114 C322 120 326 138 312 148 C304 158 280 160 268 150 C252 158 238 150 238 136 Z" fill="#fff4e6" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M252 120 Q262 108 278 110" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+    </g>
+
+    <!-- cheeks peek out around the screen -->
+    <circle cx="146" cy="342" r="30" fill="url(#cheek)"/>
+    <circle cx="366" cy="342" r="30" fill="url(#cheek)"/>
+
+    <!-- face screen: the renderer draws the expression here -->
+    <rect x="168" y="252" width="176" height="112" rx="34" fill="url(#screen)" stroke="#5c3150" stroke-width="8"/>
+    <rect x="178" y="262" width="156" height="92" rx="26" fill="none" stroke="#ffc7dd" stroke-width="2" opacity="0.2"/>
+    <path d="M192 270 Q216 258 246 260" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.16"/>
+    <circle cx="330" cy="280" r="4" fill="#ffc7dd" opacity="0.55"/>
+
+    <!-- tiny stitch details on the body -->
+    <path d="M118 380 L108 398" stroke="#d9a3a5" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+    <path d="M394 380 L404 398" stroke="#d9a3a5" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="126" cy="446" r="5" fill="#f6cfd8" opacity="0.8"/>
+    <circle cx="386" cy="446" r="5" fill="#f6cfd8" opacity="0.8"/>
+  </g>
+</svg>

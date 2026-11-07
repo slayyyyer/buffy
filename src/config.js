@@ -27,7 +27,7 @@ export function ensureBuffyDir(env = process.env) {
 
 const BUILTIN = {
   port: DEFAULT_PORT,
-  doneHoldMs: 4000,
+  doneHoldMs: 30000,
   sessionTtlMs: DEFAULT_SESSION_TTL_MS,
   watch: {
     enabled: true,

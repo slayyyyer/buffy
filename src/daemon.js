@@ -101,6 +101,10 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       mood: Math.round(store.mood),
       current,
       sessions: current.sessions,
+      pendingRequests: current.pendingRequests ?? 0,
+      pendingRequestsList: current.pendingRequestsList ?? [],
+      recentCompletions: current.recentCompletions ?? [],
+      lastIdleReminder: current.lastIdleReminder ?? null,
       reaction: reaction && now - reaction.at < 10_000 ? reaction : null,
       watch: watchInfo,
     };
@@ -122,7 +126,28 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     const source = cleanText(input.source, 40) || 'manual';
     const sessionId = cleanText(input.sessionId ?? input.session, 96) || source;
     const previous = machine.snapshot(now);
-    const current = machine.dispatch({ state, message: cleanText(input.message), source, sessionId }, now);
+    const current = machine.dispatch(
+      {
+        ...input,
+        state,
+        message: cleanText(input.message),
+        source,
+        sessionId,
+        category: input.category,
+        observed: input.observed,
+        request: input.request,
+        resolveRequests: input.resolveRequests,
+        resolveAllRequests: input.resolveAllRequests,
+        requestId: input.requestId,
+        toolUseId: input.toolUseId,
+        toolName: input.toolName,
+        informational: input.informational,
+        interrupted: input.interrupted,
+        completionMessage: input.completionMessage,
+        completedAt: input.completedAt,
+      },
+      now,
+    );
 
     const repeated =
       previous.state === state &&
@@ -225,12 +250,22 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
           message: file ? `editing ${file}` : `watching ${path.basename(directory)}`,
           source: 'watcher',
           sessionId: 'watcher',
+          category: 'editing-inferred',
+          observed: 'inferred',
         });
       },
       onQuiet: () => {
         const watcherSession = machine.getSession('watcher');
         if (!watcherSession || watcherSession.state !== 'working') return;
-        dispatch({ state: 'done', message: 'changes settled', source: 'watcher', sessionId: 'watcher' });
+        dispatch({
+          state: 'done',
+          message: 'activity settled',
+          source: 'watcher',
+          sessionId: 'watcher',
+          category: 'settled-inferred',
+          observed: 'inferred',
+          completionMessage: 'Repository activity settled; no test result was observed.',
+        });
       },
       onError: (error) => {
         watchInfo = { ...watchInfo, degraded: true, error: cleanText(error?.message, 80) };
@@ -273,6 +308,9 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
         pid: process.pid,
         port: server.address()?.port ?? null,
         states: STATES,
+        doneHoldMs: config.doneHoldMs,
+        watch: watchInfo,
+        pendingRequests: snapshot().pendingRequests ?? 0,
       });
     }
 

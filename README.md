@@ -1,11 +1,11 @@
 # buffy
 
-A small companion that lives on your desktop and reacts to whatever your coding
-agent is doing. Built so that Claude Code, Freebuff and anything else that can
-run a shell command can drive the same pet.
+A tiny always-on-top companion for Claude Code, Freebuff, and any coding agent
+that can run a shell command. Buffy watches the work, keeps her own little
+life, and can carry a prompt into Claude without sending it for you.
 
 <p align="center">
-  <img src="docs/buffy.png" width="240" alt="Buffy, a pink princess-cloud desktop companion, waving">
+  <img src="docs/shots/nimbus.png" width="260" alt="Nimbus, a plush storm-cloud companion with a dark face screen">
 </p>
 
 <p align="center">
@@ -16,345 +16,336 @@ run a shell command can drive the same pet.
 
 ```
 Claude Code ──hooks──────────┐
-Freebuff ──AGENTS.md events──┤
-repo edits ──watcher─────────┼──► HTTP 127.0.0.1:4517 ──► daemon ──► ~/.buffy/state.json
-a script ──buffy─────────────┘                              │
-                                                            └──► overlay window (Electron)
+Freebuff ──AGENTS.md─────────┤
+repo edits ──watcher─────────┼──► HTTP + SSE 127.0.0.1:4517 ──► daemon ──► ~/.buffy/state.json
+a script ──buffy─────────────┘                                      │
+                                                                    └──► Electron overlay + settings
 ```
 
-The watcher is the dependable signal; Freebuff's AGENTS.md events are
-best-effort.
-
-The pet is not a chatbot. Agents only send events; the daemon owns the state and
-the always-on-top overlay draws it.
+Buffy is not a chatbot. Agents send events; the daemon owns the state and the
+overlay draws it. Claude hooks are explicit. The Freebuff watcher is inferred
+and labeled as such.
 
 ## Status
 
-Buffy is at **v1.1.0**. The core is complete, and this release adds a full wardrobe and a quieter idle life:
+Buffy is at **v2.0.0**. This release rebuilds the companion around an
+asset-driven character system and a request-aware session model:
 
-- [x] daemon, CLI, state machine, placeholder sprite, overlay window
-- [x] Claude Code hooks, `/buffy` command and `buffy install claude`
-- [x] Freebuff repo watcher (dependable) and best-effort AGENTS.md events
-- [x] `buffy hatch` with generated sprites
-- [x] multi-session arbitration and a per-session overlay rail
-- [x] desktop lifecycle (tray, launch at login, first-run setup) and update-ready releases
-- [x] wardrobe window: five outfits, five bows, three hats, glasses, wands, six themes, and twelve saved looks
-- [x] idle hobbies: reading, cocoa, and stretching, plus a configurable two-minute nap
+- [x] Nimbus layered artwork and Mochi's nine-pose atlas, rendered by one engine
+- [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
+- [x] full composer for Claude with draft-safe `claude://` handoff
+- [x] request-aware concurrent sessions with pending badges that only count requests
+- [x] three lifecycles: 30s completion presentation, 5m recent completions, 30m stale sessions
+- [x] six-section settings window with live preview, wardrobe, alerts, connection, updates
+- [x] per-character wardrobe, independent clothing switches, favorites, 32 saved looks
+- [x] opt-in daily rotation that starts the next local day and skips unavailable art
+- [x] default-off request/completion notifications, sounds, and 15m/1h/4h snooze
+- [x] packaged Claude hook installer with a stable launcher and health distinctions
+- [x] draft-aware update guard and explicit deferred-update resume
+- [x] local-only dictation surfaced honestly; no cloud fallback is used
 
 ## Requirements
 
 - Node.js 20+ to run from source or use the CLI
-- Windows, macOS or Linux with a desktop session (the overlay is an Electron window)
-- Git is recommended for the repo watcher
+- Windows, macOS or Linux with a desktop session (the overlay is Electron)
+- Git is recommended for the Freebuff watcher
 
 ## Install and run
 
 ### Desktop installer
 
-Buffy 1.1.0 ships for Windows, macOS, and Linux:
+Buffy **2.0.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-linux-x86_64.AppImage.sha256)
 
-The desktop app includes the pet and its local daemon, so the pet itself does
-not need Node installed. The `buffy` CLI, Claude Code hooks, and Freebuff
-instructions still run from the Node checkout described below. Installed builds
-open a first-run setup window and can check GitHub Releases for updates from the
-tray.
+The packaged app includes the pet, the local daemon, and stable hook and CLI
+launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
+Connection** to install or repair the hooks and the `/buffy` command. Only the
+optional `buffy` terminal CLI runs from the source checkout.
 
 Builds are unsigned unless signing credentials are configured, so Windows
-SmartScreen and macOS Gatekeeper may ask you to confirm. The release workflow
-supports optional Windows signing and macOS signing/notarization; see
-[Release signing](#release-signing). Pushing a `v*` tag that matches
-`package.json` builds all platforms, smoke-tests each packaged app, writes
-installer checksums, and publishes installers plus update metadata. To build
-locally, use electron-builder on each target operating system:
-
-```bash
-npm install
-npm run dist:win     # Windows NSIS installer in dist/
-npm run dist:mac     # macOS dmg + zip; build on macOS
-npm run dist:linux   # Linux AppImage; build on Linux
-```
-
-The landing page lives in `docs/` and is published at
-[slayyyyer.github.io/buffy](https://slayyyyer.github.io/buffy/) via GitHub Pages.
+SmartScreen and macOS Gatekeeper may ask you to confirm. See
+[Release signing](#release-signing).
 
 ### From source
 
 ```bash
 npm install          # installs Electron
-
-# optional: put `buffy` on your PATH
-npm link
-
-buffy overlay        # starts the daemon on demand and shows the pet
+npm link             # optional: put `buffy` on your PATH
+buffy overlay        # starts the daemon on demand and shows Nimbus
 ```
 
-The overlay is frameless, transparent and always on top. Drag it anywhere for a
-tiny heart-and-sparkle trail, click the pet to wave, right-click or use the tray
-icon for the menu (show/hide, wardrobe, move to a screen corner, setup guide,
-launch at login, update checks, hide for 10 minutes, quit). Her eyes follow your
-cursor. After a quiet spell she opens a book, sips cocoa, or stretches; after two
-minutes she naps. Hover or click to wake her, and turn **Idle hobbies** off from
-the tray if you want a calmer desk. Her position is remembered in
-`~/.buffy/window.json`.
+The overlay is frameless, transparent, and always on top. Drag the character
+to move her, click her to pet her, right-click for the menu, and use the pill
+toolbar for compose, activity, wardrobe, compact mode, and settings.
 
-The packaged app opens a first-run setup window that explains the desktop pet,
-the `buffy install claude` and `buffy install freebuff` commands, and where
-state lives. Reopen it from the tray or with `buffy overlay --onboarding`.
-Installed builds can enable launch at login from the tray; development builds
-show those packaging-only controls as disabled.
-
-Use the **Wardrobe** menu to build a look from five outfits (Princess, Cozy,
-Sleepover, Rainy, Starlight), five bows, three hats, glasses, and wands, then
-pick one of six pastel themes. The wardrobe window has a live preview, three
-built-in looks (Royal, Cozy, Starlight), and up to twelve named presets.
-Everything is saved in `~/.buffy/wardrobe.json`; v1 wardrobe files migrate
-automatically.
+The first-run setup window explains the overlay, the global shortcut, the
+Claude connection, and where state lives. Reopen it from the tray or with
+`buffy overlay --onboarding`.
 
 <p align="center">
-  <img src="docs/shots/wardrobe.png" width="640" alt="Buffy's wardrobe window with a live preview, outfit tabs, built-in looks, and hobby chips">
+  <img src="docs/shots/overlay.png" width="360" alt="Buffy's overlay with Nimbus idle, the pending badge, and the toolbar">
 </p>
 
-Drive it from a second terminal:
+## Compose for Claude
 
-```bash
-buffy event thinking --msg "reading the repo" --source claude
-buffy event working  --msg "editing src/app.ts" --source freebuff
-buffy event needs-you --msg "waiting on a decision" --source claude
-buffy event done     --msg "tests pass"
-buffy pet
-buffy status
-```
+Buffy's composer is a draft tray, not a send button with a text field.
 
-Without `npm link`, use `node bin/buffy.js …` in place of `buffy`.
+- The default global shortcut is **Ctrl/Cmd + Shift + B**. Change it in
+  **Settings → Shortcuts**. If the accelerator is already taken, Buffy reports
+  the conflict and keeps the previous shortcut; it never silently falls back.
+- Summoning reveals the overlay, expands the composer, places it near the
+  pointer when hidden, and focuses the existing draft without recording or
+  sending anything.
+- **Ctrl/Cmd + Enter** hands the draft to Claude. Buffy opens
+  `claude://code/new?q=<encoded>` through the OS.
+- Unicode, newlines, and literal `+` survive encoding.
+- The handoff is deliberately capped at **4,000 encoded URL characters**. A
+  longer draft is rejected with a copy fallback; it is never truncated.
+- Buffy logs no prompt-bearing URL. A successful OS launch only proves the link
+  was handed to the operating system; Claude still shows the prompt for review.
+- Drafts live in the main process, not on disk. Hiding, compact mode, settings,
+  failed opens, and window resizes preserve the draft. It clears only after a
+  successful handoff if the revision has not changed in the meantime.
+- **Escape** closes the panel and asks the OS to restore focus where supported.
+- Update prompts never interrupt an open composer, a non-empty draft, or an
+  in-flight handoff.
 
-## Commands
+<p align="center">
+  <img src="docs/shots/compose.png" width="360" alt="Buffy's composer with a draft prompt and Open in Claude button">
+</p>
 
-| Command | Purpose |
-| --- | --- |
-| `buffy daemon` | Run the daemon in the foreground |
-| `buffy event <state> [--msg "text"] [--source name] [--session id]` | Send a state change; `--source` shows in the bubble and `--session` keeps concurrent agents separate |
-| `buffy pet` | Happy reaction, +2 XP, +8 mood |
-| `buffy dismiss <session>` | Clear one active agent session |
-| `buffy status [--json]` | State, mood, XP, daemon health |
-| `buffy overlay [--dev] [--onboarding] [--shot file.png]` | Show the pet window and optional setup guide |
-| `buffy hatch "<prompt>"` | Generate a custom sprite with OpenAI Images (needs `OPENAI_API_KEY`) |
-| `buffy install claude [--global]` | Merge Claude Code hooks and the `/buffy` command |
-| `buffy uninstall claude [--global]` | Remove only buffy-managed entries |
-| `buffy install freebuff` | Add best-effort event instructions to the project's `AGENTS.md` |
-| `buffy uninstall freebuff` | Remove only the buffy block from `AGENTS.md` |
+## Characters, wardrobe, and poses
 
-## Claude Code
+Buffy uses an asset-driven character system. A character is either layered
+(base + outfit + accessory layers + semantic pose art) or an atlas with one
+cell per pose. The overlay, wardrobe preview, and settings preview all use the
+same renderer.
 
-```bash
-buffy overlay          # start the pet
-buffy install claude   # project scope: .claude/settings.json + .claude/commands/buffy.md
-```
+**Nimbus** is the default plush storm-cloud, drawn as layered SVG. **Mochi** is
+a pocket bunny with a 3×3 atlas and exercises the atlas path. Both support:
 
-`install claude` merges five hooks into `.claude/settings.json` and never removes
-an existing hook. Any file it changes is backed up next to itself as
-`<name>.buffy-backup-<timestamp>`, and every install is recorded in
-`~/.buffy/installs.json`.
+`idle` · `typingLeft` · `typingRight` · `happy` · `wave` · `sleepy` · `reading` · `tea` · `gardening`
 
-| Claude Code event | Pet state | Bubble |
-| --- | --- | --- |
-| `UserPromptSubmit` | `thinking` | thinking about your prompt |
-| `PreToolUse` | `working` | using <tool> |
-| `PostToolUse` | `working` | <tool> finished |
-| `Notification` (permission, idle, needs-input, elicitation) | `needs-you` | the notification message |
-| `Stop` | `done` | turn finished |
+Open **Settings → Companion & wardrobe** to:
 
-Inside Claude Code, use `/buffy`, `/buffy status`, `/buffy pet`, or
-`/buffy hatch "<prompt>"`. The command runs the CLI at its absolute installed
-path, so it works even when `buffy` is not on your PATH.
+- choose a character and preview every pose
+- change name and pronouns
+- mix outfits, bows, hats, glasses, wands, and themes
+- switch each clothing slot off without deleting the underlying look
+- wear built-in looks or save your own (up to **32 per character**)
+- favorite looks, rename/replace/delete saved looks, and choose which saved looks
+  participate in rotation
+- use **Surprise me**, with a gentle bias toward favorites
 
-`--global` writes `~/.claude/settings.json` and `~/.claude/commands/buffy.md`,
-which applies to every Claude Code project on the machine. Project scope is the
-default. Remove either with `buffy uninstall claude [--global]`.
+Clothing selections are stored per character. Unavailable art is disabled in
+the choice list rather than silently deleting a saved selection.
 
-## Concurrent agents
+<p align="center">
+  <img src="docs/shots/settings.png" width="760" alt="Buffy settings with the live character preview and wardrobe controls">
+</p>
 
-Every event belongs to a session. Claude Code hooks use the hook payload's
+### Daily rotation
+
+Rotation is opt-in per character and starts on the **next local day**, not the
+day you enable it. It only runs while resting. An open composer, activity cards,
+an open settings window, a handoff, or a drag defers the change. A manual look
+change on a local day prevents a reroll that day, and a restart does not reroll
+a day that already rotated. Unavailable assets are skipped without consuming
+the day or deleting the look.
+
+## Sessions and lifecycles
+
+Every agent event belongs to a session. Claude hooks use the payload
 `session_id`; the watcher has its own session; CLI callers can pass
-`--session <id>` (or set `BUFFY_SESSION`). When no session is supplied, the
-event falls back to its `source`, which keeps Claude, Freebuff and the watcher
-from overwriting one another. Freebuff sessions that share the `freebuff`
-source still need an explicit `--session` to stay independent.
+`--session <id>` or set `BUFFY_SESSION`.
 
 The visible state is the highest-priority active session:
 
 `needs-you` > `error` > `working` > `thinking` > `done` > `idle`
 
-A `working`, `done` or `idle` event from one session cannot clear another
-session's `needs-you`. Sessions expire after `sessionTtlMs` (30 minutes by
-default), while a finished session's `done` bubble still holds for
-`doneHoldMs`.
+Requests are tracked separately from session state:
 
-When more than one session is active, the overlay adds a compact rail showing
-each source, state, and age. If two sessions need you, the bubble includes the
-count and the rail keeps both visible. Use the × on a rail row or
-`buffy dismiss <session>` to clear one session without clearing the others.
+- A permission request or question has a stable request id, or a stable
+  fingerprint when the hook has no id.
+- Unrelated parallel tool completions cannot clear a request.
+- A matching request id, tool-use id, or safe fingerprint/tool-name match
+  resolves it. Session end clears only that session's requests.
+- An idle reminder is informational. It never dismisses a request or wipes a
+  recent completion.
+- The pending badge counts **unresolved requests only**, not "done" animations.
+
+Three lifecycles are intentionally separate:
+
+| Lifecycle | Default | What it means |
+| --- | --- | --- |
+| Completion presentation | 30 seconds | `done` hop/sparkles before the pet returns to idle |
+| Recent completions | 5 minutes | Activity cards can still show what finished |
+| Stale session expiry | 30 minutes | Quiet sessions are removed |
+
+These are configurable with `doneHoldMs` and `sessionTtlMs` in
+`~/.buffy/config.json`.
+
+## Personality and quiet time
+
+**Settings → Personality** controls idle hobbies, extra gestures, return
+greetings, sleepiness, thought bubbles (Off / Emoji / Emoji + words), reduced
+motion, and reply reactions. Reply reactions are **off by default** and only use
+transient presentation categories. Decorations pause while composing,
+recording, or showing activity cards. Settings previews are visual only and do
+not trigger live reactions.
+
+## Alerts
+
+Request and completion notifications are **off by default**, as are sounds.
+Enable them in **Settings → Alerts**. The first snapshot after startup seeds the
+dedupe set, so old requests never burst out on launch. A snooze (15 minutes,
+1 hour, or 4 hours) suppresses delivery but still marks events seen; they are
+never replayed later. Idle reminders do not create request alerts, and inferred
+completion events never create completion notifications.
+
+## Settings
+
+The settings window has six sections:
+
+1. **Companion & wardrobe** — identity, character, clothing, saved looks, rotation
+2. **Personality** — hobbies, gestures, sleep, bubbles, motion, reactions
+3. **Shortcuts** — global summon shortcut and conflict status
+4. **Alerts** — request/completion/sound switches and snooze
+5. **Connection** — Claude hook health, Freebuff watcher, daemon status, dictation
+6. **Updates** — current version, update check, install guard
+
+The right-hand preview draws the current character at full size with selectable
+poses, so wardrobe changes are visible before you leave settings.
+
+## Claude Code
+
+Use **Settings → Connection → Connect Claude Code** in the packaged app. It
+writes a stable launcher to `~/.buffy/bin/buffy-hook.cmd` (Windows) or
+`~/.buffy/bin/buffy-hook` (macOS/Linux), then merges hooks into the **user**
+Claude settings (`~/.claude/settings.json`). The launcher runs the packaged
+Electron binary in Node mode and survives app updates. It also writes
+`~/.buffy/bin/buffy-cli.cmd` / `buffy-cli` for the `/buffy` command, so the
+slash command works without a checkout too.
+
+From a source checkout, the equivalent is:
+
+```bash
+buffy install claude --global
+# or project scope:
+buffy install claude
+```
+
+The installer:
+
+- preserves unrelated hooks and settings
+- backs up every changed file as `<name>.buffy-backup-<timestamp>`
+- writes atomically and restores the prior settings if the command file fails
+- respects Claude's `disableAllHooks` and refuses to claim a connection when
+  hooks are disabled
+- records the install in `~/.buffy/installs.json`
+- never blocks the agent: a hook always exits 0 and writes diagnostics only to
+  stderr
+
+The installed hook vocabulary:
+
+| Claude Code event | Buffy behavior |
+| --- | --- |
+| `SessionStart` | session visibility |
+| `UserPromptSubmit` | thinking |
+| `PreToolUse` | working, with a tool category |
+| `PermissionRequest` | explicit permission request |
+| `PostToolUse` | working; resolves matching requests |
+| `PostToolUseFailure` | error |
+| `Notification` | question/permission request, or informational idle reminder |
+| `PreCompact` / `PostCompact` | compacting |
+| `SubagentStop` | delegating finished |
+| `Stop` | explicit completion |
+| `SessionEnd` | session ended; clears its requests |
+
+The settings page distinguishes **not connected**, **installed but no event
+seen**, **repair needed**, **hooks disabled**, **connected** (a hook event was
+seen within 30 minutes), and **error**. Installation alone is not reported as a
+verified connection.
 
 ## Freebuff
 
-Current Freebuff (npm `0.2.36`, SDK `0.10.7`) has no user-installable lifecycle
-hooks: there is no hook file in the shipped package, and the `cli/`, `sdk/` and
-`docs/` trees have no hook-event API. What it does have:
+Freebuff has no user-installable lifecycle hook stream. Buffy uses two signals:
 
-- `AGENTS.md` (or `CLAUDE.md`) as a knowledge file, read from the project root.
-- MCP servers from `.agents/mcp.json` in the project, its parent, or `~/.agents`.
-- `handleEvent` on `@codebuff/sdk` runs — only for sessions started through the
-  SDK, not a normal `freebuff` TUI session.
+- **Repo watcher (dependable):** file churn sends `working`; a quiet window
+  sends `done` with category `settled-inferred` and message `activity settled`.
+  It never claims a test passed or that work succeeded.
+- **AGENTS.md instructions (best-effort):** `buffy install freebuff` appends a
+  marked block asking the agent to send thinking/working/needs-you/done events.
+  Agents can ignore it.
 
-So buffy uses one dependable signal and one best-effort signal. The watcher
-does not depend on the agent following instructions.
+The watcher is local (`fs.watch` + a periodic `git status`) and does not read
+file contents or upload anything. **Settings → Connection** can disable it; the
+daemon restarts to apply the change.
 
-**Repo watcher (primary, dependable).** The daemon watches the working
-directory for file churn and, when the directory is a git repository, polls
-`git status` as well.
-Churn sends `working`; `quietMs` without a change sends `done` and the pet
-returns to idle. The git poll catches index-only changes such as `git add` or a
-branch switch that never touch a working-tree file.
+## Dictation
 
-```json
-{
-  "watch": {
-    "enabled": true,
-    "directory": null,
-    "quietMs": 2500,
-    "pollMs": 700,
-    "ignore": ["node_modules", ".git", "dist", "build", ".next", "artifacts"]
-  }
-}
-```
+Buffy only supports dictation when an on-device recognizer is available. This
+build has no bundled dictation helper. On this Windows host it reports that
+dictation is unavailable and keeps the text path fully usable; it never sends
+audio to a cloud service as a fallback. The composer, clipboard fallback, and
+keyboard shortcuts remain available.
 
-`directory: null` means the directory the daemon was started in. The daemon is
-shared across commands, so set an explicit directory if you switch projects.
-`buffy status` prints the watched directory, whether git polling is active, and
-the quiet window. `enabled: false` turns the watcher off.
+## CLI
 
-**AGENTS.md instructions (secondary, best-effort).** `buffy install freebuff`
-appends a marked block to the project's `AGENTS.md`. It asks the agent to send
-`thinking` at the start, `working` before project-changing steps, `needs-you`
-before it stops for input, and `done` when it finishes.
+| Command | Purpose |
+| --- | --- |
+| `buffy daemon` | Run the local daemon in the foreground |
+| `buffy event <state> [--msg "text"] [--source name] [--session id]` | Send a state change |
+| `buffy pet` | Pet reaction, mood, and XP |
+| `buffy dismiss <session>` | Clear one active session |
+| `buffy status [--json]` | Current state, sessions, mood, XP, daemon health |
+| `buffy overlay [--dev] [--onboarding] [--shot file.png]` | Show the overlay and optional setup |
+| `buffy hatch "<prompt>"` | Generate a custom sprite with OpenAI Images |
+| `buffy install claude [--global]` | Merge Claude hooks and `/buffy` |
+| `buffy uninstall claude [--global]` | Remove Buffy-managed hooks only |
+| `buffy install freebuff` | Add best-effort AGENTS.md instructions |
+| `buffy uninstall freebuff` | Remove only the Buffy block |
 
-These are instructions, not hooks. Freebuff can ignore them: across four real
-Desktop sessions the events varied — one sent `needs-you` and `done`, one sent
-nothing, one sent `working` and `done`, and one refused an explicitly requested
-`thinking` command but still sent `done`. `thinking` was never observed.
+States accepted by `buffy event`: `idle`, `thinking`, `working`, `needs-you`,
+`done`, `error`.
 
-Only watcher-driven states are dependable: its `working` event and its
-quiet-window `done`. Every event that depends on Freebuff reading or obeying
-AGENTS.md is best-effort and may not occur, even when the command is written
-out explicitly. Existing content is preserved, the file is backed up before the
-first change, and repeated installs replace only the block.
+## Files
 
-```bash
-buffy overlay
-buffy install freebuff
-```
+| Path | Contents |
+| --- | --- |
+| `~/.buffy/preferences.json` | v3 identity, character looks, personality, shortcuts, alerts, connection, updates |
+| `~/.buffy/state.json` | pet identity, sprite, mood, XP, counters |
+| `~/.buffy/window.json` | full/compact positions and 80/100/125% scale |
+| `~/.buffy/config.json` | port, timing, watcher, hatch settings |
+| `~/.buffy/runtime.json` | daemon pid/port while running |
+| `~/.buffy/onboarding.json` | first-run acknowledgement |
+| `~/.buffy/installs.json` | installer manifest (scope, files, launcher, backups) |
+| `~/.buffy/hook-last.json` | last hook event seen (health only) |
+| `~/.buffy/bin/` | stable packaged hook launcher |
+| `~/.buffy/sprites/` | generated hatch PNGs |
 
-The block uses the CLI's absolute path, so it works without `npm link`. Remove
-it with `buffy uninstall freebuff`; the watcher is independent and keeps
-working.
-
-## Hatching a sprite
-
-`buffy hatch` generates a transparent PNG from your description with OpenAI
-Images, stores it in `~/.buffy/sprites/`, and swaps it into the running pet.
-Theoverlay keeps its bob, tilt, squash and effects; the generated art replaces the
-procedural body. The placeholder remains the fallback. A hatched sprite is a
-full-body replacement: procedural outfits, accessories, and hobby props are not
-drawn over it.
-
-Set the key in the shell that runs hatch (buffy never stores or prints it):
-
-```powershell
-$env:OPENAI_API_KEY = "sk-..."
-buffy hatch "a sleepy mint-colored axolotl with tiny antennae"
-```
-
-```bash
-export OPENAI_API_KEY="sk-..."
-buffy hatch "a sleepy mint-colored axolotl with tiny antennae"
-```
-
-Each hatch is one Images API call, billed to your OpenAI account. The prompt is
-augmented with constraints for a single full-body character, transparent
-background, and readability at about 100 px. If the daemon is running the
-overlay updates immediately; otherwise the next `buffy overlay` shows it.
-
-Configure the provider under `hatch` in `~/.buffy/config.json`:
-
-```json
-{
-  "hatch": {
-    "provider": "openai",
-    "model": "gpt-image-1",
-    "size": "1024x1024",
-    "quality": "medium",
-    "baseUrl": "https://api.openai.com/v1"
-  }
-}
-```
-
-`baseUrl` can point at an OpenAI-compatible image endpoint; the key env var is
-still `OPENAI_API_KEY`.
-
-## Idle life
-
-When nothing is active, Buffy entertains herself. Reading lasts 20 seconds,
-cocoa 16, and stretching 7; the first hobby starts after 8 seconds of quiet,
-with a 9-second gap between them. Hobbies are cosmetic: no XP, mood, or counters
-change. After two minutes of quiet she sleeps; hover, click, or any event wakes
-her.
-
-Idle hobbies are on by default. Toggle **Idle hobbies** in the tray, or set
-`overlay.idleHobbies` in `~/.buffy/config.json`. `overlay.sleepAfterMs` accepts
-30,000–600,000 ms (default 120,000).
-
-## States
-
-| State | Animation | Leaves when |
-| --- | --- | --- |
-| `idle` | slow breathing, blinking, occasional hobby | any event or hover |
-| `thinking` | tilt, floating dots | any event |
-| `working` | fast typing on a tiny keyboard | any event |
-| `needs-you` | bouncing, wide eyes | another event arrives |
-| `done` | hops and sparkles | after 4s, falls back to `idle` |
-| `error` | shake, crossed eyes | another event arrives |
-
-Within a session, the last event wins. The pet shows the most urgent active
-session. Every event carries a `source` (`claude`, `freebuff`, `watcher`, `cli`,
-…) that is shown in the speech bubble.
+Legacy `~/.buffy/wardrobe.json` and `config.overlay` settings migrate into
+`preferences.json`. Old `princess`/`sleepover` outfit ids map to `dress` and
+`overalls`. Nothing is deleted.
 
 ## Configuration
 
-`~/.buffy/config.json` is optional; defaults are shown.
+`~/.buffy/config.json` is optional; defaults include:
 
 ```json
 {
   "port": 4517,
-  "doneHoldMs": 4000,
+  "doneHoldMs": 30000,
   "sessionTtlMs": 1800000,
-  "overlay": {
-    "idleHobbies": true,
-    "sleepAfterMs": 120000
-  },
   "watch": {
     "enabled": true,
     "directory": null,
     "quietMs": 2500,
-    "pollMs": 700,
-    "ignore": [
-      "node_modules", ".git", "dist", "build", "out", ".next", ".turbo",
-      ".cache", "target", "coverage", "artifacts", ".buffy",
-      "*.buffy-backup-*"
-    ]
+    "pollMs": 700
   },
   "hatch": {
     "provider": "openai",
@@ -367,32 +358,31 @@ session. Every event carries a `source` (`claude`, `freebuff`, `watcher`, `cli`,
 ```
 
 `BUFFY_PORT` overrides the port for one process. `BUFFY_HOME` relocates all
-state (used by the tests).
+state (used by tests). Preferences are edited through the settings window; the
+main process normalizes them before every save.
 
-## Files
+## Hatching a sprite
 
-| Path | Contents |
-| --- | --- |
-| `~/.buffy/state.json` | pet identity, sprite, mood, XP, counters |
-| `~/.buffy/wardrobe.json` | outfit, accessories, theme, and saved looks (v2; v1 migrates) |
-| `~/.buffy/config.json` | port, timing, overlay, watcher and hatch settings |
-| `~/.buffy/runtime.json` | daemon pid/port while it runs |
-| `~/.buffy/window.json` | overlay position |
-| `~/.buffy/onboarding.json` | first-run setup acknowledgement |
-| `~/.buffy/installs.json` | installer manifest (scope, files, backups) |
-| `~/.buffy/sprites/` | generated hatch PNGs |
+`buffy hatch` generates a transparent PNG with OpenAI Images, stores it in
+`~/.buffy/sprites/`, and swaps it into the running pet. The overlay keeps its
+bob and state effects; the generated art replaces the layered body. A custom
+sprite is a full-body replacement, so procedural outfits, accessories, and
+hobby props are not drawn over it. Set `OPENAI_API_KEY` in the shell that runs
+the command; the key is never written to Buffy state or logged.
 
 ## Security and privacy
 
-- The daemon binds to `127.0.0.1` only.
-- No telemetry. Installed builds check GitHub Releases for updates; the only
-  other outbound request is `buffy hatch`, which sends your prompt to the
-  configured image API using `OPENAI_API_KEY`; the key is read from the
-  environment, never written to `~/.buffy` or the repo.
-- The watcher is local: `fs.watch` plus a periodic `git status`. It never reads
-  file contents and does not send anything off the machine.
-- Nothing outside `~/.buffy` is written until you run an installer, which backs
-  up every file it changes and records it in `~/.buffy/installs.json`.
+- The daemon binds to `127.0.0.1` only and streams updates over SSE with a
+  polling fallback.
+- No telemetry.
+- Installed builds check GitHub Releases for updates. The only other outbound
+  request is `buffy hatch`, which sends the prompt to the configured image API
+  using your `OPENAI_API_KEY`.
+- The watcher is local and never reads file contents.
+- The composer deliberately cannot send a prompt. It hands a URL to the OS and
+  clears the draft only after a successful launch with no intervening edit.
+- Prompt-bearing URLs are never written to logs.
+- Dictation never falls back to a cloud service.
 
 ## Troubleshooting
 
@@ -400,45 +390,65 @@ state (used by the tests).
   `buffy daemon` in a terminal to see the error. Electron must be installed
   (`npm install`).
 - **Port already in use.** Change `port` in `~/.buffy/config.json`.
-- **`buffy: unknown state`.** Valid states are `idle`, `thinking`, `working`,
-  `needs-you`, `done`, `error`.
-- **Overlay is hidden.** Use **Show Buffy** in the tray, or run `buffy overlay`
-  again; the second launch focuses the existing window and quits itself.
-- **Watcher does not react.** `buffy status` prints the watched directory and
-  whether git polling is on. Set `watch.directory` explicitly if the daemon was
-  started from another folder, or `watch.enabled: false` to turn it off.
-- **Freebuff ignores AGENTS.md.** Start Freebuff from the project root (it loads
-  `AGENTS.md` as a knowledge file there) and re-run `buffy install freebuff`
-  after moving this checkout. The watcher still tracks edits, but start,
-  approval and agent-reported finish events may be missing; they are
-  best-effort.
-- **Hatch says `OPENAI_API_KEY` is not set.** Export it in the same shell that
-  runs `buffy hatch`; a new terminal does not keep environment variables.
-- **Hatch returns 401 or 429.** Check the key's billing and quota. Do not paste
-  the key into chat or a repository.
-- **New sprite does not appear.** The daemon must be running to serve the PNG.
-  Restart `buffy overlay`; confirm the file exists in `~/.buffy/sprites/`.
+- **Shortcut does nothing.** Open **Settings → Shortcuts**. A conflict with
+  another app is reported there; choose a different accelerator.
+- **Claude connection says installed but no event.** Start a Claude Code
+  session. "Connected" requires an event within the last 30 minutes.
+- **Hooks are disabled.** Claude's `disableAllHooks` is on. Buffy leaves the
+  settings untouched and reports the disabled state.
+- **Watcher does not react.** Check **Settings → Connection**; the watched
+  directory is the daemon's working directory. Restart the daemon after
+  changing the watcher switch or start it from the project root.
+- **Update is waiting.** Finish or clear the draft, then use the tray or
+  **Settings → Updates** to restart explicitly. Buffy does not install updates
+  behind an open draft.
+- **Dictation is unavailable.** This build has no on-device recognizer. Type,
+  or use the clipboard fallback; no audio is uploaded.
 
 ## Release signing
 
-The release workflow builds unsigned artifacts when the optional secrets are
-absent. To enable signing and notarization, add these repository secrets:
+The release workflow builds unsigned artifacts when optional secrets are
+absent. To enable signing and notarization:
 
 | Platform | Secrets |
 | --- | --- |
 | Windows | `WIN_CSC_LINK`, `WIN_CSC_KEY_PASSWORD` |
 | macOS | `MAC_CSC_LINK`, `MAC_CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` |
 
-The macOS build runs `build/notarize.cjs` after signing and skips notarization
-when the Apple credentials are missing. The release workflow uploads the
-installers, checksums, `latest*.yml` update metadata, and the macOS zip files
-used by `electron-updater`. Installed builds check for updates in the background
-and expose **Check for updates** in the tray; Linux updates require the AppImage
-runtime.
+macOS runs `build/notarize.cjs` after signing and skips notarization when the
+Apple credentials are missing. Pushing a `v*` tag that matches `package.json`
+builds the installers, smoke-tests each packaged app, writes checksums, and
+uploads the `latest*.yml` update metadata. Build locally with:
+
+```bash
+npm run dist:win
+npm run dist:mac
+npm run dist:linux
+```
+
+## Verification
+
+```bash
+npm test                 # unit and integration coverage
+npm start                # run the overlay from source
+npx electron . --smoke-test --no-sandbox
+npx electron . --shot docs/shots/overlay.png --shot-exit
+npx electron . --shot docs/shots/settings.png --shot-mode settings --shot-exit
+```
 
 ## Uninstall
 
-Remove agent wiring with `buffy uninstall claude` (add `--global` for user
-scope) and `buffy uninstall freebuff`, turn off launch at login from the tray,
-quit Buffy from the tray, then remove `~/.buffy` and this checkout (and
-`npm unlink buffy` if you linked it).
+Use **Settings → Connection → Remove hooks** or:
+
+```bash
+buffy uninstall claude --global
+buffy uninstall freebuff
+```
+
+Turn off launch at login, quit Buffy from the tray, then remove `~/.buffy` and
+the checkout (and `npm unlink buffy` if linked).
+
+## License
+
+MIT. The Blossom/Ensemble relay, inbox, badges, reactions, and mode features are
+intentionally not part of Buffy; this is a local desktop companion.

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="rain" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#ffe8a6"/>
+      <stop offset="0.6" stop-color="#f8d274"/>
+      <stop offset="1" stop-color="#e6b94f"/>
+    </linearGradient>
+    <linearGradient id="boot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7d8fa6"/>
+      <stop offset="1" stop-color="#56667d"/>
+    </linearGradient>
+  </defs>
+  <g id="nimbus-rainy">
+    <!-- boots -->
+    <g>
+      <path d="M170 520 C170 504 186 498 202 498 C220 498 232 506 232 522 L232 572 C232 582 224 588 212 588 L178 588 C170 588 166 580 166 572 Z"
+        fill="url(#boot)" stroke="#3d2a3f" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M278 522 C278 506 294 498 310 498 C328 498 344 504 344 520 L344 572 C344 580 340 588 332 588 L298 588 C286 588 278 582 278 572 Z"
+        fill="url(#boot)" stroke="#3d2a3f" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M166 566 H232" stroke="#ffd98a" stroke-width="7" stroke-linecap="round"/>
+      <path d="M278 566 H344" stroke="#ffd98a" stroke-width="7" stroke-linecap="round"/>
+    </g>
+    <!-- coat -->
+    <path d="M172 382 C150 424 146 484 156 536 C190 556 322 556 356 536 C366 484 362 424 340 382 C312 366 200 366 172 382 Z"
+      fill="url(#rain)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- lapels -->
+    <path d="M206 376 L246 434 L222 448 L190 398 Z" fill="#fff0bf" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M306 376 L266 434 L290 448 L322 398 Z" fill="#fff0bf" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <!-- buttons and pockets -->
+    <circle cx="256" cy="452" r="6" fill="#fff2c2" stroke="#8a6224" stroke-width="3"/>
+    <circle cx="256" cy="486" r="6" fill="#fff2c2" stroke="#8a6224" stroke-width="3"/>
+    <path d="M184 474 C184 466 214 466 214 474 L212 500 H186 Z" fill="#efd07e" stroke="#8a6224" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M298 474 C298 466 328 466 328 474 L326 500 H300 Z" fill="#efd07e" stroke="#8a6224" stroke-width="5" stroke-linejoin="round"/>
+    <!-- tiny cloud pin -->
+    <path d="M276 414 C276 404 288 400 294 408 C302 402 312 410 308 418 C314 424 306 432 298 428 C290 434 278 428 280 420 Z"
+      fill="#fff8e6" stroke="#8a6224" stroke-width="2.5"/>
+    <!-- coat hem -->
+    <path d="M158 528 Q256 552 354 528" fill="none" stroke="#c59a3c" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

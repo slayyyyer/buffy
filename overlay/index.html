@@ -6,18 +6,103 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; img-src 'self' data: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; script-src 'self'"
     />
-    <title>buffy</title>
+    <title>Buffy</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="bubble" class="bubble hidden" aria-live="polite">
-      <span id="source" class="source"></span>
-      <span id="text"></span>
-    </div>
-    <div id="sessions" class="sessions hidden" aria-label="Active agent sessions"></div>
-    <canvas id="stage"></canvas>
+    <main id="app" data-mode="full" data-state="idle">
+      <canvas id="stage" aria-hidden="true"></canvas>
+      <div id="hit" class="hit" data-interactive aria-label="Drag Buffy, or click to pet her"></div>
+
+      <header id="pill" class="pill" data-interactive>
+        <span id="pill-dot" class="pill-dot" aria-hidden="true"></span>
+        <span id="pill-name" class="pill-name">Buffy</span>
+        <span id="pill-state" class="pill-state">Idle</span>
+        <span id="pill-project" class="pill-project" hidden></span>
+        <span id="pill-pending" class="pill-badge" role="status" aria-label="No pending requests" hidden>0</span>
+      </header>
+
+      <div id="bubble" class="bubble hidden" role="status" aria-live="polite">
+        <span id="bubble-source" class="bubble-source"></span>
+        <span id="bubble-text"></span>
+      </div>
+
+      <nav id="toolbar" class="toolbar" aria-label="Buffy controls" data-interactive>
+        <button class="tool" type="button" data-action="compose" aria-label="Compose a message for Claude" title="Compose (C)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>
+        </button>
+        <button class="tool" type="button" data-action="activity" aria-label="Activity and alerts" title="Activity and alerts (A)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V9M10 18V5M16 18v-6M22 18H2"/></svg>
+          <span id="toolbar-pending" class="tool-badge" aria-hidden="true" hidden>0</span>
+        </button>
+        <button class="tool" type="button" data-action="pet" aria-label="Pet Buffy" title="Pet Buffy">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z"/></svg>
+        </button>
+        <button class="tool" type="button" data-action="dictate" aria-label="Start dictation" title="Dictation" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        </button>
+        <button class="tool" type="button" data-action="compact" aria-label="Switch to compact mode" title="Compact mode">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
+        </button>
+        <button class="tool" type="button" data-action="settings" aria-label="Open settings" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>
+        </button>
+      </nav>
+
+      <section id="composer" class="sheet composer hidden" data-interactive aria-label="Compose for Claude Code">
+        <header class="sheet-head">
+          <div>
+            <p class="sheet-eyebrow">Claude Code</p>
+            <h2>Start a new prompt</h2>
+          </div>
+          <button class="sheet-close" type="button" data-action="close-composer" aria-label="Close composer" title="Close (Esc)">×</button>
+        </header>
+        <textarea id="draft" rows="4" spellcheck="true" aria-label="Draft prompt" placeholder="Ask Claude to fix, explain, or build something…"></textarea>
+        <div id="composer-note" class="composer-note" role="status"></div>
+        <footer class="sheet-actions">
+          <span class="composer-hint">⌘/Ctrl + Enter opens Claude. Nothing is sent automatically.</span>
+          <div class="action-row">
+            <button id="copy-draft" class="ghost" type="button">Copy</button>
+            <button id="handoff" class="primary" type="button">Open in Claude</button>
+          </div>
+        </footer>
+      </section>
+
+      <section id="cards" class="sheet cards hidden" data-interactive aria-label="Activity and alerts">
+        <header class="sheet-head">
+          <div>
+            <p class="sheet-eyebrow">Buffy's desk</p>
+            <h2>Activity</h2>
+          </div>
+          <button class="sheet-close" type="button" data-action="close-cards" aria-label="Close activity" title="Close (Esc)">×</button>
+        </header>
+        <div class="cards-toolbar">
+          <div id="cards-tabs" class="segmented" role="tablist" aria-label="Activity sections">
+            <button type="button" role="tab" data-tab="live" aria-selected="true">Live</button>
+            <button type="button" role="tab" data-tab="recent" aria-selected="false">Recent</button>
+          </div>
+          <div class="snooze-group" role="group" aria-label="Snooze notifications">
+            <span>Snooze</span>
+            <button type="button" data-snooze="900000">15m</button>
+            <button type="button" data-snooze="3600000">1h</button>
+            <button type="button" data-snooze="14400000">4h</button>
+            <button type="button" data-snooze="0">Off</button>
+          </div>
+        </div>
+        <div id="cards-body" class="cards-body" role="tabpanel"></div>
+      </section>
+
+      <div id="compact-badge" class="compact-badge" hidden aria-live="polite">
+        <span id="compact-count">0</span>
+      </div>
+
+      <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    </main>
+
     <script src="character.js"></script>
+    <script src="characters/manifest.js"></script>
     <script src="hobbies.js"></script>
+    <script src="character-system.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>

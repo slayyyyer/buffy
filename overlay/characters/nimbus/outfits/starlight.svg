@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#4a2b4c"/>
+      <stop offset="0.55" stop-color="#38203d"/>
+      <stop offset="1" stop-color="#25142c"/>
+    </linearGradient>
+    <linearGradient id="veil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9a7d8" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#8f6aa8" stop-opacity="0.08"/>
+    </linearGradient>
+  </defs>
+  <g id="nimbus-starlight">
+    <!-- skirt -->
+    <path d="M190 438 C164 480 148 528 144 564 C192 590 320 590 368 564 C364 528 348 480 322 438 Z"
+      fill="url(#night)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- sheer overskirt -->
+    <path d="M214 442 C196 486 186 530 184 566 C218 582 294 582 328 566 C326 530 316 486 298 442 Z"
+      fill="url(#veil)"/>
+    <!-- stars -->
+    <g fill="#f6cf7d">
+      <path d="M212 500 l5 12 13 2 -10 9 3 13 -11 -7 -12 7 3 -13 -10 -9 13 -2 Z"/>
+      <path d="M306 526 l4 9 10 1 -8 7 2 10 -8 -5 -9 5 2 -10 -8 -7 10 -1 Z"/>
+      <path d="M270 484 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1 Z"/>
+    </g>
+    <circle cx="232" cy="552" r="3.5" fill="#fff2cf"/>
+    <circle cx="292" cy="474" r="2.8" fill="#fff2cf"/>
+    <!-- bodice -->
+    <path d="M194 386 C188 414 190 442 200 460 C226 472 286 472 312 460 C322 442 324 414 318 386 C296 374 216 374 194 386 Z"
+      fill="url(#night)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- sweetheart neckline -->
+    <path d="M204 388 Q232 410 256 392 Q280 410 308 388" fill="none" stroke="#f6cf7d" stroke-width="6" stroke-linecap="round"/>
+    <!-- gold sash -->
+    <path d="M192 446 C224 458 288 458 320 446 L321 464 C288 476 224 476 191 464 Z"
+      fill="#e6bd69" stroke="#5c3150" stroke-width="5" stroke-linejoin="round"/>
+    <circle cx="256" cy="461" r="7" fill="#f6cf7d" stroke="#8a6224" stroke-width="2.5"/>
+    <!-- straps -->
+    <path d="M204 388 C199 366 207 352 218 346" fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <path d="M308 388 C313 366 305 352 294 346" fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <!-- sparkle at the waist -->
+    <g transform="translate(256 424)" fill="#fff2cf">
+      <path d="M0 -12 L3 -3 L12 0 L3 3 L0 12 L-3 3 L-12 0 L-3 -3 Z"/>
+    </g>
+  </g>
+</svg>

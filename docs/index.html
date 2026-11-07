@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Buffy — a tiny desktop companion for your coding agent</title>
-  <meta name="description" content="Buffy is a princess-cloud desktop companion for Claude Code, Freebuff, and any coding agent that can run a shell command, with a visual wardrobe and quiet idle hobbies.">
+  <title>Buffy — a plush desktop companion for your coding agent</title>
+  <meta name="description" content="Buffy is a plush cloud companion for Claude Code and Freebuff, with a prompt composer, layered wardrobe, request-aware sessions, and quiet idle hobbies.">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#fff8f4">
   <link rel="canonical" href="https://slayyyyer.github.io/buffy/">
   <link rel="icon" href="icon.png" type="image/png">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Buffy — a tiny desktop companion for your coding agent">
-  <meta property="og:description" content="A pink princess-cloud who lives on your desktop, reacts to your coding agent, and naps when the work is done.">
+  <meta property="og:title" content="Buffy — a plush desktop companion for your coding agent">
+  <meta property="og:description" content="A plush little cloud who lives on your desktop, carries your next prompt into Claude, and naps when the work is done.">
   <meta property="og:url" content="https://slayyyyer.github.io/buffy/">
-  <meta property="og:image" content="https://slayyyyer.github.io/buffy/buffy.png">
+  <meta property="og:image" content="https://slayyyyer.github.io/buffy/shots/nimbus.png">
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
@@ -39,24 +39,24 @@
       <div class="hero-copy">
         <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> A desk pet for your coding agent</p>
         <h1>Your agent is busy.<br><em>Buffy</em> is on it.</h1>
-        <p class="lede">A tiny princess-cloud who lives on your desktop, reacts to Claude Code, Freebuff, and repo edits, then settles in for a nap when the work is done.</p>
+        <p class="lede">A plush little cloud who lives on your desktop, tracks Claude Code and Freebuff sessions, carries your next prompt into Claude, and settles in for a nap when the work is done.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-win-x64.exe">
+          <a class="button button-primary" href="https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-win-x64.exe">
             <span>Download for Windows</span>
-            <small>v1.1.0 · macOS &amp; Linux too</small>
+            <small>v2.0.0 · macOS &amp; Linux too</small>
           </a>
           <a class="button button-ghost" href="https://github.com/slayyyyer/buffy">View source</a>
         </div>
         <p class="hero-meta"><span>Free &amp; open source</span><span>No telemetry</span><span>Local-only daemon</span></p>
       </div>
 
-      <div class="hero-stage" aria-label="Buffy waving hello from her desktop overlay">
+      <div class="hero-stage" aria-label="Nimbus peeking out from the desktop overlay">
         <span class="stage-sparkle sparkle-one" aria-hidden="true">✦</span>
         <span class="stage-sparkle sparkle-two" aria-hidden="true">✦</span>
         <span class="stage-heart" aria-hidden="true">♥</span>
-        <span class="float-tag tag-working" aria-hidden="true"><i></i> working</span>
-        <span class="float-tag tag-done" aria-hidden="true">done! <b>✦</b></span>
-        <img class="hero-buffy" src="buffy.png" width="300" height="314" alt="Buffy, a pink princess-cloud mascot with a crown, blue dress, and heart cheeks, waving">
+        <span class="float-tag tag-working" aria-hidden="true"><i></i> thinking</span>
+        <span class="float-tag tag-done" aria-hidden="true">needs you <b>●</b></span>
+        <img class="hero-buffy" src="shots/nimbus.png" width="400" height="560" alt="Nimbus, a plush cream cloud robot with a dark screen face, pink cheeks, and a pink bow dress">
         <span class="stage-caption" aria-hidden="true">always on top · always on your side</span>
       </div>
     </section>
@@ -65,29 +65,29 @@
       <div class="section-heading">
         <p class="kicker">Little companion, big feelings</p>
         <h2>She’s there for the whole loop.</h2>
-        <p>Buffy isn’t another chat window. She’s a small, always-on-top signal that your agent is thinking, working, stuck, or finished.</p>
+        <p>Buffy isn’t another chat window. She’s a small, always-on-top signal that your agent is thinking, working, stuck, or finished — and a shortcut for the prompt you were about to write anyway.</p>
       </div>
 
       <div class="feature-grid">
         <article class="feature-card">
-          <span class="feature-icon icon-pink" aria-hidden="true">♥</span>
-          <h3>Agent-aware</h3>
-          <p>Claude Code and Freebuff can send <code>thinking</code>, <code>working</code>, <code>needs-you</code>, and <code>done</code>. Concurrent sessions get their own rail, and the repo watcher catches edits when your agent stays quiet.</p>
+          <span class="feature-icon icon-pink" aria-hidden="true">✎</span>
+          <h3>A composer, not a chat window</h3>
+          <p>Write a prompt in the overlay, press <code>Cmd/Ctrl+Enter</code>, and Buffy opens it in Claude’s new-session screen. Nothing sends until you send it in Claude, and drafts survive hiding, compact mode, and a failed handoff.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon icon-lilac" aria-hidden="true">◌</span>
-          <h3>Always in reach</h3>
-          <p>A frameless, transparent overlay that floats above your windows. Drag her anywhere, tuck her into a corner, or hide her for ten minutes.</p>
+          <h3>Every session, ranked</h3>
+          <p><code>needs-you</code> beats <code>error</code>, then <code>working</code>, <code>thinking</code>, <code>done</code>, and <code>idle</code>. Parallel requests keep their own cards, so one finished tool call doesn’t wipe another session’s question.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon icon-sky" aria-hidden="true">✦</span>
-          <h3>A whole wardrobe</h3>
-          <p>Five outfits, five bows, three hats, glasses, wands, and six pastel themes. Build a look in the live-preview wardrobe and save up to twelve of your own.</p>
+          <h3>A layered wardrobe</h3>
+          <p>Two characters and nine poses drawn to the same anchors. Toggle outfits, bows, hats, glasses, and wands independently, save 32 looks per character, favorite the good ones, or let a daily rotation pick for you.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon icon-mint" aria-hidden="true">☾</span>
-          <h3>A little alive</h3>
-          <p>Her eyes follow your cursor. Click to wave. When the desk goes quiet she reads, sips cocoa, stretches, and eventually naps.</p>
+          <h3>Quiet by default</h3>
+          <p>Notifications and sounds are off until you ask. Snooze for 15 minutes, an hour, or four. Personality decorations pause while you compose, and reduced motion, compact head-only mode, and 80–125% scale keep her out of the way.</p>
         </article>
       </div>
     </section>
@@ -97,39 +97,27 @@
         <div class="section-heading screenshots-heading">
           <p class="kicker">In her natural habitat</p>
           <h2>Small screenshots.<br>Big personality.</h2>
-          <p>Real moments from the overlay — no mockups, no filters, just a small pink creature doing her best.</p>
+          <p>Real moments from the overlay and settings — no mockups, no filters, just a small plush cloud doing her best.</p>
         </div>
 
         <div class="shot-grid">
           <figure class="shot shot-wide">
             <div class="shot-art art-lilac">
-              <img src="shots/wardrobe.png" width="932" height="744" loading="lazy" alt="Buffy's wardrobe window with a live preview, built-in looks, and outfit, accessory, and theme tabs">
+              <img src="shots/settings.png" width="1333" height="932" loading="lazy" alt="Buffy's settings window with six sections, a character picker, wardrobe controls, outfit chips, and a live animated preview of Nimbus">
             </div>
-            <figcaption><strong>The wardrobe</strong><span>Five outfits, five bows, three hats, glasses, wands, six themes, and twelve saved looks.</span></figcaption>
+            <figcaption><strong>Make her yours</strong><span>Six settings sections, per-character wardrobe, 32 saved looks, and a live animated preview.</span></figcaption>
           </figure>
-          <figure class="shot">
+          <figure class="shot shot-tall">
             <div class="shot-art art-pink">
-              <img src="shots/working.png" width="300" height="314" loading="lazy" alt="Buffy working at a tiny keyboard while a speech bubble says making you a princess">
+              <img src="shots/overlay.png" width="475" height="814" loading="lazy" alt="The Buffy overlay showing Nimbus idle, a Buffy idle pill with a request badge, and the quick-action toolbar">
             </div>
-            <figcaption><strong>Heads-down</strong><span>She types along while your agent works.</span></figcaption>
+            <figcaption><strong>At the edge of your screen</strong><span>Idle Nimbus, the request badge, and the toolbar for composing, cards, favorites, dictation, compact mode, and settings.</span></figcaption>
           </figure>
-          <figure class="shot">
+          <figure class="shot shot-tall">
             <div class="shot-art art-lilac">
-              <img src="shots/reading.png" width="300" height="330" loading="lazy" alt="Buffy in a cozy sweater and sun hat reading a small cream book">
+              <img src="shots/compose.png" width="525" height="975" loading="lazy" alt="The compose panel with a prompt draft, a note that nothing is sent automatically, and Copy and Open in Claude buttons">
             </div>
-            <figcaption><strong>Chapter one</strong><span>She reads when the desk goes quiet.</span></figcaption>
-          </figure>
-          <figure class="shot">
-            <div class="shot-art art-sky">
-              <img src="shots/coffee.png" width="300" height="330" loading="lazy" alt="Buffy holding a cocoa mug with steam rising">
-            </div>
-            <figcaption><strong>Cocoa break</strong><span>A warm mug and a little steam between agent turns.</span></figcaption>
-          </figure>
-          <figure class="shot">
-            <div class="shot-art art-mint">
-              <img src="shots/starlight.png" width="300" height="330" loading="lazy" alt="Buffy in a midnight starlight outfit with star glasses and a heart wand">
-            </div>
-            <figcaption><strong>After hours</strong><span>Starlight, star glasses, and a midnight theme.</span></figcaption>
+            <figcaption><strong>The composer</strong><span>Type, keep the draft, then hand it to Claude. Nothing sends until you send it.</span></figcaption>
           </figure>
         </div>
       </div>
@@ -137,9 +125,9 @@
 
     <section class="section wrap how-section">
       <div class="how-copy">
-        <p class="kicker">Under the tiny crown</p>
+        <p class="kicker">Under the little cloud</p>
         <h2>Small events.<br>One very small operator.</h2>
-        <p>Buffy is not a chatbot. Agents send lightweight events to a daemon on <code>127.0.0.1</code>; the daemon owns the state and the overlay draws it. Everything stays on your machine.</p>
+        <p>Buffy is not a chatbot. Agents send lightweight events to a daemon on <code>127.0.0.1</code>; the daemon owns the state and the overlay draws it. Settings, looks, and positions stay in <code>~/.buffy</code>, and the composer only builds a <code>claude://</code> link for you to confirm.</p>
         <a class="text-link" href="https://github.com/slayyyyer/buffy#readme">Read how the agent hooks work <span aria-hidden="true">→</span></a>
       </div>
       <div class="how-terminal">
@@ -159,20 +147,20 @@
         <div class="install-copy">
           <p class="kicker kicker-light">Ready for a coworker?</p>
           <h2>Give your desktop<br>a little company.</h2>
-          <p>Buffy’s desktop apps include the pet and its local daemon. Open one and she’s there — no npm setup for the pet itself. The CLI and agent hooks still run from the Node checkout.</p>
-          <a class="button button-light" href="https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-win-x64.exe">
+          <p>Buffy’s desktop apps include the pet, its local daemon, and a packaged Claude hook installer in <strong>Settings → Connection</strong>. Open one and she’s there — no Node checkout needed for the pet or the Claude setup. The optional <code>buffy</code> CLI and Freebuff instructions still run from the checkout.</p>
+          <a class="button button-light" href="https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-win-x64.exe">
             <span>Download for Windows</span>
             <small>Windows 10/11 · x64</small>
           </a>
           <p class="download-links">
-            <a href="https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-arm64.dmg">macOS Apple silicon</a>
-            <a href="https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-mac-x64.dmg">macOS Intel</a>
-            <a href="https://github.com/slayyyyer/buffy/releases/download/v1.1.0/Buffy-1.1.0-linux-x86_64.AppImage">Linux AppImage</a>
+            <a href="https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-mac-arm64.dmg">macOS Apple silicon</a>
+            <a href="https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-mac-x64.dmg">macOS Intel</a>
+            <a href="https://github.com/slayyyyer/buffy/releases/download/v2.0.0/Buffy-2.0.0-linux-x86_64.AppImage">Linux AppImage</a>
           </p>
           <p class="fine-print">Free and open source under the MIT license. Builds are unsigned unless signing credentials are configured, so Windows SmartScreen or macOS Gatekeeper may ask you to confirm. Checksums and update metadata are attached to the release.</p>
           <details class="checksum">
             <summary>Checksums</summary>
-            <p>Every installer has a matching <code>.sha256</code> file on the v1.1.0 release page.</p>
+            <p>Every installer has a matching <code>.sha256</code> file on the v2.0.0 release page.</p>
           </details>
         </div>
         <div class="install-source">
@@ -198,7 +186,7 @@ npm run dist:win</code></pre>
       <a href="https://github.com/slayyyyer/buffy#readme">README</a>
       <a href="https://github.com/slayyyyer/buffy/blob/main/LICENSE">MIT</a>
     </div>
-    <p class="footer-note">© 2026 slayyyyer · Made with too much pink</p>
+    <p class="footer-note">© 2026 slayyyyer · Made with too much pink and one small cloud</p>
   </footer>
 </body>
 </html>

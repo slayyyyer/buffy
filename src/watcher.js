@@ -93,7 +93,13 @@ export function createWatcher({
     const child = execFile(
       'git',
       GIT_ARGS,
-      { cwd: root, timeout: 2000, windowsHide: true, maxBuffer: 1024 * 1024 },
+      {
+        cwd: root,
+        timeout: 2000,
+        windowsHide: true,
+        maxBuffer: 1024 * 1024,
+        env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+      },
       (error, stdout) => {
         gitChildren.delete(child);
         if (closed || error) return;

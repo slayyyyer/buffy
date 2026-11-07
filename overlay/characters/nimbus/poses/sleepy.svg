@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-sleepy" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M146 402 C126 428 122 448 128 462" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C126 428 122 448 128 462" stroke="#fbe6d9" stroke-width="10"/>
+    <path d="M366 402 C386 428 390 448 384 462" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C386 428 390 448 384 462" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="132" cy="470" rx="19" ry="20" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="380" cy="470" rx="19" ry="20" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <g fill="#8f5f80" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700">
+      <text x="430" y="226" font-size="28" opacity="0.8">z</text>
+      <text x="452" y="198" font-size="22" opacity="0.6">z</text>
+      <text x="468" y="176" font-size="17" opacity="0.4">z</text>
+    </g>
+    <path d="M112 240 Q128 226 144 240" fill="none" stroke="#e7c9d6" stroke-width="4" opacity="0.6"/>
+  </g>
+</svg>

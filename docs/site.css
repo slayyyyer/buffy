@@ -411,7 +411,7 @@ h1 em::after {
 .hero-buffy {
   position: relative;
   z-index: 2;
-  width: min(300px, 72%);
+  width: min(262px, 64%);
   filter: drop-shadow(0 24px 22px rgba(91, 38, 77, 0.16));
   animation: bob 5s ease-in-out infinite;
 }
@@ -653,12 +653,20 @@ h1 em::after {
   filter: drop-shadow(0 13px 12px rgba(91, 38, 77, 0.12));
 }
 
+.shot-tall .shot-art {
+  min-height: 430px;
+}
+
+.shot-tall .shot-art img {
+  width: min(224px, 62%);
+}
+
 .shot-wide {
   grid-column: 1 / -1;
 }
 
 .shot-wide .shot-art img {
-  width: min(640px, 92%);
+  width: min(760px, 92%);
 }
 
 .art-pink {
@@ -1111,7 +1119,8 @@ h1 em::after {
     min-height: 255px;
   }
 
-  .shot-wide .shot-art img {
+  .shot-wide .shot-art img,
+  .shot-tall .shot-art img {
     width: 100%;
   }
 
