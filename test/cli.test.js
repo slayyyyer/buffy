@@ -69,6 +69,15 @@ test('buffy pet prints a reaction', async () => {
   assert.equal(snapshot.reaction.kind, 'pet');
 });
 
+test('buffy celebrate records an explicit pass', async () => {
+  const celebrate = await run(['celebrate', 'tests passed']);
+  assert.equal(celebrate.status, 0, celebrate.stderr);
+  assert.match(celebrate.stdout, /celebrates: tests passed/);
+
+  const snapshot = JSON.parse((await run(['status', '--json'])).stdout);
+  assert.equal(snapshot.celebration.message, 'tests passed');
+});
+
 test('unknown states exit with code 2', async () => {
   const bad = await run(['event', 'dancing']);
   assert.equal(bad.status, 2);

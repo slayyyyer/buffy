@@ -32,6 +32,7 @@ const SETTINGS_HEIGHT = 780;
 const EDGE_GAP = 24;
 const WINDOW_STATE = require('./window-state.cjs');
 const { isNewerVersion } = require('./update-version.cjs');
+const SESSION_JUMP = require('./session-jump.cjs');
 const LOOKS = require('./catalog.cjs');
 const { createDraftStore, buildClaudeCodeUrl } = require('./handoff.cjs');
 const { createAlertPlanner } = require('./alerts.cjs');
@@ -221,7 +222,10 @@ function applyZoom() {
 }
 
 function defaultBounds(size = WINDOW_stateSize('full')) {
-  return WINDOW_STATE.defaultPosition(screen.getPrimaryDisplay().workArea, size, EDGE_GAP);
+  const display = screen.getPrimaryDisplay();
+  const corner = windowState.corners[String(display.id)];
+  if (corner) return WINDOW_STATE.cornerPosition(display.workArea, size, corner, EDGE_GAP);
+  return WINDOW_STATE.defaultPosition(display.workArea, size, EDGE_GAP);
 }
 
 function WINDOW_stateSize(name) {
@@ -268,6 +272,7 @@ function savePosition(name = mode) {
       full: windowState.full,
       compact: windowState.compact,
       scale: windowState.scale,
+      corners: windowState.corners,
     });
   } catch {
     /* position persistence is best effort */
@@ -519,11 +524,24 @@ function processAlerts(next) {
   if (result.startup) return;
   for (const alert of result.notifications) showNotification(alert);
   if (result.sounds && prefs.alerts.sounds) {
+    playAlertSound();
+  }
+}
+
+// The overlay renderer owns the soft chime (WebAudio, with a volume). The system
+// beep stays available because it works even when the chime is unavailable.
+function playAlertSound() {
+  if (!prefs) return;
+  if (prefs.alerts.soundStyle === 'beep') {
     try {
       shell.beep();
     } catch {
       /* sound is optional */
     }
+    return;
+  }
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('chime', { volume: Number(prefs.alerts.soundVolume ?? 60) });
   }
 }
 
@@ -1237,6 +1255,7 @@ async function settingsAction(type, payload = {}) {
           full: windowState.full,
           compact: windowState.compact,
           scale,
+          corners: windowState.corners,
         });
         setMode(mode, { force: true });
         applyZoom();
@@ -1283,6 +1302,10 @@ async function settingsAction(type, payload = {}) {
       case 'restart-daemon': {
         return { ok: true, ...(await restartDaemon()) };
       }
+      case 'test-sound': {
+        playAlertSound();
+        return { ok: true };
+      }
       case 'check-update': {
         return { ...(await checkForUpdates(true)), update: updateReady, deferred: updateDeferred };
       }
@@ -1304,6 +1327,18 @@ const SCALE_CHOICES = [
   { scale: 1.5, name: 'Extra large' },
   { scale: 1.75, name: 'Huge' },
 ];
+
+const CORNER_CHOICES = [
+  { id: 'top-left', label: 'Top left' },
+  { id: 'top-right', label: 'Top right' },
+  { id: 'bottom-left', label: 'Bottom left' },
+  { id: 'bottom-right', label: 'Bottom right' },
+];
+
+function restingCorner(display) {
+  if (!win || win.isDestroyed() || !display) return null;
+  return WINDOW_STATE.cornerOf(win.getBounds(), display.workArea, EDGE_GAP);
+}
 
 function chooseScale(scale) {
   settingsAction('scale', { scale })
@@ -1341,12 +1376,12 @@ function menuTemplate(fromTray = false) {
     { type: 'separator' },
     {
       label: 'Move to corner',
-      submenu: [
-        { label: 'Top left', click: () => moveToCorner('top-left') },
-        { label: 'Top right', click: () => moveToCorner('top-right') },
-        { label: 'Bottom left', click: () => moveToCorner('bottom-left') },
-        { label: 'Bottom right', click: () => moveToCorner('bottom-right') },
-      ],
+      submenu: CORNER_CHOICES.map((choice) => ({
+        label: choice.label,
+        type: 'radio',
+        checked: restingCorner(currentDisplay()) === choice.id,
+        click: () => moveToCorner(choice.id),
+      })),
     },
     { label: 'Compact mode', type: 'checkbox', checked: mode === 'compact', click: () => setMode(mode === 'compact' ? 'full' : 'compact') },
     {
@@ -1449,12 +1484,16 @@ function createTray() {
 
 function moveToCorner(corner) {
   if (!win || win.isDestroyed()) return;
-  const area = screen.getDisplayMatching(win.getBounds()).workArea;
+  if (!WINDOW_STATE.CORNERS.includes(corner)) return;
+  const display = screen.getDisplayMatching(win.getBounds());
   const size = WINDOW_stateSize(mode);
-  const x = corner.endsWith('left') ? area.x + EDGE_GAP : area.x + area.width - size.width - EDGE_GAP;
-  const y = corner.startsWith('top') ? area.y + EDGE_GAP : area.y + area.height - size.height - EDGE_GAP;
-  win.setBounds({ x, y, ...size });
+  const position = WINDOW_STATE.cornerPosition(display.workArea, size, corner, EDGE_GAP);
+  win.setBounds({ ...position, ...size });
+  // Remember the corner for this display, so a display without a saved
+  // position lands where that screen expects and the menu can show a check.
+  windowState.corners[String(display.id)] = corner;
   savePosition();
+  refreshTrayMenu();
 }
 
 async function runSmokeTest() {
@@ -1520,6 +1559,23 @@ ipcMain.handle('dismiss-session', async (_event, sessionId) => {
   } catch (error) {
     return { ok: false, error: error.message };
   }
+});
+
+// "Show project" from an activity card opens the folder the session reported.
+// Without a usable folder, copy the session id so it can still be traced with
+// `buffy status`.
+ipcMain.handle('session:focus', (_event, payload) => {
+  const target = SESSION_JUMP.sessionTarget(payload);
+  const directory = SESSION_JUMP.directoryFor(target.cwd);
+  if (directory) {
+    shell.openPath(directory).catch(() => {});
+    return { ok: true, opened: 'folder', path: directory };
+  }
+  if (target.sessionId) {
+    clipboard.writeText(target.sessionId);
+    return { ok: true, opened: 'session', sessionId: target.sessionId };
+  }
+  return { ok: false, error: 'That session did not report a project folder.' };
 });
 
 ipcMain.handle('snapshot:get', () => snapshot);

@@ -22,7 +22,9 @@ Usage:
       --msg "text"                 speech bubble text
       --source claude|freebuff|…   who sent it (shown in the bubble)
       --session <id>               stable identity for concurrent agents
+      --cwd <dir>                  project folder the activity card can open
   buffy pet                        scratch behind the ears
+  buffy celebrate [message]        celebrate a verified test or build pass
   buffy dismiss <session>          clear one concurrent agent session
   buffy status [--json]            state, mood, XP, daemon health
   buffy overlay [--dev] [--onboarding] show the always-on-top pet window
@@ -158,6 +160,7 @@ async function eventCommand(rest, flags, config) {
   const sessionId = (typeof flags.session === 'string' ? flags.session : process.env.BUFFY_SESSION || '')
     .trim()
     .slice(0, 96);
+  const cwd = (typeof flags.cwd === 'string' ? flags.cwd : process.cwd()).slice(0, 512);
   try {
     await client.ensureDaemon({ port: config.port });
     await client.postEvent(config.port, {
@@ -165,6 +168,7 @@ async function eventCommand(rest, flags, config) {
       message,
       source,
       ...(sessionId ? { sessionId } : {}),
+      ...(cwd ? { cwd } : {}),
     });
   } catch (error) {
     fail(`buffy: ${error.message}`);
@@ -178,6 +182,19 @@ async function petCommand(config) {
     await client.ensureDaemon({ port: config.port });
     const snapshot = await client.sendPet(config.port);
     print(`${snapshot.pet.name} seems pleased. (mood ${snapshot.mood}/100 · ${snapshot.xp} xp)`);
+    return 0;
+  } catch (error) {
+    fail(`buffy: ${error.message}`);
+    return 1;
+  }
+}
+
+async function celebrateCommand(rest, config) {
+  const message = rest.join(' ').trim();
+  try {
+    await client.ensureDaemon({ port: config.port });
+    const snapshot = await client.sendCelebration(config.port, message);
+    print(`${snapshot.pet.name} celebrates${message ? `: ${message}` : '.'} (mood ${snapshot.mood}/100 · ${snapshot.xp} xp)`);
     return 0;
   } catch (error) {
     fail(`buffy: ${error.message}`);
@@ -384,6 +401,8 @@ export async function main(argv = process.argv.slice(2)) {
       return eventCommand(args.slice(1), flags, config);
     case 'pet':
       return petCommand(config);
+    case 'celebrate':
+      return celebrateCommand(args.slice(1), config);
     case 'dismiss':
       return dismissCommand(args.slice(1), config);
     case 'status':

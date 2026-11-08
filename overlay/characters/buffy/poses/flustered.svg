@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-flustered" stroke-linecap="round" stroke-linejoin="round">
+    <!-- both hands up near her cheeks -->
+    <path d="M146 402 C126 376 132 346 154 330" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C126 376 132 346 154 330" stroke="#fbe6d9" stroke-width="10"/>
+    <path d="M366 402 C386 376 380 346 358 330" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C386 376 380 346 358 330" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="156" cy="320" rx="19" ry="21" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(-14 156 320)"/>
+    <ellipse cx="356" cy="320" rx="19" ry="21" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(14 356 320)"/>
+    <path d="M148 318 Q156 324 164 318" stroke="#e9b6b8" stroke-width="3"/>
+    <path d="M348 318 Q356 324 364 318" stroke="#e9b6b8" stroke-width="3"/>
+    <circle cx="146" cy="332" r="4" fill="#f3b9c8"/>
+    <circle cx="366" cy="332" r="4" fill="#f3b9c8"/>
+    <!-- sweat drop -->
+    <path d="M424 242 C414 256 412 268 422 276 C432 268 434 256 424 242 Z" fill="#9fd0e0" stroke="#5c3150" stroke-width="4"/>
+    <!-- stress marks -->
+    <g stroke="#e78bb0" stroke-width="4" opacity="0.8">
+      <path d="M78 222 L92 232"/>
+      <path d="M70 242 L86 246"/>
+      <path d="M434 222 L420 232"/>
+      <path d="M442 242 L426 246"/>
+    </g>
+  </g>
+</svg>

@@ -120,6 +120,12 @@ export async function sendPet(port) {
   return data.state;
 }
 
+export async function sendCelebration(port, message) {
+  const { status, data } = await httpJson({ method: 'POST', port, path: '/celebrate', body: { message }, timeout: 1500 });
+  if (status !== 200 || !data?.ok) throw new Error(data?.error || `daemon returned ${status}`);
+  return data.state;
+}
+
 export async function dismissSession(port, sessionId) {
   const { status, data } = await httpJson({
     port,

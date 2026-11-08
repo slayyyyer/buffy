@@ -79,6 +79,8 @@ test('maps the Claude Code hook vocabulary onto six states', () => {
   assert.equal(mapClaudeHook('Notification', { message: 'Allow Bash?' }).state, 'needs-you');
   assert.equal(mapClaudeHook('Notification', { message: 'Allow Bash?' }).message, 'Allow Bash?');
   assert.equal(mapClaudeHook('Stop', {}).state, 'done');
+  assert.equal(mapClaudeHook('PreToolUse', { tool_name: 'Edit', cwd: 'C:/work/app' }).cwd, 'C:/work/app');
+  assert.equal(mapClaudeHook('PreToolUse', { tool_name: 'Edit' }).cwd, undefined);
   assert.equal(mapClaudeHook('SomethingElse', {}), null);
   assert.equal(mapClaudeHook(undefined, { hook_event_name: 'Stop' }).state, 'done');
 });
@@ -110,6 +112,27 @@ test('Stop moves the pet to done', async () => {
   const result = await runHook('Stop', { hook_event_name: 'Stop' });
   assert.equal(result.status, 0, result.stderr);
   assert.equal((await state()).current.state, 'done');
+});
+
+test('PostToolUse celebrates only with an explicit zero exit code', async () => {
+  const noCode = await runHook('PostToolUse', {
+    hook_event_name: 'PostToolUse',
+    tool_name: 'Bash',
+    tool_input: { command: 'npm test' },
+    tool_response: { stdout: 'all tests passed' },
+  });
+  assert.equal(noCode.status, 0, noCode.stderr);
+  assert.equal((await state()).celebration, null);
+
+  const passed = await runHook('PostToolUse', {
+    hook_event_name: 'PostToolUse',
+    tool_name: 'Bash',
+    tool_input: { command: 'npm test' },
+    tool_response: { exit_code: 0 },
+  });
+  assert.equal(passed.status, 0, passed.stderr);
+  const snapshot = await state();
+  assert.equal(snapshot.celebration.message, 'tests passed');
 });
 
 test('unknown events and malformed input stay silent and successful', async () => {

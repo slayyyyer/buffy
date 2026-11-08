@@ -74,6 +74,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   const clients = new Set();
   const startedAt = Date.now();
   let reaction = null;
+  let celebration = null;
   let lastDispatchAt = 0;
   let lastDispatchState = null;
   let lastDispatchSession = null;
@@ -106,6 +107,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       recentCompletions: current.recentCompletions ?? [],
       lastIdleReminder: current.lastIdleReminder ?? null,
       reaction: reaction && now - reaction.at < 10_000 ? reaction : null,
+      celebration: celebration && now - celebration.at < 8_000 ? celebration : null,
       watch: watchInfo,
     };
   }
@@ -133,6 +135,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
         message: cleanText(input.message),
         source,
         sessionId,
+        cwd: input.cwd,
         category: input.category,
         observed: input.observed,
         request: input.request,
@@ -182,6 +185,20 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     store.xp += 2;
     store.mood = clamp(store.mood + 8, 0, 100);
     store.counters.pets += 1;
+    store.lastSeen = new Date(now).toISOString();
+    saveState(store, env);
+    broadcast();
+    return snapshot(now);
+  }
+
+  // Celebration is deliberately explicit: a caller has to assert the pass.
+  // The watcher never calls this, so file churn can never fake a green build.
+  function celebrate(input, now = Date.now()) {
+    const message = cleanText(input?.message, 120) || 'all green';
+    celebration = { kind: 'celebrate', at: now, message };
+    store.xp += 4;
+    store.mood = clamp(store.mood + 6, 0, 100);
+    store.counters.celebrations = (store.counters.celebrations || 0) + 1;
     store.lastSeen = new Date(now).toISOString();
     saveState(store, env);
     broadcast();
@@ -418,6 +435,14 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       return sendJson(res, 200, { ok: true, state });
     }
 
+    if (req.method === 'POST' && url.pathname === '/celebrate') {
+      readJsonBody(req, (err, body) => {
+        if (err) return sendJson(res, err.status || 400, { ok: false, error: err.message });
+        return sendJson(res, 200, { ok: true, state: celebrate(body) });
+      });
+      return;
+    }
+
     sendJson(res, 404, { ok: false, error: 'not found' });
   });
 
@@ -461,7 +486,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     }
   }
 
-  return { listen, close, snapshot, dispatch, dismissSession, pet, machine, server, store };
+  return { listen, close, snapshot, dispatch, dismissSession, pet, celebrate, machine, server, store };
 }
 
 export async function startDaemon({ config = readConfig(), env = process.env, port = config.port, quiet = false } = {}) {

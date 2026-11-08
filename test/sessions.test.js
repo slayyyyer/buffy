@@ -47,6 +47,14 @@ test.after(async () => {
   fs.rmSync(home, { recursive: true, force: true });
 });
 
+test('celebrate is a separate explicit signal with its own snapshot window', async () => {
+  const before = (await get('/state')).body;
+  const result = await postTo('/celebrate', { message: 'build passed' });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.state.celebration.message, 'build passed');
+  assert.ok(result.body.state.xp >= before.xp + 4);
+});
+
 test('a needs-you session survives another session working and finishing', async () => {
   await post({ state: 'working', source: 'claude', sessionId: 'claude:a', message: 'editing' });
   await post({ state: 'needs-you', source: 'claude', sessionId: 'claude:b', message: 'approve?' });
@@ -94,4 +102,21 @@ test('dismiss clears one session and leaves the others active', async () => {
   assert.equal(snapshot.current.sessionId, 'dismiss:b');
   assert.equal(snapshot.current.state, 'working');
   assert.ok(snapshot.sessions.every((session) => session.id !== 'dismiss:a'));
+});
+
+test('a session carries the project folder for its activity card', async () => {
+  await post({
+    state: 'needs-you',
+    source: 'claude',
+    sessionId: 'cwd:one',
+    message: 'approve?',
+    cwd: 'C:/work/app',
+    request: { id: 'perm-cwd', kind: 'permission', label: 'approve?', toolName: 'Bash' },
+  });
+
+  const snapshot = (await get('/state')).body;
+  assert.equal(snapshot.current.sessionId, 'cwd:one');
+  const session = snapshot.sessions.find((entry) => entry.id === 'cwd:one');
+  assert.equal(session.cwd, 'C:/work/app');
+  assert.equal(snapshot.pendingRequestsList[0].cwd, 'C:/work/app');
 });

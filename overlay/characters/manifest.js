@@ -20,8 +20,13 @@
     'gardening',
   ];
 
+  // Buffy's layered renderer can express reactions that need new art. Mochi's
+  // atlas stays at the original nine cells and maps these to nearest poses.
+  const REACTION_POSES = ['flustered', 'tapping', 'squish', 'waiting', 'celebrate'];
+  const BUFFY_POSES = [...POSES, ...REACTION_POSES];
+
   const buffyPoseFiles = {};
-  for (const pose of POSES) buffyPoseFiles[pose] = `buffy/poses/${pose}.svg`;
+  for (const pose of BUFFY_POSES) buffyPoseFiles[pose] = `buffy/poses/${pose}.svg`;
 
   const buffyOutfits = {
     dress: 'buffy/outfits/dress.svg',
@@ -57,6 +62,7 @@
   return {
     version: 1,
     poses: POSES,
+    reactionPoses: REACTION_POSES,
     characters: [
       {
         id: 'buffy',
@@ -86,7 +92,7 @@
           wand: 'none',
           theme: 'plum',
         },
-        supportedPoses: POSES,
+        supportedPoses: BUFFY_POSES,
       },
       {
         id: 'mochi',

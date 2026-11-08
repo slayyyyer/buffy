@@ -28,6 +28,8 @@ export const DEFAULT_ALERTS = Object.freeze({
   requests: false,
   completions: false,
   sounds: false,
+  soundStyle: 'chime',
+  soundVolume: 60,
   snoozeUntil: null,
 });
 
@@ -272,6 +274,10 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
       requests: alerts.requests === true,
       completions: alerts.completions === true,
       sounds: alerts.sounds === true,
+      soundStyle: alerts.soundStyle === 'beep' ? 'beep' : 'chime',
+      soundVolume: Number.isFinite(Number(alerts.soundVolume))
+        ? Math.min(100, Math.max(0, Math.round(Number(alerts.soundVolume))))
+        : base.alerts.soundVolume,
       snoozeUntil: normalizeSnooze(alerts.snoozeUntil, now),
     },
     connection: {

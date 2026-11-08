@@ -19,9 +19,11 @@ contextBridge.exposeInMainWorld('buffy', {
   onDraft: (callback) => subscribe('draft', callback),
   onMode: (callback) => subscribe('mode', callback),
   onUpdate: (callback) => subscribe('update', callback),
+  onChime: (callback) => subscribe('chime', callback),
 
   pet: () => ipcRenderer.invoke('pet'),
   dismissSession: (sessionId) => ipcRenderer.invoke('dismiss-session', sessionId),
+  focusSession: (payload) => ipcRenderer.invoke('session:focus', payload && typeof payload === 'object' ? payload : {}),
   getSnapshot: () => ipcRenderer.invoke('snapshot:get'),
   getComposer: () => ipcRenderer.invoke('composer:get'),
   setDraft: (text) => ipcRenderer.invoke('composer:update', String(text ?? '')),

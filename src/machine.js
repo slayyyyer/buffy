@@ -164,6 +164,7 @@ export function createMachine({
       source: session.source,
       category: session.category,
       observed: session.observed,
+      cwd: session.cwd ?? null,
       since: session.since,
       updatedAt: session.updatedAt,
       seq: session.seq,
@@ -255,6 +256,7 @@ export function createMachine({
           ...publicRequest(request),
           sessionId: session.id,
           source: session.source,
+          cwd: session.cwd ?? null,
           state: 'needs-you',
         });
       }
@@ -391,6 +393,7 @@ export function createMachine({
     const id = sessionIdFor(event);
     const source = clean(event.source, 40) || null;
     const message = clean(event.message);
+    const cwd = clean(event.cwd, 512);
     const category = normalizeCategory(event.category, event.observed === 'inferred' ? 'editing-inferred' : 'tool');
     const observed = event.observed === 'inferred' ? 'inferred' : 'explicit';
     const eventSeq = nextSeq();
@@ -447,6 +450,7 @@ export function createMachine({
       source,
       category,
       observed,
+      cwd: cwd ?? null,
       since: now,
       updatedAt: now,
       seq: eventSeq,
@@ -458,6 +462,7 @@ export function createMachine({
     session.state = state;
     session.message = message;
     session.source = source ?? session.source;
+    if (cwd) session.cwd = cwd;
     session.category = category;
     session.observed = observed;
     session.updatedAt = now;

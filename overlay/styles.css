@@ -157,6 +157,13 @@ body.dragging .hit {
   text-overflow: ellipsis;
 }
 
+/* The display rule below would otherwise defeat the `hidden` attribute and
+   leave a "0" badge on the pill. */
+.pill-badge[hidden],
+.tool-badge[hidden] {
+  display: none;
+}
+
 .pill-badge,
 .tool-badge {
   display: inline-flex;
@@ -758,7 +765,7 @@ body.dragging .hit {
 }
 
 #app[data-mode="compact"] .pill-state {
-  max-width: 90px;
+  max-width: 150px;
 }
 
 #app[data-mode="compact"] .toolbar {

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-squish" stroke-linecap="round" stroke-linejoin="round">
+    <!-- arms braced outward as she is compressed -->
+    <path d="M146 402 C112 414 92 430 82 448" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C112 414 92 430 82 448" stroke="#fbe6d9" stroke-width="10"/>
+    <path d="M366 402 C400 414 420 430 430 448" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C400 414 420 430 430 448" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="74" cy="456" rx="21" ry="18" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(-18 74 456)"/>
+    <ellipse cx="438" cy="456" rx="21" ry="18" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(18 438 456)"/>
+    <path d="M66 452 Q74 458 82 452" stroke="#e9b6b8" stroke-width="3"/>
+    <path d="M430 452 Q438 458 446 452" stroke="#e9b6b8" stroke-width="3"/>
+    <!-- pressure puffs -->
+    <g fill="#ffffff" opacity="0.5">
+      <circle cx="58" cy="420" r="9"/>
+      <circle cx="44" cy="438" r="6"/>
+      <circle cx="454" cy="420" r="9"/>
+      <circle cx="468" cy="438" r="6"/>
+    </g>
+    <g stroke="#ffc7dd" stroke-width="4" opacity="0.8">
+      <path d="M40 400 L54 408"/>
+      <path d="M472 400 L458 408"/>
+    </g>
+  </g>
+</svg>

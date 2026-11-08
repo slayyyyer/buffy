@@ -40,6 +40,11 @@
     reading: { state: 'working', poseOverride: 'reading', category: 'reading' },
     tea: { state: 'idle', hobby: { id: 'tea' }, poseOverride: 'tea' },
     gardening: { state: 'idle', hobby: { id: 'gardening' }, poseOverride: 'gardening' },
+    flustered: { state: 'error', poseOverride: 'flustered' },
+    tapping: { state: 'needs-you', poseOverride: 'tapping' },
+    squish: { state: 'working', category: 'compacting', poseOverride: 'squish' },
+    waiting: { state: 'working', poseOverride: 'waiting', category: 'editing' },
+    celebrate: { state: 'done', poseOverride: 'celebrate' },
   };
 
   const CLOTHING_LABELS = {
@@ -257,7 +262,7 @@
       ),
       card(
         'Wardrobe',
-        'Outfits are drawn to the same anchors across all nine poses. Each piece can be switched off independently.',
+        'Outfits are drawn to the same anchors across every pose. Each piece can be switched off independently.',
         `${slotHtml}
         <div class="row-actions"><button type="button" class="button" data-random>Surprise me</button><span class="hint" style="margin:0">Favorites get a gentle bias.</span></div>`,
       ),
@@ -345,6 +350,7 @@
 
   function renderAlerts() {
     const a = prefs.alerts || {};
+    const volume = Number.isFinite(Number(a.soundVolume)) ? Number(a.soundVolume) : 60;
     const snoozed = a.snoozeUntil && Date.parse(a.snoozeUntil) > Date.now();
     panel.innerHTML = [
       card(
@@ -352,7 +358,19 @@
         'Everything is opt-in. Alerts are deduplicated, so polling, startup, and reconnects never replay old requests.',
         toggleRow('alert-requests', 'Permission requests and questions', 'A notification when a session explicitly needs you.', a.requests === true, 'data-alert="requests"') +
           toggleRow('alert-completions', 'Completed turns', 'A notification when an agent explicitly reports completion.', a.completions === true, 'data-alert="completions"') +
-          toggleRow('alert-sounds', 'Play a soft sound', 'Uses the operating system beep. Independent of visual alerts.', a.sounds === true, 'data-alert="sounds"') +
+          toggleRow('alert-sounds', 'Play a soft sound', 'Independent of visual alerts. Pick a chime or the system beep below.', a.sounds === true, 'data-alert="sounds"') +
+          `<div class="field-grid" style="margin-top:10px">
+            <div class="field"><label for="alert-sound-style">Sound</label>
+              <select id="alert-sound-style" data-alert-field="soundStyle">
+                <option value="chime" ${a.soundStyle === 'beep' ? '' : 'selected'}>Soft chime</option>
+                <option value="beep" ${a.soundStyle === 'beep' ? 'selected' : ''}>System beep</option>
+              </select>
+            </div>
+            <div class="field"><label for="alert-volume">Volume · <span id="alert-volume-value">${volume}%</span></label>
+              <input id="alert-volume" type="range" min="0" max="100" step="5" value="${volume}" data-alert-field="soundVolume" />
+            </div>
+          </div>
+          <div class="row-actions"><button type="button" class="button" data-test-sound>Test sound</button></div>` +
           `<p class="note">${data.notificationsSupported ? 'Desktop notifications are supported on this computer.' : 'Desktop notifications are unavailable on this system; the activity cards and pending badge still update.'}</p>`,
       ),
       card(
@@ -492,6 +510,13 @@
     const meta = SECTIONS[section] || SECTIONS.companion;
     title.textContent = meta.title;
     eyebrow.textContent = meta.eyebrow;
+    const supported = character()?.supportedPoses;
+    poseButtons.querySelectorAll('[data-pose]').forEach((button) => {
+      const available = !Array.isArray(supported) || supported.includes(button.dataset.pose);
+      button.hidden = !available;
+      if (!available && pose === button.dataset.pose) pose = 'idle';
+      button.setAttribute('aria-pressed', String(button.dataset.pose === pose));
+    });
     document.querySelectorAll('[data-section]').forEach((button) => {
       if (button.dataset.section === section) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
@@ -648,6 +673,11 @@
       window.buffySettings.openExternal('https://github.com/slayyyyer/buffy#install-and-run');
       return;
     }
+    if (event.target.closest('[data-test-sound]')) {
+      const result = await action('test-sound');
+      if (result?.ok) toast('Played the alert sound.');
+      return;
+    }
     const shortcutSave = event.target.closest('[data-save-shortcut]');
     if (shortcutSave) {
       const accelerator = $('summon-shortcut')?.value || '';
@@ -719,6 +749,12 @@
       scheduleSave();
       return;
     }
+    if (target.matches('[data-alert-field]')) {
+      const key = target.dataset.alertField;
+      prefs.alerts[key] = key === 'soundVolume' ? Number(target.value) : target.value;
+      scheduleSave();
+      return;
+    }
     if (target.matches('[data-watcher]')) {
       prefs.connection.freebuffWatcher = target.checked;
       scheduleSave();
@@ -733,6 +769,13 @@
 
   panel.addEventListener('input', (event) => {
     const target = event.target;
+    if (target.matches('[data-alert-field="soundVolume"]')) {
+      prefs.alerts.soundVolume = Number(target.value);
+      const value = $('alert-volume-value');
+      if (value) value.textContent = `${prefs.alerts.soundVolume}%`;
+      scheduleSave();
+      return;
+    }
     if (target.matches('[data-companion]')) {
       prefs.companion[target.dataset.companion] = target.value;
       if (target.dataset.companion === 'name') previewName.textContent = character()?.name || 'Buffy';

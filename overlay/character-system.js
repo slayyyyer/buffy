@@ -100,12 +100,37 @@
     return themeOf(theme).accent;
   }
 
-  function poseFor({ state = 'idle', category = 'thinking', hobby = null, greeting = false } = {}) {
+  // The five reaction poses are layered art on Buffy only. Mochi's atlas keeps
+  // its nine hand-drawn cells, so reactions fall back to the closest mood.
+  const ATLAS_FALLBACK = {
+    flustered: 'idle',
+    tapping: 'idle',
+    squish: 'typingLeft',
+    waiting: 'sleepy',
+    celebrate: 'happy',
+  };
+
+  function atlasPose(pose) {
+    return ATLAS_FALLBACK[pose] || pose;
+  }
+
+  function poseFor({
+    state = 'idle',
+    category = 'thinking',
+    hobby = null,
+    greeting = false,
+    waiting = false,
+    celebration = false,
+  } = {}) {
+    if (state === 'error') return 'flustered';
+    if (state === 'needs-you') return 'tapping';
+    if (celebration) return 'celebrate';
     if (greeting) return 'wave';
     if (state === 'done' || state === 'pet') return 'happy';
     if (state === 'working') {
+      if (category === 'compacting') return 'squish';
+      if (waiting) return 'waiting';
       if (category === 'reading' || category === 'searching') return 'reading';
-      if (category === 'compacting') return 'typingLeft';
       return 'typingLeft';
     }
     if (state === 'sleepy') return 'sleepy';
@@ -222,7 +247,7 @@
     ctx.restore();
   }
 
-  function drawFace(ctx, { x, y, width, height, state, blink, gazeX, gazeY, hobby, reducedMotion }) {
+  function drawFace(ctx, { x, y, width, height, state, pose = null, blink, gazeX, gazeY, hobby, reducedMotion, now = 0 }) {
     // The default character has a dark plush screen, so the face is drawn in
     // warm light ink with a dark pupil. Dark ink vanished into the screen.
     const ink = '#ffe9f3';
@@ -241,11 +266,16 @@
     ctx.lineWidth = Math.max(2, width * 0.028);
     ctx.lineCap = 'round';
 
-    const happy = state === 'done' || state === 'pet' || state === 'wave' || hobby;
+    const happy = state === 'done' || state === 'pet' || state === 'wave' || hobby || pose === 'celebrate';
     const sleepy = state === 'sleepy';
     const error = state === 'error';
     const offline = state === 'offline';
     const attention = state === 'needs-you';
+    const flustered = pose === 'flustered' || error;
+    const squished = pose === 'squish';
+    const waitingPose = pose === 'waiting';
+    const tappingPose = pose === 'tapping';
+    const celebrating = pose === 'celebrate';
 
     const lashFlicks = (cx, baseY, side, scale = 1) => {
       ctx.save();
@@ -312,14 +342,29 @@
       ctx.restore();
     };
 
-    if (error) {
+    if (flustered) {
+      // Spiral eyes read as flustered rather than a hard failure cross.
       [-1, 1].forEach((side) => {
         const cx = x + side * eyeGap;
         ctx.beginPath();
-        ctx.moveTo(cx - eyeW, eyeY - eyeW);
-        ctx.lineTo(cx + eyeW, eyeY + eyeW);
-        ctx.moveTo(cx + eyeW, eyeY - eyeW);
-        ctx.lineTo(cx - eyeW, eyeY + eyeW);
+        for (let i = 0; i <= 30; i += 1) {
+          const t = i / 30;
+          const angle = t * Math.PI * 3.4 + (side > 0 ? 0 : Math.PI);
+          const radius = eyeW * t;
+          const px = cx + Math.cos(angle) * radius;
+          const py = eyeY + Math.sin(angle) * radius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      });
+    } else if (squished) {
+      [-1, 1].forEach((side) => {
+        const cx = x + side * eyeGap;
+        ctx.beginPath();
+        ctx.moveTo(cx - eyeW * 1.05, eyeY - eyeW * 0.7);
+        ctx.lineTo(cx + eyeW * 0.7, eyeY);
+        ctx.lineTo(cx - eyeW * 1.05, eyeY + eyeW * 0.7);
         ctx.stroke();
       });
     } else if (offline) {
@@ -337,6 +382,17 @@
         ctx.quadraticCurveTo(cx, eyeY + eyeW * 0.8, cx + eyeW, eyeY);
         ctx.stroke();
         lashFlicks(cx, eyeY, side);
+      });
+    } else if (waitingPose) {
+      [-1, 1].forEach((side) => {
+        const cx = x + side * eyeGap;
+        ctx.beginPath();
+        ctx.ellipse(cx, eyeY + eyeH * 0.18, eyeW, eyeH * 0.58, 0, 0, Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx - eyeW, eyeY);
+        ctx.lineTo(cx + eyeW, eyeY);
+        ctx.stroke();
       });
     } else if (happy) {
       [-1, 1].forEach((side) => {
@@ -447,10 +503,27 @@
     ctx.strokeStyle = ink;
     ctx.fillStyle = ink;
     ctx.lineWidth = Math.max(2, width * 0.026);
-    if (error) {
+    if (flustered) {
+      // A wobbly mouth plus the spiral eyes sells "flustered" at a glance.
       ctx.beginPath();
-      ctx.moveTo(x - eyeW, mouthY);
-      ctx.quadraticCurveTo(x, mouthY - eyeW * 0.7, x + eyeW, mouthY);
+      ctx.moveTo(x - eyeW * 1.05, mouthY);
+      ctx.quadraticCurveTo(x - eyeW * 0.5, mouthY - eyeW * 0.5, x, mouthY);
+      ctx.quadraticCurveTo(x + eyeW * 0.5, mouthY + eyeW * 0.5, x + eyeW * 1.05, mouthY);
+      ctx.stroke();
+    } else if (squished) {
+      pout(x, mouthY, eyeW * 0.3);
+    } else if (waitingPose) {
+      ctx.beginPath();
+      ctx.moveTo(x - eyeW * 0.55, mouthY);
+      ctx.lineTo(x + eyeW * 0.55, mouthY);
+      ctx.stroke();
+    } else if (tappingPose) {
+      ctx.beginPath();
+      ctx.ellipse(x, mouthY, eyeW * 0.28, eyeW * (0.34 + Math.sin(now / 220) * 0.05), 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 132, 184, 0.96)';
+      ctx.fill();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = Math.max(1.3, width * 0.014);
       ctx.stroke();
     } else if (offline) {
       ctx.beginPath();
@@ -539,7 +612,7 @@
     ctx.restore();
   }
 
-  function drawStateEffects(ctx, { x, y, width, height, state, now, reducedMotion, pending }) {
+  function drawStateEffects(ctx, { x, y, width, height, state, pose = null, now, reducedMotion, pending, celebration = false }) {
     const cx = x + width / 2;
     const cy = y + height * 0.34;
     if (state === 'needs-you' || pending > 0) {
@@ -601,6 +674,145 @@
         );
       }
     }
+    if (pose === 'flustered') {
+      ctx.save();
+      const drop = reducedMotion ? 0.4 : 0.5 + 0.5 * Math.sin(now / 520);
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#9fd0e0';
+      ctx.strokeStyle = '#5c3150';
+      ctx.lineWidth = 1.6;
+      const dx = x + width * 0.72;
+      const dy = y + height * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(dx, dy - 9 - drop * 3);
+      ctx.bezierCurveTo(dx - 7, dy - 1, dx - 7, dy + 6, dx, dy + 7);
+      ctx.bezierCurveTo(dx + 7, dy + 6, dx + 7, dy - 1, dx, dy - 9 - drop * 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(231, 139, 176, 0.8)';
+      ctx.lineWidth = 2;
+      [-1, 1].forEach((side) => {
+        for (let i = 0; i < 2; i += 1) {
+          const sx = cx + side * width * (0.34 + i * 0.04);
+          const sy = cy - height * (0.13 + i * 0.04);
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + side * width * 0.035, sy - height * 0.02);
+          ctx.stroke();
+        }
+      });
+      ctx.restore();
+    }
+
+    if (pose === 'tapping') {
+      ctx.save();
+      const rx = cx + width * 0.27;
+      const ry = cy + height * 0.01;
+      // Ripples on the glass, one wave per tap.
+      for (let i = 0; i < 3; i += 1) {
+        const phase = reducedMotion ? i / 3 : ((now / 900 + i / 3) % 1);
+        ctx.globalAlpha = (1 - phase) * 0.7;
+        ctx.strokeStyle = '#ffd77a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(rx, ry, width * (0.03 + phase * 0.09), -0.8, 0.8);
+        ctx.stroke();
+      }
+      // A little hand tapping at the screen from inside.
+      const tapOffset = reducedMotion ? 0 : Math.max(0, Math.sin(now / 130)) * 4;
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = '#fbe6d9';
+      ctx.strokeStyle = '#5c3150';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(rx + 13 + tapOffset, ry + 12, width * 0.055, width * 0.042, -0.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(rx - 2 + tapOffset, ry + 5, width * 0.018, width * 0.03, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (pose === 'squish') {
+      ctx.save();
+      const squeeze = reducedMotion ? 0.5 : 0.5 + 0.5 * Math.sin(now / 220);
+      ctx.globalAlpha = 0.5 + squeeze * 0.3;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.strokeStyle = 'rgba(255, 199, 221, 0.75)';
+      ctx.lineWidth = 2;
+      [-1, 1].forEach((side) => {
+        const px = cx + side * width * (0.36 + squeeze * 0.03);
+        ctx.beginPath();
+        ctx.arc(px, cy + height * 0.16, width * (0.022 + squeeze * 0.012), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(px + side * width * 0.04, cy + height * 0.02);
+        ctx.lineTo(px + side * width * 0.08, cy + height * 0.06);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    if (pose === 'waiting') {
+      ctx.save();
+      const r = Math.max(11, width * 0.06);
+      const bx = x + width * 0.74;
+      const by = y + height * 0.1;
+      ctx.fillStyle = 'rgba(44, 27, 41, 0.9)';
+      ctx.strokeStyle = 'rgba(255, 186, 214, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#ffe9f3';
+      ctx.lineWidth = 2;
+      const angle = reducedMotion ? Math.PI * 0.25 : (now / 2600) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx + Math.sin(angle) * r * 0.52, by - Math.cos(angle) * r * 0.52);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx + Math.cos(now / 9000) * r * 0.34, by + Math.sin(now / 9000) * r * 0.34);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 233, 243, 0.8)';
+      for (let i = 0; i < 3; i += 1) {
+        const pulse = reducedMotion ? 1 : 0.55 + 0.45 * Math.sin(now / 480 + i * 0.8);
+        ctx.globalAlpha = pulse;
+        ctx.beginPath();
+        ctx.arc(bx - 10 + i * 10, by + r + 10, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    if (celebration || pose === 'celebrate') {
+      ctx.save();
+      const colors = ['#ffd77a', '#ff9fc6', '#b9d7ff', '#b8e8c8', '#d5b8ff'];
+      const pieces = reducedMotion ? 6 : 14;
+      for (let i = 0; i < pieces; i += 1) {
+        const spread = Math.sin(i * 2.399) * width * 0.44;
+        const fall = reducedMotion ? (i % 6) / 8 : ((now / 1100 + i * 0.137) % 1);
+        const px = cx + spread;
+        const py = y + height * 0.04 + fall * height * 0.74;
+        ctx.globalAlpha = 0.9 - fall * 0.4;
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(fall * 7 + i);
+        ctx.fillRect(-2.2, -4.5, 4.4, 9);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      drawSparkle(ctx, cx + width * 0.38, cy - height * 0.16, width * 0.024, '#ffd77a', 0.9);
+      drawSparkle(ctx, cx - width * 0.4, cy - height * 0.2, width * 0.02, '#ff9fc6', 0.8);
+      ctx.restore();
+    }
+
     if (state === 'wave') {
       drawHeart(ctx, cx + width * 0.42, cy - height * 0.05, width * 0.022, 0.7, '#ff9fc6');
     }
@@ -624,6 +836,8 @@
       thoughtBubbles = 'off',
       greeting = false,
       pending = 0,
+      waiting = false,
+      celebration = false,
       customImage = null,
       poseOverride = null,
     } = options;
@@ -657,6 +871,7 @@
         now,
         reducedMotion,
         pending,
+        celebration,
       });
       ctx.restore();
       return;
@@ -689,13 +904,16 @@
     const originX = (width - drawWidth) / 2;
     const originY = (baseY ?? height) - drawHeight;
 
-    const pose =
-      poseOverride ||
-      (style === 'atlas'
-        ? poseFor({ state, category, hobby, greeting })
-        : state === 'working'
+    const resolvedPose = poseFor({ state, category, hobby, greeting, waiting, celebration });
+    const pose = poseOverride
+      ? style === 'atlas'
+        ? atlasPose(poseOverride)
+        : poseOverride
+      : style === 'atlas'
+        ? atlasPose(resolvedPose)
+        : state === 'working' && !waiting && !celebration && category !== 'compacting'
           ? typingPose(now, category)
-          : poseFor({ state, category, hobby, greeting }));
+          : resolvedPose;
 
     const bobAmplitude = reducedMotion ? 0 : state === 'sleepy' ? 1 : 2.4;
     const bob = Math.sin(now / 1000) * bobAmplitude + (reducedMotion ? 0 : Math.sin(now / 2600) * 0.8);
@@ -705,6 +923,9 @@
     const hop = state === 'done' && !reducedMotion ? -Math.abs(Math.sin(now / 190)) * 5 : 0;
     const waveTilt = state === 'wave' && !reducedMotion ? Math.sin(now / 120) * 0.025 : 0;
     const pulse = attention && !reducedMotion ? 1 + Math.sin(now / 380) * 0.008 : 1;
+    const squish = pose === 'squish' && !reducedMotion ? 0.9 + Math.sin(now / 180) * 0.018 : 1;
+    const tap = pose === 'tapping' && !reducedMotion ? Math.sin(now / 95) * 1.8 : 0;
+    const cheerHop = pose === 'celebrate' && !reducedMotion ? -Math.abs(Math.sin(now / 170)) * 7 : 0;
 
     // Ground shadow stays put while the character floats.
     ctx.save();
@@ -720,9 +941,9 @@
     ctx.restore();
 
     ctx.save();
-    ctx.translate(originX + drawWidth / 2 + shake, originY + drawHeight / 2 + bob + hop);
+    ctx.translate(originX + drawWidth / 2 + shake + tap, originY + drawHeight / 2 + bob + hop + cheerHop);
     ctx.rotate(waveTilt);
-    ctx.scale((1 + (breathe - 1) * 0.5) * pulse, 1 - (breathe - 1) * 0.5);
+    ctx.scale((1 + (breathe - 1) * 0.5) * pulse * (2 - squish), (1 - (breathe - 1) * 0.5) * squish);
     ctx.translate(-drawWidth / 2, -drawHeight / 2);
 
     const drawImage = (image, rel, { filter = null, alpha = 1 } = {}) => {
@@ -771,9 +992,11 @@
           width: drawWidth,
           height: drawHeight,
           state,
+          pose,
           now,
           reducedMotion,
           pending,
+          celebration,
         });
       }
     } else {
@@ -805,6 +1028,7 @@
           gazeX = (dx / distance) * Math.min(2.6, faceW * 0.02) * reach;
           gazeY = (dy / distance) * Math.min(2, faceH * 0.03) * reach;
         }
+        if (pose === 'tapping' && !reducedMotion) gazeX = Math.sin(now / 240) * 1.6;
         const blink = !reducedMotion && !['needs-you', 'error', 'sleepy', 'done', 'pet', 'wave', 'offline'].includes(state) && now % 4300 < 115;
         drawFace(ctx, {
           x: faceCenterX,
@@ -812,11 +1036,13 @@
           width: faceW,
           height: faceH,
           state,
+          pose,
           blink,
           gazeX,
           gazeY,
           hobby,
           reducedMotion,
+          now,
         });
       }
 
@@ -851,9 +1077,11 @@
         width: drawWidth,
         height: drawHeight,
         state: compact ? 'idle' : state,
+        pose: compact ? null : pose,
         now,
         reducedMotion,
         pending,
+        celebration: compact ? false : celebration,
       });
 
       if (!compact) {

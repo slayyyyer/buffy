@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-celebrate" stroke-linecap="round" stroke-linejoin="round">
+    <!-- both arms up in a V -->
+    <path d="M146 402 C112 366 96 322 104 284" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C112 366 96 322 104 284" stroke="#fbe6d9" stroke-width="10"/>
+    <path d="M366 402 C400 366 416 322 408 284" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C400 366 416 322 408 284" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="104" cy="274" rx="20" ry="23" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(-18 104 274)"/>
+    <ellipse cx="408" cy="274" rx="20" ry="23" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(18 408 274)"/>
+    <path d="M96 270 Q104 278 112 270" stroke="#e9b6b8" stroke-width="3"/>
+    <path d="M400 270 Q408 278 416 270" stroke="#e9b6b8" stroke-width="3"/>
+    <!-- confetti -->
+    <g>
+      <rect x="72" y="232" width="8" height="16" rx="2" fill="#ffd77a" transform="rotate(-24 76 240)"/>
+      <rect x="132" y="214" width="8" height="16" rx="2" fill="#ff9fc6" transform="rotate(32 136 222)"/>
+      <rect x="386" y="210" width="8" height="16" rx="2" fill="#b9d7ff" transform="rotate(-34 390 218)"/>
+      <rect x="438" y="236" width="8" height="16" rx="2" fill="#b8e8c8" transform="rotate(22 442 244)"/>
+      <circle cx="96" cy="208" r="4" fill="#d5b8ff"/>
+      <circle cx="414" cy="204" r="4" fill="#ffd77a"/>
+      <circle cx="164" cy="246" r="3" fill="#ffd77a"/>
+      <circle cx="352" cy="240" r="3" fill="#ff9fc6"/>
+      <path d="M256 188 L260 200 L272 204 L260 208 L256 220 L252 208 L240 204 L252 200 Z" fill="#ffd77a"/>
+      <path d="M186 190 L189 198 L197 201 L189 204 L186 212 L183 204 L175 201 L183 198 Z" fill="#ff9fc6"/>
+      <path d="M328 184 L331 192 L339 195 L331 198 L328 206 L325 198 L317 195 L325 192 Z" fill="#b9d7ff"/>
+    </g>
+  </g>
+</svg>

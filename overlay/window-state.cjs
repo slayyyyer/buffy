@@ -8,6 +8,17 @@ const SIZES = {
 };
 
 const SCALES = [0.8, 1, 1.25, 1.5, 1.75];
+const CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+
+function normalizeCorners(raw) {
+  const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const corners = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (!/^[\w.-]{1,64}$/.test(key)) continue;
+    if (CORNERS.includes(value)) corners[key] = value;
+  }
+  return corners;
+}
 
 function normalizeWindowState(raw) {
   const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -23,6 +34,7 @@ function normalizeWindowState(raw) {
     full,
     compact,
     scale,
+    corners: normalizeCorners(source.corners),
     migrated: Boolean(legacy && !source.full),
   };
 }
@@ -61,6 +73,30 @@ function defaultPosition(area, size, gap = 24) {
   };
 }
 
+function cornerPosition(area, size, corner, gap = 24) {
+  if (!CORNERS.includes(corner)) return defaultPosition(area, size, gap);
+  return {
+    x: Math.round(corner.endsWith('left') ? area.x + gap : area.x + area.width - size.width - gap),
+    y: Math.round(corner.startsWith('top') ? area.y + gap : area.y + area.height - size.height - gap),
+  };
+}
+
+/** Which corner is the window resting in, if any. Used for menu checkmarks. */
+function cornerOf(bounds, area, gap = 24, tolerance = 4) {
+  const near = (value, target) => Math.abs(value - target) <= tolerance;
+  const column = near(bounds.x - area.x, gap)
+    ? 'left'
+    : near(area.x + area.width - (bounds.x + bounds.width), gap)
+      ? 'right'
+      : null;
+  const row = near(bounds.y - area.y, gap)
+    ? 'top'
+    : near(area.y + area.height - (bounds.y + bounds.height), gap)
+      ? 'bottom'
+      : null;
+  return column && row ? `${row}-${column}` : null;
+}
+
 function placeNearCursor(cursor, size, displays, gap = 18) {
   const display =
     displays.find((entry) => {
@@ -84,10 +120,14 @@ function placeNearCursor(cursor, size, displays, gap = 18) {
 module.exports = {
   SIZES,
   SCALES,
+  CORNERS,
   normalizeWindowState,
+  normalizeCorners,
   sizeFor,
   visibleOn,
   clampToDisplay,
   defaultPosition,
+  cornerPosition,
+  cornerOf,
   placeNearCursor,
 };

@@ -66,6 +66,9 @@ function baseEvent(payload) {
   return {
     observed: 'explicit',
     sessionId: clean(payload.session_id || payload.sessionId, 96) || undefined,
+    // Claude Code includes the session's working directory in every hook
+    // payload. Buffy only uses it to open the folder from an activity card.
+    cwd: clean(payload.cwd, 512) || undefined,
   };
 }
 

@@ -79,6 +79,8 @@
     tab: 'live',
     greetingAt: 0,
     petAt: 0,
+    celebrateAt: 0,
+    lastCelebrationAt: 0,
     bubbleUntil: 0,
     lastSeq: null,
     lastReactionAt: 0,
@@ -99,6 +101,7 @@
     pillTop: null,
     pillDirty: false,
     pillBlocked: false,
+    audio: null,
   };
 
   const personality = () => state.prefs?.personality || {};
@@ -295,6 +298,39 @@
     );
   }
 
+  // A short two-note chime for alert sounds. Volume comes from preferences,
+  // and the system beep style stays untouched in the main process.
+  function playChime(volume = 60) {
+    const level = Math.min(1, Math.max(0, Number(volume) / 100));
+    if (!level) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!state.audio) state.audio = new Ctx();
+      const ctx = state.audio;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const start = ctx.currentTime + 0.02;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.14 * level, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.44);
+      for (const [frequency, delay] of [
+        [880, 0],
+        [1318.5, 0.11],
+      ]) {
+        const oscillator = ctx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, start + delay);
+        oscillator.connect(gain);
+        oscillator.start(start + delay);
+        oscillator.stop(start + delay + 0.4);
+      }
+    } catch {
+      /* sound is optional */
+    }
+  }
+
   function updatePill(now = performance.now()) {
     const local = localState(now);
     const base = baseState();
@@ -317,6 +353,10 @@
     pillProject.textContent = project || '';
     pillProject.hidden =
       !project || state.mode === 'compact' || project.toLowerCase() === companionName().toLowerCase();
+    // Compact mode has no room for a second line, so the message replaces the
+    // state label inside the pill. The dot still carries the state colour.
+    const compactMessage = state.snapshot?.current?.message;
+    if (state.mode === 'compact' && compactMessage) pillState.textContent = compactMessage;
     pill.title = `${companionName()} — ${pillState.textContent}${project ? ` in ${project}` : ''}`;
     updateBadges();
     if (state.snapshot?.reaction?.kind === 'pet' && state.snapshot.reaction.at !== state.lastReactionAt) {
@@ -324,6 +364,13 @@
       state.petAt = now;
       scheduler.activity(now);
       showBubble('That tickles!', 'you', 'explicit', false, 1900);
+    }
+    const celebration = state.snapshot?.celebration;
+    if (celebration && celebration.at !== state.lastCelebrationAt) {
+      state.lastCelebrationAt = celebration.at;
+      state.celebrateAt = now;
+      scheduler.activity(now);
+      showBubble(celebration.message || 'All green!', 'buffy', 'explicit', false, 3000);
     }
   }
 
@@ -369,10 +416,10 @@
 
     const actions = document.createElement('div');
     actions.className = 'card-actions';
-    actions.append(
-      makeButton('Open Claude', 'open-claude'),
-      makeButton('Dismiss', 'dismiss', { session: request.sessionId }, true),
-    );
+    if (request.cwd) {
+      actions.append(makeButton('Show project', 'focus-session', { session: request.sessionId, cwd: request.cwd }));
+    }
+    actions.append(makeButton('Open Claude', 'open-claude'), makeButton('Dismiss', 'dismiss', { session: request.sessionId }, true));
     card.append(top, message, actions);
     return card;
   }
@@ -406,6 +453,9 @@
 
     const actions = document.createElement('div');
     actions.className = 'card-actions';
+    if (session.cwd) {
+      actions.append(makeButton('Show project', 'focus-session', { session: session.id, cwd: session.cwd }));
+    }
     actions.append(makeButton('Dismiss', 'dismiss', { session: session.id }, true));
     card.append(top, message, actions);
     return card;
@@ -448,7 +498,7 @@
       if (requests.length) {
         const notice = document.createElement('p');
         notice.className = 'notice';
-        notice.textContent = 'Opening Claude starts a new composer. It does not resolve the request or jump to the waiting session.';
+        notice.textContent = 'Show project opens the folder that session reported. Opening Claude starts a new composer; neither resolves the request.';
         body.append(notice);
       }
       requests.forEach((request) => body.append(requestCard(request)));
@@ -789,6 +839,13 @@
       state.draftRevision > 0 && state.composerOpen;
     const hobby = scheduler.update(now, { hovered: state.hovered, busy });
     const local = localState(now);
+    const startedAt = Number(state.snapshot?.current?.since);
+    const waiting =
+      local === 'working' &&
+      currentCategory() !== 'compacting' &&
+      Number.isFinite(startedAt) &&
+      Date.now() - startedAt > 60_000;
+    const celebrating = state.celebrateAt > 0 && now - state.celebrateAt < 4200;
     const greeting = local === 'idle' && now - state.greetingAt < 1600 && personality().returnGreetings !== false && pendingCount() === 0;
     if (local === 'idle' && personality().extraIdleGestures !== false && now - state.lastGestureAt > 78_000) {
       state.lastGestureAt = now;
@@ -813,6 +870,8 @@
       thoughtBubbles: personality().thoughtBubbles || 'off',
       greeting,
       pending: pendingCount(),
+      waiting,
+      celebration: celebrating,
       customImage: state.customImage,
     });
     drawTrail(now);
@@ -956,6 +1015,26 @@
       if (!action) return;
       if (action.dataset.action === 'open-claude') {
         openClaude();
+        return;
+      }
+      if (action.dataset.action === 'focus-session') {
+        action.disabled = true;
+        try {
+          const result = await window.buffy.focusSession({
+            sessionId: action.dataset.session,
+            cwd: action.dataset.cwd,
+          });
+          if (result?.ok && result.opened === 'folder') {
+            showToast(`Opened ${String(result.path).split(/[\\/]/).filter(Boolean).pop() || 'the project folder'}.`);
+          } else if (result?.ok) {
+            showToast('Session id copied. This session did not report a folder.');
+          } else {
+            showToast(result?.error || 'That session has no folder to open.');
+          }
+        } catch {
+          showToast('That session has no folder to open.');
+        }
+        action.disabled = false;
         return;
       }
       if (action.dataset.action === 'dismiss') {
@@ -1125,6 +1204,7 @@
       if (typeof draft.text === 'string' && draft.text !== draftEl.value) draftEl.value = draft.text;
     });
     window.buffy.onMode(applyMode);
+    window.buffy.onChime((payload) => playChime(payload?.volume));
     window.buffy.onVisibility((visible) => {
       const wasHidden = !state.visible;
       state.visible = Boolean(visible);

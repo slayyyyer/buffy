@@ -432,6 +432,7 @@ export function freebuffInstructions() {
     '',
     `- **As your first action, before planning:** \`${prefix} event thinking --source freebuff\``,
     `- **Before each file edit or project-changing tool call:** \`${prefix} event working --source freebuff --msg "what you are doing"\``,
+    `- **Only after a test or build command exited 0 and you saw the passing result:** \`${prefix} celebrate "tests passed"\``,
     `- **Before you stop because you need the user's approval or input:** \`${prefix} event needs-you --source freebuff --msg "what you need"\``,
     `- **Before you stop after completing the task:** \`${prefix} event done --source freebuff\``,
     '',

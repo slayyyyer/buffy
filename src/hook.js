@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 
 import { buffyFile, ensureBuffyDir, readConfig } from './config.js';
-import { ensureDaemon, postEvent } from './client.js';
+import { ensureDaemon, postEvent, sendCelebration } from './client.js';
+import { explicitSuccess } from './celebrate.js';
 import { mapClaudeHook, mapClaudeEvent } from './events.js';
 
 export { mapClaudeHook, mapClaudeEvent };
@@ -99,6 +100,8 @@ export async function runClaudeHook(eventName, { env = process.env } = {}) {
       ...(sessionId ? { sessionId: `claude:${sessionId}` } : {}),
     });
     recordHookSeen(event, payload, env);
+    const success = explicitSuccess(payload);
+    if (success) await sendCelebration(config.port, success.message);
   } catch (error) {
     process.stderr.write(`buffy hook: ${error.message}\n`);
   }

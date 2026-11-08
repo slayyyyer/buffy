@@ -267,6 +267,11 @@ select {
   cursor: pointer;
 }
 
+input[type="range"] {
+  width: 100%;
+  accent-color: #d95f91;
+}
+
 .toggle-row {
   display: flex;
   align-items: flex-start;

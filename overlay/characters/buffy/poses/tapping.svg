@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <g id="pose-tapping" stroke-linecap="round" stroke-linejoin="round">
+    <!-- left arm resting -->
+    <path d="M146 402 C126 422 116 446 118 466" stroke="#5c3150" stroke-width="18"/>
+    <path d="M146 402 C126 422 116 446 118 466" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="116" cy="478" rx="19" ry="22" fill="#fbe6d9" stroke="#5c3150" stroke-width="7"/>
+    <path d="M108 474 Q116 482 124 474" stroke="#e9b6b8" stroke-width="3"/>
+    <!-- right arm raised toward the screen -->
+    <path d="M366 402 C398 382 410 348 400 314" stroke="#5c3150" stroke-width="18"/>
+    <path d="M366 402 C398 382 410 348 400 314" stroke="#fbe6d9" stroke-width="10"/>
+    <ellipse cx="394" cy="302" rx="20" ry="22" fill="#fbe6d9" stroke="#5c3150" stroke-width="7" transform="rotate(20 394 302)"/>
+    <!-- tapping finger reaching left toward the face -->
+    <path d="M380 314 L352 326" stroke="#5c3150" stroke-width="14"/>
+    <path d="M380 314 L352 326" stroke="#fbe6d9" stroke-width="7"/>
+    <circle cx="348" cy="327" r="4.5" fill="#f3b9c8"/>
+    <!-- tap ripples -->
+    <path d="M338 300 Q328 316 338 332" fill="none" stroke="#ffd77a" stroke-width="4" opacity="0.85"/>
+    <path d="M326 290 Q312 316 326 342" fill="none" stroke="#ffd77a" stroke-width="3" opacity="0.55"/>
+    <path d="M314 280 Q296 316 314 352" fill="none" stroke="#ffd77a" stroke-width="2.5" opacity="0.3"/>
+    <circle cx="416" cy="276" r="4" fill="#e78bb0" opacity="0.8"/>
+  </g>
+</svg>

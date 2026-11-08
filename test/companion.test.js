@@ -13,6 +13,7 @@ const { createAlertPlanner } = require('../overlay/alerts.cjs');
 const windowState = require('../overlay/window-state.cjs');
 const { CATALOG } = require('../overlay/catalog.cjs');
 const { isNewerVersion } = require('../overlay/update-version.cjs');
+const { cleanPath, sessionTarget, directoryFor } = require('../overlay/session-jump.cjs');
 
 function requestSnapshot(requests, completions = []) {
   return {
@@ -30,6 +31,50 @@ test('the updater only accepts versions newer than the running build', () => {
   assert.equal(isNewerVersion('2.1.1', '2.1.0'), true);
   assert.equal(isNewerVersion('v2.2.0', '2.1.0'), true);
   assert.equal(isNewerVersion('2.1.0-beta.2', '2.1.0'), false);
+});
+
+test('alert sounds default to a chime at 60% and normalize bad values', () => {
+  const prefs = defaultPrefs();
+  assert.equal(prefs.alerts.soundStyle, 'chime');
+  assert.equal(prefs.alerts.soundVolume, 60);
+
+  const loud = normalizePrefs(
+    { ...prefs, alerts: { ...prefs.alerts, soundStyle: 'beep', soundVolume: 140 } },
+    { now: 1000 },
+  );
+  assert.equal(loud.alerts.soundStyle, 'beep');
+  assert.equal(loud.alerts.soundVolume, 100);
+
+  const unusual = normalizePrefs(
+    { ...prefs, alerts: { ...prefs.alerts, soundStyle: 'airhorn', soundVolume: -20 } },
+    { now: 1000 },
+  );
+  assert.equal(unusual.alerts.soundStyle, 'chime');
+  assert.equal(unusual.alerts.soundVolume, 0);
+});
+
+test('show project only accepts absolute, existing folders', () => {
+  assert.equal(cleanPath('/home/me/app'), '/home/me/app');
+  assert.equal(cleanPath('C:/work/app'), 'C:/work/app');
+  assert.equal(cleanPath('relative/path'), null);
+  assert.equal(cleanPath(''), null);
+  assert.equal(cleanPath(null), null);
+
+  assert.deepEqual(sessionTarget({ sessionId: 'claude:abc', cwd: '/home/me/app' }), {
+    sessionId: 'claude:abc',
+    cwd: '/home/me/app',
+  });
+  assert.deepEqual(sessionTarget({}), { sessionId: null, cwd: null });
+
+  const stat = (isDirectory) => () => ({ isDirectory: () => isDirectory });
+  assert.equal(directoryFor('/home/me/app', stat(true)), '/home/me/app');
+  assert.equal(directoryFor('/home/me/app', stat(false)), null);
+  assert.equal(
+    directoryFor('/gone', () => {
+      throw new Error('ENOENT');
+    }),
+    null,
+  );
 });
 
 test('Claude handoff preserves Unicode, newlines, and literal plus signs', () => {
@@ -243,6 +288,20 @@ test('window state keeps compact and full positions separate and recovers off-sc
     width: 200,
     height: 200,
   });
+});
+
+test('the chosen corner is remembered per display', () => {
+  const area = { x: 0, y: 0, width: 1920, height: 1080 };
+  const size = { width: 380, height: 650 };
+  assert.deepEqual(windowState.cornerPosition(area, size, 'top-left', 24), { x: 24, y: 24 });
+  assert.deepEqual(windowState.cornerPosition(area, size, 'bottom-right', 24), { x: 1516, y: 406 });
+  assert.equal(windowState.cornerOf({ x: 1516, y: 406, ...size }, area, 24), 'bottom-right');
+  assert.equal(windowState.cornerOf({ x: 700, y: 300, ...size }, area, 24), null);
+  assert.deepEqual(
+    windowState.normalizeWindowState({ corners: { '1': 'top-left', '2': 'sideways', 'bad key!': 'top-left' } })
+      .corners,
+    { '1': 'top-left' },
+  );
 });
 
 test('parallel requests survive unrelated tools and resolve by stable id', () => {
