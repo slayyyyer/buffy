@@ -28,12 +28,14 @@ and labeled as such.
 
 ## Status
 
-Buffy is at **v2.1.1**. The 2.0 line rebuilt the companion around an
-asset-driven character system and a request-aware session model; 2.1 adds a
-real size control and keeps compact mode inside its window:
+Buffy is at **v2.2.0**. The 2.0 line rebuilt the companion around an
+asset-driven character system and a request-aware session model; 2.1 added a
+real size control and kept compact mode inside its window; 2.2 adds reactions,
+project jumps, sound choices, and per-display corners:
 
 - [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
+- [x] reactions: flustered, tapping, squish, waiting, and an explicit-only celebrate
 - [x] full composer for Claude with draft-safe `claude://` handoff
 - [x] request-aware concurrent sessions with pending badges that only count requests
 - [x] three lifecycles: 30s completion presentation, 5m recent completions, 30m stale sessions
@@ -44,6 +46,30 @@ real size control and keeps compact mode inside its window:
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+
+### 2.2.0
+
+- **She has more feelings.** Five new layered reactions: `flustered` when a
+  tool reports an error, `tapping` while she needs you, `squish` while the
+  context is compacting, `waiting` after a minute of unbroken work, and
+  `celebrate` for a verified pass. Mochi's nine-cell atlas maps each reaction
+  to its closest hand-drawn mood.
+- **Celebration stays honest.** File churn never celebrates. Send it explicitly
+  with `buffy celebrate "tests passed"`, or let the Claude hook forward a test
+  or build command whose `tool_response` carries an explicit zero exit code.
+  The watcher remains inference-only.
+- **Jump to the work.** Activity cards now carry the project folder a session
+  reported. **Show project** opens it in your file manager; if the folder is
+  missing, Buffy copies the session id so it can still be traced with
+  `buffy status`.
+- **A sound that fits.** Alerts can use a soft two-note chime or the system
+  beep, with a volume slider and a **Test sound** button in **Settings →
+  Alerts**.
+- **She remembers where she sits.** “Move to corner” now checks the active
+  corner and remembers it per display, so a second monitor lands where you
+  left it.
+- **Compact mode reads better.** The current message replaces the state label in
+  the pill, the phantom “0” badge is gone, and the full toolbar stays reachable.
 
 ### 2.1.1
 
@@ -98,12 +124,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **2.1.1** ships for Windows, macOS, and Linux:
+Buffy **2.2.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-linux-x86_64.AppImage.sha256)
 
 The packaged app includes the pet, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
@@ -174,6 +200,23 @@ a pocket bunny with a 3×3 atlas and exercises the atlas path. Both support:
 
 `idle` · `typingLeft` · `typingRight` · `happy` · `wave` · `sleepy` · `reading` · `tea` · `gardening`
 
+Buffy also reacts to the moment with five extra layered poses: `flustered`
+when a tool reports an error, `tapping` while she needs you, `squish` while the
+context is compacting, `waiting` after a minute of unbroken work, and
+`celebrate` for a verified pass. Mochi's nine-cell atlas maps each reaction to
+its closest mood.
+
+A celebration is never inferred from file churn. Send it explicitly after a
+pass you actually saw:
+
+```sh
+buffy celebrate "tests passed"
+```
+
+The Claude Code hook also forwards a celebration when a test or build command's
+`tool_response` carries an explicit zero exit code. Without that code, the hook
+stays quiet rather than guessing.
+
 Open **Settings → Companion & wardrobe** to:
 
 - choose a character and preview every pose
@@ -222,6 +265,12 @@ Requests are tracked separately from session state:
   recent completion.
 - The pending badge counts **unresolved requests only**, not "done" animations.
 
+Activity cards carry the project folder a session reported. **Show project**
+opens that folder in your file manager; if the session never reported one, or
+the folder is gone, Buffy copies the session id instead so it can still be
+traced with `buffy status`. Claude hooks supply the folder automatically, and
+`buffy event --cwd <dir>` does it for CLI callers.
+
 Three lifecycles are intentionally separate:
 
 | Lifecycle | Default | What it means |
@@ -245,7 +294,9 @@ not trigger live reactions.
 ## Alerts
 
 Request and completion notifications are **off by default**, as are sounds.
-Enable them in **Settings → Alerts**. The first snapshot after startup seeds the
+Enable them in **Settings → Alerts**; sound alerts can be a soft two-note chime
+with a volume slider or the system beep, and **Test sound** previews the choice.
+The first snapshot after startup seeds the
 dedupe set, so old requests never burst out on launch. A snooze (15 minutes,
 1 hour, or 4 hours) suppresses delivery but still marks events seen; they are
 never replayed later. Idle reminders do not create request alerts, and inferred
@@ -343,8 +394,9 @@ keyboard shortcuts remain available.
 | Command | Purpose |
 | --- | --- |
 | `buffy daemon` | Run the local daemon in the foreground |
-| `buffy event <state> [--msg "text"] [--source name] [--session id]` | Send a state change |
+| `buffy event <state> [--msg "text"] [--source name] [--session id] [--cwd dir]` | Send a state change |
 | `buffy pet` | Pet reaction, mood, and XP |
+| `buffy celebrate [message]` | Explicit celebration for a verified test or build pass |
 | `buffy dismiss <session>` | Clear one active session |
 | `buffy status [--json]` | Current state, sessions, mood, XP, daemon health |
 | `buffy overlay [--dev] [--onboarding] [--shot file.png]` | Show the overlay and optional setup |
@@ -363,7 +415,7 @@ States accepted by `buffy event`: `idle`, `thinking`, `working`, `needs-you`,
 | --- | --- |
 | `~/.buffy/preferences.json` | v3 identity, character looks, personality, shortcuts, alerts, connection, updates |
 | `~/.buffy/state.json` | pet identity, sprite, mood, XP, counters |
-| `~/.buffy/window.json` | full/compact positions and size (80–175% scale) |
+| `~/.buffy/window.json` | full/compact positions, size (80–175% scale), and the remembered corner per display |
 | `~/.buffy/config.json` | port, timing, watcher, hatch settings |
 | `~/.buffy/runtime.json` | daemon pid/port while running |
 | `~/.buffy/onboarding.json` | first-run acknowledgement |
