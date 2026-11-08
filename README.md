@@ -28,9 +28,9 @@ and labeled as such.
 
 ## Status
 
-Buffy is at **v2.1.0**. The 2.0 line rebuilt the companion around an
+Buffy is at **v2.1.1**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 adds a
-real size control:
+real size control and keeps compact mode inside its window:
 
 - [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
@@ -44,6 +44,17 @@ real size control:
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+
+### 2.1.1
+
+- **Compact mode fits its window again.** The compact toolbar kept its fixed
+size while the window shrank, so choosing Small cut off its right end. The whole
+overlay now scales with the chosen size, and the unavailable dictation slot no
+longer renders and pads out the toolbar.
+- **The update prompt stops coming back.** Buffy only offers a build that is
+newer than the one running, remembers a version you put off with **Later** so it
+does not ask on every launch, and relaunches after installing so the new version
+is the one you actually see.
 
 ### 2.1.0
 
@@ -87,12 +98,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **2.1.0** ships for Windows, macOS, and Linux:
+Buffy **2.1.1** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.1/Buffy-2.1.1-linux-x86_64.AppImage.sha256)
 
 The packaged app includes the pet, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
