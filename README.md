@@ -178,7 +178,7 @@ Clothing selections are stored per character. Unavailable art is disabled in
 the choice list rather than silently deleting a saved selection.
 
 <p align="center">
-  <img src="docs/shots/settings.png" width="760" alt="Buffy settings with the live character preview and wardrobe controls">
+  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing the Size control set to Medium, the live character preview, and wardrobe controls">
 </p>
 
 ### Daily rotation

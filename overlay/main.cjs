@@ -729,7 +729,8 @@ function createWindow() {
         try {
           if (shotMode === 'settings') {
             await openSettings();
-            await sleep(900);
+            // Wait past the connection toast so screenshots stay clean.
+            await sleep(5200);
             const targetWindow = settingsWindow;
             const image = await targetWindow.webContents.capturePage();
             const target = path.resolve(shotPath);
@@ -1708,7 +1709,8 @@ if (!gotLock) {
       try {
         await sleep(600);
         const settings = await openSettings('companion');
-        await sleep(1100);
+        // The "not connected" toast clears after 3.6s; capture after it is gone.
+        await sleep(5200);
         const target = path.resolve(settingsShotPath);
         fs.mkdirSync(path.dirname(target), { recursive: true });
         fs.writeFileSync(target, (await settings.webContents.capturePage()).toPNG());
