@@ -28,7 +28,7 @@ and labeled as such.
 
 ## Status
 
-Buffy is at **v2.0.1**. This release rebuilds the companion around an
+Buffy is at **v2.0.2**. This release rebuilds the companion around an
 asset-driven character system and a request-aware session model:
 
 - [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
@@ -72,12 +72,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **2.0.1** ships for Windows, macOS, and Linux:
+Buffy **2.0.2** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.1/Buffy-2.0.1-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-linux-x86_64.AppImage.sha256)
 
 The packaged app includes the pet, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
