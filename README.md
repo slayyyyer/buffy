@@ -44,6 +44,15 @@ asset-driven character system and a request-aware session model:
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
 
+### 2.0.2
+
+- **She answers to Buffy, only.** The character was still called Nimbus in the
+manifest, the built-in looks, the settings defaults and the docs. The character
+id, asset folder and preferences key are now `buffy`, and saved wardrobes,
+favorite looks, and rotation settings carry over from the old key on first load.
+- **A new icon.** The app, tray, and site icons are rendered from her current
+layered art instead of the pre-2.0 pink cloud with the crown.
+
 ### 2.0.1
 
 - **Dragging no longer makes her grow.** The overlay captures its size once when
