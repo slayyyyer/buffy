@@ -44,6 +44,15 @@ asset-driven character system and a request-aware session model:
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
 
+### 2.0.1
+
+- **Dragging no longer makes her grow.** The overlay captures its size once when
+a drag starts instead of re-applying bounds on every pointer event, which
+Windows was rounding up at display scales above 100%.
+- **The status pill sits above her head.** While idle, the overlay measures the
+topmost drawn pixel of the current character and art and hangs the pill 8px
+above it, so hats, bows, and custom sprites no longer collide with it.
+
 ## Requirements
 
 - Node.js 20+ to run from source or use the CLI
