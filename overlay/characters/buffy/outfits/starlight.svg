@@ -10,7 +10,7 @@
       <stop offset="1" stop-color="#8f6aa8" stop-opacity="0.08"/>
     </linearGradient>
   </defs>
-  <g id="nimbus-starlight">
+  <g id="buffy-starlight">
     <!-- skirt -->
     <path d="M190 438 C164 480 148 528 144 564 C192 590 320 590 368 564 C364 528 348 480 322 438 Z"
       fill="url(#night)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>

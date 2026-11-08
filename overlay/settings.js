@@ -45,7 +45,7 @@
   let data = null;
   let prefs = null;
   let catalog = null;
-  let characterId = 'nimbus';
+  let characterId = 'buffy';
   let section = 'companion';
   let pose = 'idle';
   let saveTimer = null;

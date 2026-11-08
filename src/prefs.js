@@ -6,6 +6,10 @@ import { buffyFile, ensureBuffyDir } from './config.js';
 export const PREFS_VERSION = 3;
 export const MAX_SAVED_LOOKS = 32;
 
+// The plush cloud used to be called Nimbus, so saved preferences can still
+// carry the old character id.
+const LEGACY_CHARACTER_IDS = { nimbus: 'buffy' };
+
 export const SLOT_KEYS = ['outfit', 'bow', 'hat', 'glasses', 'wand', 'theme'];
 export const CLOTHING_KEYS = ['outfit', 'bow', 'hat', 'glasses', 'wand'];
 
@@ -52,11 +56,11 @@ export function defaultPrefs() {
     companion: {
       name: 'Buffy',
       pronouns: 'she/her',
-      characterId: 'nimbus',
+      characterId: 'buffy',
       theme: 'plum',
     },
     characters: {
-      nimbus: defaultCharacterPrefs(),
+      buffy: defaultCharacterPrefs(),
     },
     personality: { ...DEFAULT_PERSONALITY },
     shortcuts: { ...DEFAULT_SHORTCUTS },
@@ -161,9 +165,9 @@ export function migrateLegacy({ wardrobe, overlay } = {}) {
   if (wardrobeRaw) {
     const legacyOutfit = wardrobeRaw.outfit;
     const outfit = legacyOutfit === 'princess' ? 'dress' : legacyOutfit === 'sleepover' ? 'overalls' : legacyOutfit;
-    prefs.characters.nimbus.look = sanitizeLook({ ...wardrobeRaw, outfit }, defaultPrefs().characters.nimbus.look);
+    prefs.characters.buffy.look = sanitizeLook({ ...wardrobeRaw, outfit }, defaultPrefs().characters.buffy.look);
     if (Array.isArray(wardrobeRaw.presets)) {
-      prefs.characters.nimbus.looks = normalizeSavedLooks(
+      prefs.characters.buffy.looks = normalizeSavedLooks(
         wardrobeRaw.presets.map((preset) => ({
           id: preset.id,
           name: preset.name,
@@ -192,10 +196,36 @@ export function migrateLegacy({ wardrobe, overlay } = {}) {
   return prefs;
 }
 
+function migrateCharacterIds(raw) {
+  const characters =
+    raw.characters && typeof raw.characters === 'object' && !Array.isArray(raw.characters) ? raw.characters : null;
+  const companion = raw.companion && typeof raw.companion === 'object' ? raw.companion : null;
+  let nextCharacters = characters;
+  if (characters) {
+    const legacyIds = Object.keys(characters).filter((id) => LEGACY_CHARACTER_IDS[id]);
+    if (legacyIds.length) {
+      nextCharacters = { ...characters };
+      for (const id of legacyIds) {
+        const target = LEGACY_CHARACTER_IDS[id];
+        if (!nextCharacters[target]) nextCharacters[target] = nextCharacters[id];
+        delete nextCharacters[id];
+      }
+    }
+  }
+  let nextCompanion = companion;
+  if (companion && LEGACY_CHARACTER_IDS[companion.characterId]) {
+    nextCompanion = { ...companion, characterId: LEGACY_CHARACTER_IDS[companion.characterId] };
+  }
+  if (nextCharacters === characters && nextCompanion === companion) return raw;
+  return { ...raw, characters: nextCharacters ?? raw.characters, companion: nextCompanion ?? raw.companion };
+}
+
 export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOverlay } = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Number(raw.version) < PREFS_VERSION) {
     return migrateLegacy({ wardrobe: legacyWardrobe ?? raw, overlay: legacyOverlay });
   }
+
+  raw = migrateCharacterIds(raw);
 
   const base = defaultPrefs();
   const companion = raw.companion && typeof raw.companion === 'object' ? raw.companion : {};
@@ -257,9 +287,9 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
     : {};
   for (const [id, value] of Object.entries(characters)) {
     if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) continue;
-    prefs.characters[id] = normalizeCharacter(value, base.characters.nimbus.look, now);
+    prefs.characters[id] = normalizeCharacter(value, base.characters.buffy.look, now);
   }
-  if (!prefs.characters.nimbus) prefs.characters.nimbus = defaultCharacterPrefs();
+  if (!prefs.characters.buffy) prefs.characters.buffy = defaultCharacterPrefs();
   if (!prefs.characters[prefs.companion.characterId]) {
     prefs.characters[prefs.companion.characterId] = defaultCharacterPrefs();
   }

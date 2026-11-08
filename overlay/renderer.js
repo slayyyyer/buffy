@@ -109,7 +109,7 @@
   });
 
   function characterId() {
-    return state.prefs?.companion?.characterId || state.catalog?.characters?.[0]?.id || 'nimbus';
+    return state.prefs?.companion?.characterId || state.catalog?.characters?.[0]?.id || 'buffy';
   }
 
   function characterPrefs() {

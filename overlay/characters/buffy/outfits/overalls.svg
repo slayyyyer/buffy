@@ -6,7 +6,7 @@
       <stop offset="1" stop-color="#cd8a9f"/>
     </linearGradient>
   </defs>
-  <g id="nimbus-overalls">
+  <g id="buffy-overalls">
     <!-- trousers -->
     <path d="M174 470 C160 504 156 542 162 566 C190 576 236 576 250 566 L252 500 L260 500 L262 566 C276 576 322 576 350 566 C356 542 352 504 338 470 Z"
       fill="url(#rose)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>

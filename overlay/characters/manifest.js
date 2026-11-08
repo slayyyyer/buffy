@@ -20,37 +20,37 @@
     'gardening',
   ];
 
-  const nimbusPoseFiles = {};
-  for (const pose of POSES) nimbusPoseFiles[pose] = `nimbus/poses/${pose}.svg`;
+  const buffyPoseFiles = {};
+  for (const pose of POSES) buffyPoseFiles[pose] = `buffy/poses/${pose}.svg`;
 
-  const nimbusOutfits = {
-    dress: 'nimbus/outfits/dress.svg',
-    cozy: 'nimbus/outfits/cozy.svg',
-    rainy: 'nimbus/outfits/rainy.svg',
-    starlight: 'nimbus/outfits/starlight.svg',
-    overalls: 'nimbus/outfits/overalls.svg',
+  const buffyOutfits = {
+    dress: 'buffy/outfits/dress.svg',
+    cozy: 'buffy/outfits/cozy.svg',
+    rainy: 'buffy/outfits/rainy.svg',
+    starlight: 'buffy/outfits/starlight.svg',
+    overalls: 'buffy/outfits/overalls.svg',
   };
 
-  const nimbusAccessories = {
+  const buffyAccessories = {
     bow: {
-      pink: 'nimbus/accessories/bow-pink.svg',
-      lavender: 'nimbus/accessories/bow-lavender.svg',
-      mint: 'nimbus/accessories/bow-mint.svg',
-      gold: 'nimbus/accessories/bow-gold.svg',
+      pink: 'buffy/accessories/bow-pink.svg',
+      lavender: 'buffy/accessories/bow-lavender.svg',
+      mint: 'buffy/accessories/bow-mint.svg',
+      gold: 'buffy/accessories/bow-gold.svg',
     },
     hat: {
-      beret: 'nimbus/accessories/hat-beret.svg',
-      party: 'nimbus/accessories/hat-party.svg',
-      sunhat: 'nimbus/accessories/hat-sunhat.svg',
+      beret: 'buffy/accessories/hat-beret.svg',
+      party: 'buffy/accessories/hat-party.svg',
+      sunhat: 'buffy/accessories/hat-sunhat.svg',
     },
     glasses: {
-      round: 'nimbus/accessories/glasses-round.svg',
-      heart: 'nimbus/accessories/glasses-heart.svg',
-      star: 'nimbus/accessories/glasses-star.svg',
+      round: 'buffy/accessories/glasses-round.svg',
+      heart: 'buffy/accessories/glasses-heart.svg',
+      star: 'buffy/accessories/glasses-star.svg',
     },
     wand: {
-      star: 'nimbus/accessories/wand-star.svg',
-      heart: 'nimbus/accessories/wand-heart.svg',
+      star: 'buffy/accessories/wand-star.svg',
+      heart: 'buffy/accessories/wand-heart.svg',
     },
   };
 
@@ -59,24 +59,24 @@
     poses: POSES,
     characters: [
       {
-        id: 'nimbus',
-        name: 'Nimbus',
+        id: 'buffy',
+        name: 'Buffy',
         tagline: 'A plush storm-cloud who keeps you company while you build.',
         renderer: 'layered',
         size: { width: 512, height: 640 },
-        base: 'nimbus/base.svg',
-        poses: nimbusPoseFiles,
+        base: 'buffy/base.svg',
+        poses: buffyPoseFiles,
         compactCrop: { x: 56, y: 62, width: 400, height: 400 },
         face: { x: 256, y: 308, width: 176, height: 112 },
         outfits: ['none', 'dress', 'cozy', 'rainy', 'starlight', 'overalls'],
-        outfitAssets: nimbusOutfits,
+        outfitAssets: buffyOutfits,
         accessories: {
           bow: ['none', 'pink', 'lavender', 'mint', 'gold'],
           hat: ['none', 'beret', 'party', 'sunhat'],
           glasses: ['none', 'round', 'heart', 'star'],
           wand: ['none', 'star', 'heart'],
         },
-        accessoryAssets: nimbusAccessories,
+        accessoryAssets: buffyAccessories,
         themes: ['plum', 'rose', 'lavender', 'mint', 'sky', 'butter', 'midnight'],
         defaultLook: {
           outfit: 'dress',

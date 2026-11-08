@@ -25,7 +25,7 @@
     </filter>
   </defs>
 
-  <g id="nimbus-base">
+  <g id="buffy-base">
     <!-- feet, tucked behind the body -->
     <g id="feet">
       <ellipse cx="202" cy="548" rx="40" ry="27" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>

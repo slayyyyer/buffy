@@ -126,25 +126,37 @@ test('legacy wardrobe and overlay settings migrate into v3 preferences', () => {
     overlay: { idleHobbies: false, sleepAfterMs: 60000 },
   });
   assert.equal(prefs.version, 3);
-  assert.equal(prefs.characters.nimbus.look.outfit, 'dress');
-  assert.equal(prefs.characters.nimbus.look.bow, 'lavender');
-  assert.equal(prefs.characters.nimbus.looks[0].look.outfit, 'overalls');
+  assert.equal(prefs.characters.buffy.look.outfit, 'dress');
+  assert.equal(prefs.characters.buffy.look.bow, 'lavender');
+  assert.equal(prefs.characters.buffy.looks[0].look.outfit, 'overalls');
   assert.equal(prefs.personality.idleHobbies, false);
   assert.equal(prefs.personality.sleepAfterMs, 60000);
   assert.equal(prefs.alerts.requests, false);
   assert.equal(prefs.personality.replyReactions, false);
 });
 
+test('preferences saved under the old character id move to buffy', () => {
+  const legacy = defaultPrefs();
+  legacy.companion.characterId = 'nimbus';
+  legacy.characters.nimbus = { ...legacy.characters.buffy, favorites: ['builtin-primrose'] };
+  delete legacy.characters.buffy;
+
+  const normalized = normalizePrefs(legacy);
+  assert.equal(normalized.companion.characterId, 'buffy');
+  assert.deepEqual(normalized.characters.buffy.favorites, ['builtin-primrose']);
+  assert.equal(normalized.characters.nimbus, undefined);
+});
+
 test('preferences cap saved looks and clear expired snoozes', () => {
   const prefs = defaultPrefs();
-  prefs.characters.nimbus.looks = Array.from({ length: 40 }, (_, index) => ({
+  prefs.characters.buffy.looks = Array.from({ length: 40 }, (_, index) => ({
     id: `look-${index}`,
     name: `Look ${index}`,
-    look: prefs.characters.nimbus.look,
+    look: prefs.characters.buffy.look,
   }));
   prefs.alerts.snoozeUntil = new Date(1000).toISOString();
   const normalized = normalizePrefs(prefs, { now: 2000 });
-  assert.equal(normalized.characters.nimbus.looks.length, MAX_SAVED_LOOKS);
+  assert.equal(normalized.characters.buffy.looks.length, MAX_SAVED_LOOKS);
   assert.equal(normalized.alerts.snoozeUntil, null);
   setAlertsSnooze(normalized, 60 * 60 * 1000, 2000);
   assert.equal(Date.parse(normalized.alerts.snoozeUntil), 2000 + 60 * 60 * 1000);
@@ -153,15 +165,15 @@ test('preferences cap saved looks and clear expired snoozes', () => {
 test('daily rotation starts the next day, respects manual looks, and never rerolls', () => {
   const now = new Date(2026, 10, 8, 12, 0, 0).getTime();
   const prefs = defaultPrefs();
-  const character = prefs.characters.nimbus;
+  const character = prefs.characters.buffy;
   const enabled = setRotationEnabled(character, true, new Date(2026, 10, 7, 12).getTime());
   enabled.rotation.enabledOn = '2026-11-07';
-  prefs.characters.nimbus = enabled;
+  prefs.characters.buffy = enabled;
 
   const plan = planRotation({
     prefs,
     catalog: CATALOG,
-    characterId: 'nimbus',
+    characterId: 'buffy',
     now,
     resting: true,
     isAvailable: () => true,
@@ -173,9 +185,9 @@ test('daily rotation starts the next day, respects manual looks, and never rerol
   assert.equal(applied.rotation.lastRotatedDay, localDay(now));
   assert.equal(
     planRotation({
-      prefs: { ...prefs, characters: { nimbus: applied } },
+      prefs: { ...prefs, characters: { buffy: applied } },
       catalog: CATALOG,
-      characterId: 'nimbus',
+      characterId: 'buffy',
       now,
       resting: true,
       isAvailable: () => true,
@@ -186,9 +198,9 @@ test('daily rotation starts the next day, respects manual looks, and never rerol
   const manual = markManualLook(enabled, now);
   assert.equal(
     planRotation({
-      prefs: { ...prefs, characters: { nimbus: manual } },
+      prefs: { ...prefs, characters: { buffy: manual } },
       catalog: CATALOG,
-      characterId: 'nimbus',
+      characterId: 'buffy',
       now,
       resting: true,
       isAvailable: () => true,

@@ -1276,7 +1276,7 @@ function menuTemplate(fromTray = false) {
     {
       label: 'Surprise me',
       click: () => {
-        const characterId = prefs?.companion?.characterId || 'nimbus';
+        const characterId = prefs?.companion?.characterId || 'buffy';
         settingsAction('random', { characterId });
       },
     },

@@ -6,7 +6,7 @@
       <stop offset="1" stop-color="#dfc0a1"/>
     </linearGradient>
   </defs>
-  <g id="nimbus-cozy">
+  <g id="buffy-cozy">
     <!-- body of the sweater -->
     <path d="M162 392 C150 430 148 478 158 520 C196 542 316 542 354 520 C364 478 362 430 350 392 C320 372 192 372 162 392 Z"
       fill="url(#knit)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>

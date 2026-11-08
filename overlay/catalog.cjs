@@ -101,21 +101,21 @@ const LEGACY_OUTFITS = new Map([
 const BUILTIN_PRESETS = [
   {
     id: 'builtin-primrose',
-    characterId: 'nimbus',
+    characterId: 'buffy',
     name: 'Primrose',
     description: 'The everyday look: cream dress, plum sash, one small bow.',
     look: { outfit: 'dress', bow: 'pink', hat: 'none', glasses: 'none', wand: 'none', theme: 'plum' },
   },
   {
     id: 'builtin-quiet-morning',
-    characterId: 'nimbus',
+    characterId: 'buffy',
     name: 'Quiet morning',
     description: 'Sweater, round glasses, and a cup of tea.',
     look: { outfit: 'cozy', bow: 'none', hat: 'none', glasses: 'round', wand: 'none', theme: 'butter' },
   },
   {
     id: 'builtin-night-garden',
-    characterId: 'nimbus',
+    characterId: 'buffy',
     name: 'Night garden',
     description: 'Starlight dress with gold stars and a heart wand.',
     look: { outfit: 'starlight', bow: 'lavender', hat: 'none', glasses: 'star', wand: 'heart', theme: 'midnight' },

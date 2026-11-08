@@ -5,7 +5,7 @@ that can run a shell command. Buffy watches the work, keeps her own little
 life, and can carry a prompt into Claude without sending it for you.
 
 <p align="center">
-  <img src="docs/shots/nimbus.png" width="260" alt="Nimbus, a plush storm-cloud companion with a dark face screen">
+  <img src="docs/shots/buffy.png" width="260" alt="Buffy, a plush storm-cloud companion with a dark face screen">
 </p>
 
 <p align="center">
@@ -31,7 +31,7 @@ and labeled as such.
 Buffy is at **v2.0.1**. This release rebuilds the companion around an
 asset-driven character system and a request-aware session model:
 
-- [x] Nimbus layered artwork and Mochi's nine-pose atlas, rendered by one engine
+- [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
 - [x] full composer for Claude with draft-safe `claude://` handoff
 - [x] request-aware concurrent sessions with pending badges that only count requests
@@ -84,7 +84,7 @@ SmartScreen and macOS Gatekeeper may ask you to confirm. See
 ```bash
 npm install          # installs Electron
 npm link             # optional: put `buffy` on your PATH
-buffy overlay        # starts the daemon on demand and shows Nimbus
+buffy overlay        # starts the daemon on demand and shows Buffy
 ```
 
 The overlay is frameless, transparent, and always on top. Drag the character
@@ -96,7 +96,7 @@ Claude connection, and where state lives. Reopen it from the tray or with
 `buffy overlay --onboarding`.
 
 <p align="center">
-  <img src="docs/shots/overlay.png" width="360" alt="Buffy's overlay with Nimbus idle, the pending badge, and the toolbar">
+  <img src="docs/shots/overlay.png" width="360" alt="Buffy's overlay, idle with the pending badge and the toolbar">
 </p>
 
 ## Compose for Claude
@@ -134,7 +134,7 @@ Buffy uses an asset-driven character system. A character is either layered
 cell per pose. The overlay, wardrobe preview, and settings preview all use the
 same renderer.
 
-**Nimbus** is the default plush storm-cloud, drawn as layered SVG. **Mochi** is
+**Buffy** is the plush storm-cloud, drawn as layered SVG. **Mochi** is
 a pocket bunny with a 3×3 atlas and exercises the atlas path. Both support:
 
 `idle` · `typingLeft` · `typingRight` · `happy` · `wave` · `sleepy` · `reading` · `tea` · `gardening`
