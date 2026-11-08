@@ -12,6 +12,7 @@ const { buildClaudeCodeUrl, createDraftStore } = require('../overlay/handoff.cjs
 const { createAlertPlanner } = require('../overlay/alerts.cjs');
 const windowState = require('../overlay/window-state.cjs');
 const { CATALOG } = require('../overlay/catalog.cjs');
+const { isNewerVersion } = require('../overlay/update-version.cjs');
 
 function requestSnapshot(requests, completions = []) {
   return {
@@ -21,6 +22,15 @@ function requestSnapshot(requests, completions = []) {
     current: { state: requests.length ? 'needs-you' : 'idle' },
   };
 }
+
+test('the updater only accepts versions newer than the running build', () => {
+  assert.equal(isNewerVersion('2.1.0', '2.0.2'), true);
+  assert.equal(isNewerVersion('2.1.0', '2.1.0'), false);
+  assert.equal(isNewerVersion('2.0.2', '2.1.0'), false);
+  assert.equal(isNewerVersion('2.1.1', '2.1.0'), true);
+  assert.equal(isNewerVersion('v2.2.0', '2.1.0'), true);
+  assert.equal(isNewerVersion('2.1.0-beta.2', '2.1.0'), false);
+});
 
 test('Claude handoff preserves Unicode, newlines, and literal plus signs', () => {
   const text = 'Fix the + button\nand keep “quotes” 💗';

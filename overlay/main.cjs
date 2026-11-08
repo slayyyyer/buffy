@@ -31,6 +31,7 @@ const SETTINGS_WIDTH = 1080;
 const SETTINGS_HEIGHT = 780;
 const EDGE_GAP = 24;
 const WINDOW_STATE = require('./window-state.cjs');
+const { isNewerVersion } = require('./update-version.cjs');
 const LOOKS = require('./catalog.cjs');
 const { createDraftStore, buildClaudeCodeUrl } = require('./handoff.cjs');
 const { createAlertPlanner } = require('./alerts.cjs');
@@ -102,6 +103,7 @@ let updateReady = null;
 let updatePromptOpen = false;
 let updateDeferred = false;
 let manualUpdateCheck = false;
+let skippedUpdateVersion = String(readJson(CONFIG_FILE, {}).skippedUpdateVersion || '');
 let handoffInFlight = false;
 let composerOpen = false;
 let pendingRestoreFocus = false;
@@ -208,6 +210,14 @@ function scaleFitsDisplay(scale) {
     const size = WINDOW_STATE.sizeFor(name, scale);
     return size.width <= area.width && size.height <= area.height;
   });
+}
+
+// Scale the rendered page with the window, so the pill, toolbar, and sheets keep
+// their proportions. Without this a small size clips the compact toolbar and a
+// large one leaves the chrome tiny next to the art.
+function applyZoom() {
+  if (!win || win.isDestroyed()) return;
+  win.webContents.setZoomFactor(windowState.scale);
 }
 
 function defaultBounds(size = WINDOW_stateSize('full')) {
@@ -625,7 +635,8 @@ function sendCursor() {
   if (!win || win.isDestroyed() || !win.isVisible()) return;
   const point = screen.getCursorScreenPoint();
   const bounds = win.getBounds();
-  const payload = { x: point.x - bounds.x, y: point.y - bounds.y };
+  const zoom = windowState.scale;
+  const payload = { x: Math.round((point.x - bounds.x) / zoom), y: Math.round((point.y - bounds.y) / zoom) };
   const key = `${payload.x},${payload.y}`;
   if (key === lastCursor) return;
   lastCursor = key;
@@ -673,6 +684,7 @@ function createWindow() {
 
   win.webContents.on('did-finish-load', () => {
     if (!win || win.isDestroyed()) return;
+    applyZoom();
     broadcastCatalog();
     if (prefs) win.webContents.send('prefs', { prefs, ...modePayload() });
     win.webContents.send('mode', modePayload());
@@ -742,6 +754,9 @@ function createWindow() {
               setMode('compose');
               win.webContents.send('summon');
               await sleep(500);
+            } else if (shotMode === 'compact') {
+              setMode('compact');
+              await sleep(700);
             }
             const image = await win.webContents.capturePage();
             const target = path.resolve(shotPath);
@@ -916,6 +931,17 @@ function showUpdateMessage(options) {
   return dialog.showMessageBox({ type: 'info', title: 'Buffy updates', ...options });
 }
 
+// Remember a declined version so the prompt does not return on every launch.
+// A manual check clears it, and a newer download overrides it.
+function skipUpdateVersion(version) {
+  skippedUpdateVersion = String(version || '');
+  const config = readJson(CONFIG_FILE, {});
+  if (skippedUpdateVersion) config.skippedUpdateVersion = skippedUpdateVersion;
+  else delete config.skippedUpdateVersion;
+  writeJson(CONFIG_FILE, config);
+  refreshTrayMenu();
+}
+
 function updateIsBusy() {
   return Boolean(composerOpen || DRAFT.text.trim() || handoffInFlight);
 }
@@ -932,8 +958,17 @@ function initUpdater() {
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.logger = console;
   autoUpdater.on('update-downloaded', (info) => {
+    // Never offer a build that is not newer than the running one: a cached
+    // download can be replayed right after a manual install.
+    if (!isNewerVersion(info.version, app.getVersion())) {
+      updateReady = null;
+      updateDeferred = false;
+      refreshTrayMenu();
+      return;
+    }
     updateReady = info;
     refreshTrayMenu();
+    if (skippedUpdateVersion && skippedUpdateVersion === String(info.version)) return;
     if (prefs?.updates?.deferWhileBusy !== false && updateIsBusy()) {
       updateDeferred = true;
       if (win && !win.isDestroyed()) {
@@ -973,13 +1008,14 @@ async function promptInstall() {
     type: 'info',
     title: 'Buffy update ready',
     message: `Buffy ${updateReady.version} is ready to install.`,
-    detail: 'Restart Buffy to finish the update. Your pet, looks, and preferences stay put.',
+    detail: `Restart Buffy to finish the update. Your pet, looks, and preferences stay put. You are running ${app.getVersion()}.`,
     buttons: ['Restart and install', 'Later'],
     defaultId: 0,
     cancelId: 1,
   });
   updatePromptOpen = false;
   if (result.response === 0) installUpdateNow();
+  else if (updateReady) skipUpdateVersion(updateReady.version);
 }
 
 function installUpdateNow() {
@@ -988,7 +1024,7 @@ function installUpdateNow() {
     updateDeferred = true;
     return { ok: false, error: 'Finish or clear your draft before installing.' };
   }
-  autoUpdater.quitAndInstall();
+  autoUpdater.quitAndInstall(false, true);
   return { ok: true };
 }
 
@@ -1012,6 +1048,7 @@ async function checkForUpdates(manual = false) {
     return { ok: false, error: 'Use the latest AppImage.' };
   }
   manualUpdateCheck = Boolean(manual);
+  if (manual && skippedUpdateVersion) skipUpdateVersion('');
   try {
     await autoUpdater.checkForUpdates();
     return { ok: true };
@@ -1202,6 +1239,7 @@ async function settingsAction(type, payload = {}) {
           scale,
         });
         setMode(mode, { force: true });
+        applyZoom();
         broadcastPrefs();
         refreshTrayMenu();
         return { ok: true, scale };
