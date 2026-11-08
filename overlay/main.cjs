@@ -199,12 +199,28 @@ function currentDisplay() {
   return screen.getPrimaryDisplay();
 }
 
+// The resting window has to fit the display, otherwise she hangs off the
+// screen. The transient composer and activity panels are clamped to the work
+// area instead, so a large size does not lock you out of them.
+function scaleFitsDisplay(scale) {
+  const area = currentDisplay().workArea;
+  return ['full', 'compact'].every((name) => {
+    const size = WINDOW_STATE.sizeFor(name, scale);
+    return size.width <= area.width && size.height <= area.height;
+  });
+}
+
 function defaultBounds(size = WINDOW_stateSize('full')) {
   return WINDOW_STATE.defaultPosition(screen.getPrimaryDisplay().workArea, size, EDGE_GAP);
 }
 
 function WINDOW_stateSize(name) {
-  return WINDOW_STATE.sizeFor(name, windowState.scale);
+  const size = WINDOW_STATE.sizeFor(name, windowState.scale);
+  const area = currentDisplay().workArea;
+  return {
+    width: Math.min(size.width, area.width),
+    height: Math.min(size.height, area.height),
+  };
 }
 
 function savedPosition(name) {
@@ -1176,6 +1192,7 @@ async function settingsAction(type, payload = {}) {
       case 'scale': {
         const scale = Number(payload.scale);
         if (!WINDOW_STATE.SCALES.includes(scale)) return { ok: false, error: 'Unsupported scale.' };
+        if (!scaleFitsDisplay(scale)) return { ok: false, error: 'That size is larger than this display. Choose a smaller size.' };
         savePosition(mode === 'compact' ? 'compact' : 'full');
         windowState.scale = scale;
         writeJson(WINDOW_FILE, {
@@ -1185,6 +1202,7 @@ async function settingsAction(type, payload = {}) {
         });
         setMode(mode, { force: true });
         broadcastPrefs();
+        refreshTrayMenu();
         return { ok: true, scale };
       }
       case 'shortcut': {
@@ -1240,6 +1258,25 @@ async function settingsAction(type, payload = {}) {
   }
 }
 
+const SCALE_CHOICES = [
+  { scale: 0.8, name: 'Small' },
+  { scale: 1, name: 'Medium' },
+  { scale: 1.25, name: 'Large' },
+  { scale: 1.5, name: 'Extra large' },
+  { scale: 1.75, name: 'Huge' },
+];
+
+function chooseScale(scale) {
+  settingsAction('scale', { scale })
+    .then((result) => {
+      if (!result?.ok && win && !win.isDestroyed()) {
+        win.webContents.send('toast', result?.error || 'That size could not be applied.');
+      }
+      refreshTrayMenu();
+    })
+    .catch((error) => dialog.showErrorBox('Could not change size', error.message));
+}
+
 function menuTemplate(fromTray = false) {
   const items = [];
   if (fromTray) {
@@ -1273,6 +1310,20 @@ function menuTemplate(fromTray = false) {
       ],
     },
     { label: 'Compact mode', type: 'checkbox', checked: mode === 'compact', click: () => setMode(mode === 'compact' ? 'full' : 'compact') },
+    {
+      label: 'Size',
+      submenu: SCALE_CHOICES.map((choice) => {
+        const percent = Math.round(choice.scale * 100);
+        const fits = scaleFitsDisplay(choice.scale);
+        return {
+          label: fits ? `${choice.name} · ${percent}%` : `${choice.name} · ${percent}% (needs a taller display)`,
+          type: 'radio',
+          checked: windowState.scale === choice.scale,
+          enabled: fits || windowState.scale === choice.scale,
+          click: () => chooseScale(choice.scale),
+        };
+      }),
+    },
     {
       label: 'Surprise me',
       click: () => {

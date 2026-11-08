@@ -22,6 +22,14 @@
     updates: { title: 'Updates', eyebrow: 'Keep her current' },
   };
 
+  const SIZE_OPTIONS = [
+    { value: 0.8, name: 'Small', label: 'Small · 80%' },
+    { value: 1, name: 'Medium', label: 'Medium · 100%' },
+    { value: 1.25, name: 'Large', label: 'Large · 125%' },
+    { value: 1.5, name: 'Extra large', label: 'Extra large · 150%' },
+    { value: 1.75, name: 'Huge', label: 'Huge · 175%' },
+  ];
+
   const POSE_STATE = {
     idle: { state: 'idle' },
     typingLeft: { state: 'working', poseOverride: 'typingLeft', category: 'editing' },
@@ -234,6 +242,18 @@
             .join('')}
         </div>
         <p class="hint" style="margin-bottom:0">${char ? esc(char.tagline || '') : ''}</p>`,
+      ),
+      card(
+        'On your desktop',
+        'Size changes the character and her window together. Larger sizes need room on this display.',
+        `<div class="field"><label for="companion-scale">Size</label>
+          <select id="companion-scale" data-scale>
+            ${SIZE_OPTIONS.map(
+              (option) =>
+                `<option value="${option.value}" ${Number(data.scale ?? 1) === option.value ? 'selected' : ''}>${esc(option.label)}</option>`,
+            ).join('')}
+          </select>
+        </div>`,
       ),
       card(
         'Wardrobe',
@@ -651,6 +671,16 @@
 
   panel.addEventListener('change', async (event) => {
     const target = event.target;
+    if (target.matches('[data-scale]')) {
+      const result = await action('scale', { scale: Number(target.value) });
+      if (result?.ok) {
+        data.scale = result.scale;
+        const option = SIZE_OPTIONS.find((entry) => entry.value === result.scale);
+        toast(`Size: ${option?.name || result.scale}.`);
+      }
+      render();
+      return;
+    }
     if (target.matches('[data-clothing]')) {
       const key = target.dataset.clothing;
       const result = await action('clothing', {

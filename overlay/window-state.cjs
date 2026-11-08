@@ -7,7 +7,7 @@ const SIZES = {
   compact: { width: 234, height: 300 },
 };
 
-const SCALES = [0.8, 1, 1.25];
+const SCALES = [0.8, 1, 1.25, 1.5, 1.75];
 
 function normalizeWindowState(raw) {
   const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -31,8 +31,8 @@ function sizeFor(mode, scale = 1) {
   const base = SIZES[mode] || SIZES.full;
   const factor = SCALES.includes(Number(scale)) ? Number(scale) : 1;
   return {
-    width: Math.round(base.width * (mode === 'compact' ? factor : Math.max(1, factor))),
-    height: Math.round(base.height * (mode === 'compact' ? factor : Math.max(1, factor))),
+    width: Math.round(base.width * factor),
+    height: Math.round(base.height * factor),
   };
 }
 

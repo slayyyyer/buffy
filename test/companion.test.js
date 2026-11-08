@@ -218,6 +218,11 @@ test('window state keeps compact and full positions separate and recovers off-sc
 
   const compact = windowState.sizeFor('compact', 0.8);
   assert.deepEqual(compact, { width: 187, height: 240 });
+  assert.deepEqual(windowState.sizeFor('full', 0.8), { width: 304, height: 520 });
+  assert.deepEqual(windowState.sizeFor('full', 1.5), { width: 570, height: 975 });
+  assert.deepEqual(windowState.sizeFor('full', 1.75), { width: 665, height: 1138 });
+  assert.equal(windowState.normalizeWindowState({ scale: 1.75 }).scale, 1.75);
+  assert.equal(windowState.normalizeWindowState({ scale: 2 }).scale, 1);
   const display = { workArea: { x: 0, y: 0, width: 1920, height: 1080 } };
   const placed = windowState.placeNearCursor({ x: 1900, y: 1040 }, compact, [display]);
   assert.ok(placed.x >= 0 && placed.x + compact.width <= 1920);
