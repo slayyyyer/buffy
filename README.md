@@ -28,8 +28,9 @@ and labeled as such.
 
 ## Status
 
-Buffy is at **v2.0.2**. This release rebuilds the companion around an
-asset-driven character system and a request-aware session model:
+Buffy is at **v2.1.0**. The 2.0 line rebuilt the companion around an
+asset-driven character system and a request-aware session model; 2.1 adds a
+real size control:
 
 - [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
@@ -43,6 +44,20 @@ asset-driven character system and a request-aware session model:
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+
+### 2.1.0
+
+- **She comes in more sizes.** The old 80/100/125% steps are now Small,
+Medium, Large, Extra large (150%), and Huge (175%). Choose one in
+**Settings → Companion & wardrobe → Size**, or from the new **Size** submenu on
+the right-click and tray menus.
+- **Small now shrinks the whole window.** The 80% step only applied to compact
+mode before, so picking Small left the full window unchanged. Every mode scales
+with the chosen size now.
+- **A size that does not fit is refused.** Instead of letting her hang off the
+screen, Buffy rejects a size whose resting window is larger than the display and
+leaves the choices that do fit enabled. The composer and activity panels are
+clamped to the work area so a large size cannot lock you out of them.
 
 ### 2.0.2
 
@@ -72,12 +87,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **2.0.2** ships for Windows, macOS, and Linux:
+Buffy **2.1.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.0.2/Buffy-2.0.2-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.1.0/Buffy-2.1.0-linux-x86_64.AppImage.sha256)
 
 The packaged app includes the pet, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
@@ -337,7 +352,7 @@ States accepted by `buffy event`: `idle`, `thinking`, `working`, `needs-you`,
 | --- | --- |
 | `~/.buffy/preferences.json` | v3 identity, character looks, personality, shortcuts, alerts, connection, updates |
 | `~/.buffy/state.json` | pet identity, sprite, mood, XP, counters |
-| `~/.buffy/window.json` | full/compact positions and 80/100/125% scale |
+| `~/.buffy/window.json` | full/compact positions and size (80–175% scale) |
 | `~/.buffy/config.json` | port, timing, watcher, hatch settings |
 | `~/.buffy/runtime.json` | daemon pid/port while running |
 | `~/.buffy/onboarding.json` | first-run acknowledgement |
