@@ -411,7 +411,7 @@ h1 em::after {
 .hero-buffy {
   position: relative;
   z-index: 2;
-  width: min(262px, 64%);
+  width: min(300px, 72%);
   filter: drop-shadow(0 24px 22px rgba(91, 38, 77, 0.16));
   animation: bob 5s ease-in-out infinite;
 }
@@ -1078,7 +1078,7 @@ h1 em::after {
   }
 
   .hero-buffy {
-    width: min(230px, 70%);
+    width: min(270px, 76%);
   }
 
   .float-tag {
