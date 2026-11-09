@@ -1079,25 +1079,50 @@ async function checkForUpdates(manual = false) {
   }
 }
 
-async function connectionStatus() {
-  if (!prefs) return { state: 'unknown', detail: 'Preferences are still loading.' };
-  const settingsPath = path.join(os.homedir(), '.claude', 'settings.json');
-  const launcher = path.join(HOME, 'bin', process.platform === 'win32' ? 'buffy-hook.cmd' : 'buffy-hook');
-  const lastPath = path.join(HOME, 'hook-last.json');
+const AGENT_CONNECTIONS = {
+  claude: {
+    name: 'Claude Code',
+    settings: () => path.join(os.homedir(), '.claude', 'settings.json'),
+    missing: 'Claude Code settings were not found yet.',
+  },
+  gemini: {
+    name: 'Gemini CLI',
+    settings: () => path.join(os.homedir(), '.gemini', 'settings.json'),
+    missing: 'Gemini CLI settings were not found yet.',
+  },
+  cursor: {
+    name: 'Cursor',
+    settings: () => path.join(os.homedir(), '.cursor', 'hooks.json'),
+    missing: 'Cursor hooks.json was not found yet.',
+  },
+};
+
+async function connectionStatus(agent = 'claude') {
+  const meta = AGENT_CONNECTIONS[agent] || AGENT_CONNECTIONS.claude;
+  if (!prefs) return { agent, name: meta.name, state: 'unknown', detail: 'Preferences are still loading.' };
+  if (!installApi) return { agent, name: meta.name, state: 'unknown', detail: 'Installer modules are still loading.' };
+
+  const settingsPath = meta.settings();
+  const launcher = installApi.agentLauncherPath(agent, process.env);
+  const lastPath = path.join(HOME, `hook-last-${agent}.json`);
   let data = null;
   try {
     data = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
   } catch (error) {
     return {
+      agent,
+      name: meta.name,
       state: error.code === 'ENOENT' ? 'not-installed' : 'error',
-      detail: error.code === 'ENOENT' ? 'Claude Code settings were not found yet.' : `Could not read Claude Code settings: ${error.message}`,
+      detail: error.code === 'ENOENT' ? meta.missing : `Could not read ${meta.name} settings: ${error.message}`,
       settingsPath,
       launcher,
       lastHookAt: null,
     };
   }
-  if (data?.disableAllHooks === true) {
+  if (agent === 'claude' && data?.disableAllHooks === true) {
     return {
+      agent,
+      name: meta.name,
       state: 'disabled',
       detail: 'Claude Code has disableAllHooks enabled, so Buffy hooks will not run. Enable hooks in Claude Code first.',
       settingsPath,
@@ -1105,22 +1130,29 @@ async function connectionStatus() {
       lastHookAt: null,
     };
   }
-  const hooks = data?.hooks && typeof data.hooks === 'object' ? data.hooks : {};
-  const installed = Object.values(hooks).some((entries) =>
-    (Array.isArray(entries) ? entries : []).some((entry) =>
-      (Array.isArray(entry?.hooks) ? entry.hooks : []).some(
-        (hook) =>
-          typeof hook?.command === 'string' &&
-          (hook.command.includes('buffy-hook') || hook.command.replace(/\\/g, '/').includes('bin/buffy.js')),
-      ),
-    ),
-  );
-  const last = readJson(lastPath, null);
+  if (agent === 'gemini' && data?.hooksConfig?.enabled === false) {
+    return {
+      agent,
+      name: meta.name,
+      state: 'disabled',
+      detail: 'Gemini CLI hooks are disabled (hooksConfig.enabled is false). Enable them in Gemini CLI first.',
+      settingsPath,
+      launcher,
+      lastHookAt: null,
+    };
+  }
+
+  const installed = installApi.hasBuffyHooks(agent, data, process.env);
+  const last =
+    readJson(lastPath, null) ||
+    (agent === 'claude' ? readJson(path.join(HOME, 'hook-last.json'), null) : null);
   const lastHookAt = last?.at && Number.isFinite(Date.parse(last.at)) ? last.at : null;
   if (!installed) {
     return {
+      agent,
+      name: meta.name,
       state: 'not-installed',
-      detail: 'Connect Claude Code so Buffy can see prompts, tools, and permission requests.',
+      detail: `Connect ${meta.name} so Buffy can follow its sessions.`,
       settingsPath,
       launcher,
       lastHookAt,
@@ -1128,6 +1160,8 @@ async function connectionStatus() {
   }
   if (!fs.existsSync(launcher) && app.isPackaged) {
     return {
+      agent,
+      name: meta.name,
       state: 'repair',
       detail: 'Hooks are installed, but the stable launcher is missing. Repair the connection.',
       settingsPath,
@@ -1137,8 +1171,10 @@ async function connectionStatus() {
   }
   if (!lastHookAt) {
     return {
+      agent,
+      name: meta.name,
       state: 'installed',
-      detail: 'Hooks are installed. No Claude Code event has reached Buffy yet; start a Claude Code session.',
+      detail: `Hooks are installed. No ${meta.name} event has reached Buffy yet; start a ${meta.name} session.`,
       settingsPath,
       launcher,
       lastHookAt,
@@ -1146,15 +1182,24 @@ async function connectionStatus() {
   }
   const ageMinutes = Math.round((Date.now() - Date.parse(lastHookAt)) / 60000);
   return {
+    agent,
+    name: meta.name,
     state: ageMinutes <= 30 ? 'connected' : 'installed',
     detail:
       ageMinutes <= 30
-        ? `Claude Code reached Buffy ${ageMinutes <= 0 ? 'just now' : `${ageMinutes}m ago`}.`
-        : 'Hooks are installed but no recent event was seen. Start a Claude Code session to test them.',
+        ? `${meta.name} reached Buffy ${ageMinutes <= 0 ? 'just now' : `${ageMinutes}m ago`}.`
+        : `Hooks are installed but no recent event was seen. Start ${meta.name} to test them.`,
     settingsPath,
     launcher,
     lastHookAt,
   };
+}
+
+async function connectionStatuses() {
+  const entries = await Promise.all(
+    Object.keys(AGENT_CONNECTIONS).map(async (agent) => [agent, await connectionStatus(agent)]),
+  );
+  return Object.fromEntries(entries);
 }
 
 function applyPreferencesFromSettings(payload) {
@@ -1285,19 +1330,37 @@ async function settingsAction(type, payload = {}) {
         return { ok: true, prefs };
       }
       case 'connection': {
+        const agent = ['claude', 'gemini', 'cursor'].includes(payload.agent) ? payload.agent : 'claude';
+        const installers = {
+          claude: installApi.installClaude,
+          gemini: installApi.installGemini,
+          cursor: installApi.installCursor,
+        };
+        const uninstallers = {
+          claude: installApi.uninstallClaude,
+          gemini: installApi.uninstallGemini,
+          cursor: installApi.uninstallCursor,
+        };
         connectionCache = null;
         if (payload.operation === 'install' || payload.operation === 'repair') {
-          const result = installApi.installClaude({ global: true, env: process.env, packaged: app.isPackaged });
-          connectionCache = await connectionStatus();
-          return { ok: !result.skipped, skipped: result.skipped, notes: result.notes, result, connection: connectionCache };
+          const result = installers[agent]({ global: true, env: process.env, packaged: app.isPackaged });
+          connectionCache = await connectionStatuses();
+          return {
+            ok: !result.skipped,
+            skipped: result.skipped,
+            notes: result.notes,
+            result,
+            connection: connectionCache[agent],
+            connections: connectionCache,
+          };
         }
         if (payload.operation === 'uninstall') {
-          const result = installApi.uninstallClaude({ global: true, env: process.env });
-          connectionCache = await connectionStatus();
-          return { ok: true, result, connection: connectionCache };
+          const result = uninstallers[agent]({ global: true, env: process.env });
+          connectionCache = await connectionStatuses();
+          return { ok: true, result, connection: connectionCache[agent], connections: connectionCache };
         }
-        connectionCache = await connectionStatus();
-        return { ok: true, connection: connectionCache };
+        connectionCache = await connectionStatuses();
+        return { ok: true, connection: connectionCache[agent], connections: connectionCache };
       }
       case 'restart-daemon': {
         return { ok: true, ...(await restartDaemon()) };
@@ -1695,7 +1758,7 @@ ipcMain.on('menu', () => {
 });
 
 ipcMain.handle('settings:get', async () => {
-  if (connectionCache === null) connectionCache = await connectionStatus();
+  if (connectionCache === null) connectionCache = await connectionStatuses();
   return {
     prefs,
     catalog: catalogPayload(),
@@ -1704,7 +1767,8 @@ ipcMain.handle('settings:get', async () => {
     scale: windowState.scale,
     notificationsSupported: Notification.isSupported(),
     shortcut: shortcutStatus,
-    connection: connectionCache,
+    connection: connectionCache.claude,
+    connections: connectionCache,
     dictation: dictationCapability(),
     health: await getJson('/health', 500).catch(() => null),
     watch: snapshot?.watch || null,
@@ -1724,7 +1788,8 @@ ipcMain.handle('settings:action', async (_event, payload) => {
     settingsWindow.webContents.send('settings:state', {
       prefs,
       shortcut: shortcutStatus,
-      connection: connectionCache,
+      connection: connectionCache?.claude || null,
+      connections: connectionCache,
       update: { ready: updateReady, deferred: updateDeferred, version: updateReady?.version || null },
     });
   }

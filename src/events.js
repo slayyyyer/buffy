@@ -32,8 +32,18 @@ const TOOL_CATEGORIES = new Map([
   ['notebookedit', 'editing'],
   ['bash', 'running'],
   ['shell', 'running'],
+  ['runshellcommand', 'running'],
   ['task', 'delegating'],
   ['agent', 'delegating'],
+  ['delete', 'editing'],
+  ['writefile', 'editing'],
+  ['replace', 'editing'],
+  ['readfile', 'reading'],
+  ['readmanyfiles', 'reading'],
+  ['listdirectory', 'reading'],
+  ['grepsearch', 'searching'],
+  ['searchfilecontent', 'searching'],
+  ['googlewebsearch', 'searching'],
   ['todowrite', 'planning'],
   ['todo', 'planning'],
 ]);
@@ -243,6 +253,254 @@ export function mapClaudeHook(eventName, payload = {}) {
     default:
       return null;
   }
+}
+
+function agentCommon(payload, sessionKeys) {
+  const session = sessionKeys.map((key) => payload[key]).find(Boolean);
+  return {
+    observed: 'explicit',
+    sessionId: clean(session, 96) || undefined,
+    cwd: clean(payload.cwd, 512) || undefined,
+  };
+}
+
+/** Map one Gemini CLI hook payload onto the same activity vocabulary. */
+export function mapGeminiHook(eventName, payload = {}) {
+  const event = String(eventName || payload.hook_event_name || '').toLowerCase();
+  const common = agentCommon(payload, ['session_id', 'sessionId']);
+  const tool = clean(payload.tool_name || payload.toolName, 60) || 'a tool';
+
+  switch (event) {
+    case 'sessionstart':
+      return {
+        ...common,
+        state: 'idle',
+        informational: true,
+        category: 'session-end',
+        message: 'Gemini session started',
+      };
+    case 'beforeagent':
+      return {
+        ...common,
+        state: 'thinking',
+        message: 'thinking about your prompt',
+        source: 'gemini',
+        category: 'thinking',
+      };
+    case 'beforetool':
+      return {
+        ...common,
+        state: 'working',
+        message: `using ${tool}`,
+        source: 'gemini',
+        category: categoryForTool(tool),
+        toolName: tool,
+      };
+    case 'aftertool': {
+      const failed = Boolean(payload.tool_response?.error || payload.error);
+      const error = clean(payload.tool_response?.error, 240) || clean(payload.error, 240);
+      return {
+        ...common,
+        state: failed ? 'error' : 'working',
+        message: failed ? error || `${tool} failed` : `${tool} finished`,
+        source: 'gemini',
+        category: failed ? 'error' : categoryForTool(tool),
+        toolName: tool,
+        // Gemini has no tool-use id in this event. The empty list still asks
+        // the session machine to resolve a matching fingerprint by tool name.
+        resolveRequests: [],
+      };
+    }
+    case 'afteragent':
+      return {
+        ...common,
+        state: 'done',
+        message: 'turn finished',
+        source: 'gemini',
+        category: 'completion',
+        observed: 'explicit',
+        completionMessage: 'turn finished',
+      };
+    case 'notification': {
+      const type = clean(payload.notification_type || payload.type, 60) || '';
+      // Gemini only emits Notification for system alerts today; only a tool
+      // permission alert is an actionable request. Everything else stays silent.
+      if (!/permission/i.test(type)) return null;
+      const details = payload.details && typeof payload.details === 'object' ? payload.details : {};
+      const requestTool = clean(details.tool_name || payload.tool_name, 60) || 'a tool';
+      const label = clean(payload.message) || `Gemini needs permission to use ${requestTool}`;
+      return {
+        ...common,
+        state: 'needs-you',
+        message: label,
+        source: 'gemini',
+        category: 'permission',
+        toolName: requestTool,
+        request: {
+          id: clean(details.request_id || payload.request_id, 120),
+          kind: 'permission',
+          label,
+          toolName: requestTool,
+        },
+      };
+    }
+    case 'precompress':
+      return {
+        ...common,
+        state: 'working',
+        message: 'compacting context',
+        source: 'gemini',
+        category: 'compacting',
+      };
+    case 'sessionend': {
+      const reason = clean(payload.reason, 40);
+      return {
+        ...common,
+        state: 'idle',
+        message: reason ? `session ended (${reason})` : 'session ended',
+        source: 'gemini',
+        category: 'session-end',
+        resolveAllRequests: true,
+        sessionEnded: true,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+/** Map one Cursor hook payload. Cursor has no reliable permission-request hook. */
+export function mapCursorHook(eventName, payload = {}) {
+  const event = String(eventName || payload.hook_event_name || '').toLowerCase();
+  const common = agentCommon(payload, ['conversation_id', 'session_id']);
+  if (!common.cwd && Array.isArray(payload.workspace_roots)) {
+    common.cwd = clean(payload.workspace_roots[0], 512) || undefined;
+  }
+  const tool = clean(payload.tool_name || payload.toolName, 60) || 'a tool';
+  const toolUseId = clean(payload.tool_use_id || payload.toolUseId, 120) || undefined;
+
+  switch (event) {
+    case 'sessionstart':
+      return {
+        ...common,
+        state: 'idle',
+        informational: true,
+        category: 'session-end',
+        message: 'Cursor session started',
+      };
+    case 'sessionend': {
+      const reason = clean(payload.reason, 40);
+      return {
+        ...common,
+        state: 'idle',
+        message: reason ? `session ended (${reason})` : 'session ended',
+        source: 'cursor',
+        category: 'session-end',
+        resolveAllRequests: true,
+        sessionEnded: true,
+      };
+    }
+    case 'beforesubmitprompt':
+      return {
+        ...common,
+        state: 'thinking',
+        message: 'thinking about your prompt',
+        source: 'cursor',
+        category: 'thinking',
+      };
+    case 'posttooluse':
+      return {
+        ...common,
+        state: 'working',
+        message: `${tool} finished`,
+        source: 'cursor',
+        category: categoryForTool(tool),
+        toolName: tool,
+        toolUseId,
+        resolveRequests: toolUseId ? [toolUseId] : undefined,
+      };
+    case 'posttoolusefailure':
+      return {
+        ...common,
+        state: 'error',
+        message: clean(payload.error_message, 240) || `${tool} failed`,
+        source: 'cursor',
+        category: 'error',
+        toolName: tool,
+        toolUseId,
+        resolveRequests: toolUseId ? [toolUseId] : undefined,
+      };
+    case 'afterfileedit': {
+      const edited = clean(payload.file_path, 240);
+      const file = edited ? edited.split(/[\\/]/).pop() : null;
+      return {
+        ...common,
+        state: 'working',
+        message: file ? `editing ${file}` : 'editing a file',
+        source: 'cursor',
+        category: 'editing',
+      };
+    }
+    case 'aftershellexecution':
+      return {
+        ...common,
+        state: 'working',
+        message: 'command finished',
+        source: 'cursor',
+        category: 'running',
+        toolName: 'Shell',
+      };
+    case 'precompact':
+      return {
+        ...common,
+        state: 'working',
+        message: 'compacting context',
+        source: 'cursor',
+        category: 'compacting',
+      };
+    case 'subagentstop': {
+      const status = String(payload.status || '').toLowerCase();
+      const label = clean(payload.subagent_type, 40) || 'subagent';
+      return {
+        ...common,
+        state: status === 'error' ? 'error' : 'working',
+        message: status === 'error' ? `${label} failed` : `${label} finished`,
+        source: 'cursor',
+        category: status === 'error' ? 'error' : 'delegating',
+      };
+    }
+    case 'stop': {
+      const status = String(payload.status || 'completed').toLowerCase();
+      if (status === 'error') {
+        return {
+          ...common,
+          state: 'error',
+          message: 'turn failed',
+          source: 'cursor',
+          category: 'error',
+        };
+      }
+      return {
+        ...common,
+        state: 'done',
+        message: status === 'aborted' ? 'turn interrupted' : 'turn finished',
+        source: 'cursor',
+        category: 'completion',
+        observed: 'explicit',
+        interrupted: status === 'aborted',
+        completionMessage: 'turn finished',
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+export function mapAgentHook(agent, eventName, payload = {}) {
+  const key = String(agent || 'claude').toLowerCase();
+  if (key === 'gemini') return mapGeminiHook(eventName, payload);
+  if (key === 'cursor') return mapCursorHook(eventName, payload);
+  return mapClaudeHook(eventName, payload);
 }
 
 /** Kept as a named alias for callers that used the old hook module. */

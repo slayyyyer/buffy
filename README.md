@@ -1,8 +1,9 @@
 # buffy
 
-A tiny always-on-top companion for Claude Code, Freebuff, and any coding agent
-that can run a shell command. Buffy watches the work, keeps her own little
-life, and can carry a prompt into Claude without sending it for you.
+A tiny always-on-top companion for Claude Code, Gemini CLI, Cursor, Freebuff,
+and any coding agent that can run a shell command. Buffy watches the work,
+keeps her own little life, and can carry a prompt into Claude without sending
+it for you.
 
 <p align="center">
   <img src="docs/shots/buffy.png" width="260" alt="Buffy, a plush storm-cloud companion with a dark face screen">
@@ -16,6 +17,8 @@ life, and can carry a prompt into Claude without sending it for you.
 
 ```
 Claude Code ──hooks──────────┐
+Gemini CLI ──hooks───────────┤
+Cursor ──hooks──────────────┤
 Freebuff ──AGENTS.md─────────┤
 repo edits ──watcher─────────┼──► HTTP + SSE 127.0.0.1:4517 ──► daemon ──► ~/.buffy/state.json
 a script ──buffy─────────────┘                                      │
@@ -23,8 +26,8 @@ a script ──buffy─────────────┘                  
 ```
 
 Buffy is not a chatbot. Agents send events; the daemon owns the state and the
-overlay draws it. Claude hooks are explicit. The Freebuff watcher is inferred
-and labeled as such.
+overlay draws it. Claude, Gemini CLI, and Cursor hooks are explicit. The
+Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
@@ -46,6 +49,16 @@ project jumps, sound choices, and per-display corners:
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+
+### Unreleased
+
+- **Gemini CLI and Cursor connections.** **Settings → Connection** can now
+  install, repair, check, and remove hooks for Gemini CLI and Cursor alongside
+  Claude Code. Both adapters preserve unrelated settings and hook groups, use
+  stable packaged launchers, and keep their own last-event health. Gemini
+  returns an empty JSON object on stdout so its strict parser never sees a
+  blocking hook; Cursor intentionally does not install `preToolUse`, so Buffy
+  never approves or blocks a tool call.
 
 ### 2.2.0
 
@@ -310,7 +323,7 @@ The settings window has six sections:
 2. **Personality** — hobbies, gestures, sleep, bubbles, motion, reactions
 3. **Shortcuts** — global summon shortcut and conflict status
 4. **Alerts** — request/completion/sound switches and snooze
-5. **Connection** — Claude hook health, Freebuff watcher, daemon status, dictation
+5. **Connection** — Claude, Gemini CLI, and Cursor hook health, Freebuff watcher, daemon status, dictation
 6. **Updates** — current version, update check, install guard
 
 The right-hand preview draws the current character at full size with selectable
@@ -366,6 +379,58 @@ seen**, **repair needed**, **hooks disabled**, **connected** (a hook event was
 seen within 30 minutes), and **error**. Installation alone is not reported as a
 verified connection.
 
+## Gemini CLI
+
+Use **Settings → Connection → Connect Gemini CLI**. The packaged app writes a
+stable launcher to `~/.buffy/bin/` and merges hook groups into the **user-level**
+Gemini settings (`~/.gemini/settings.json`). Existing settings and hook groups
+are preserved, unrelated hooks keep running, and `hooksConfig.enabled: false`
+is respected rather than overridden. From a source checkout, use
+`buffy install gemini --global`; without `--global` it writes project settings
+in `.gemini/settings.json`.
+
+| Gemini CLI event | Buffy behavior |
+| --- | --- |
+| `SessionStart` | session visibility |
+| `BeforeAgent` | thinking |
+| `BeforeTool` | working, with the Gemini tool category |
+| `AfterTool` | working; errors become the error state, and a matching tool resolves a permission request |
+| `AfterAgent` | explicit completion |
+| `Notification` | `ToolPermission` becomes an explicit request; other notices stay quiet |
+| `PreCompress` | compacting |
+| `SessionEnd` | session ended; clears its requests |
+
+Gemini treats stdout as strict JSON. Every Buffy Gemini hook exits 0 and writes
+`{}`; diagnostics go only to stderr. A permission notification can tell you
+that Gemini is waiting, but it cannot grant the permission for you — approve it
+in Gemini itself.
+
+## Cursor
+
+Use **Settings → Connection → Connect Cursor**. The packaged app merges hooks
+into the **user-level** `~/.cursor/hooks.json`; from a checkout use
+`buffy install cursor --global`, or omit `--global` for a project-level
+`.cursor/hooks.json`. Existing hooks and the schema version are preserved.
+
+| Cursor event | Buffy behavior |
+| --- | --- |
+| `sessionStart` / `sessionEnd` | session visibility and request cleanup |
+| `beforeSubmitPrompt` | thinking |
+| `postToolUse` | working, with the tool category |
+| `postToolUseFailure` | explicit error |
+| `afterFileEdit` | editing |
+| `afterShellExecution` | running |
+| `preCompact` | compacting |
+| `subagentStop` | delegating finished, or error |
+| `stop` | completion (or an error state when Cursor reports one) |
+
+Buffy deliberately **does not install Cursor's `preToolUse` permission hook**.
+That hook can approve or deny tool calls, and a status companion must not make
+those decisions. Cursor's `beforeSubmitPrompt` receives `{"continue":true}` and
+the other hooks receive `{}`, so they observe without changing the action.
+Cursor reloads `hooks.json` when it changes; restart Cursor if it was already
+open and does not pick up the hooks.
+
 ## Freebuff
 
 Freebuff has no user-installable lifecycle hook stream. Buffy uses two signals:
@@ -402,7 +467,11 @@ keyboard shortcuts remain available.
 | `buffy overlay [--dev] [--onboarding] [--shot file.png]` | Show the overlay and optional setup |
 | `buffy hatch "<prompt>"` | Generate a custom sprite with OpenAI Images |
 | `buffy install claude [--global]` | Merge Claude hooks and `/buffy` |
+| `buffy install gemini [--global]` | Merge Gemini CLI lifecycle hooks |
+| `buffy install cursor [--global]` | Merge Cursor observational hooks |
 | `buffy uninstall claude [--global]` | Remove Buffy-managed hooks only |
+| `buffy uninstall gemini [--global]` | Remove only Buffy's Gemini hooks |
+| `buffy uninstall cursor [--global]` | Remove only Buffy's Cursor hooks |
 | `buffy install freebuff` | Add best-effort AGENTS.md instructions |
 | `buffy uninstall freebuff` | Remove only the Buffy block |
 
@@ -420,7 +489,8 @@ States accepted by `buffy event`: `idle`, `thinking`, `working`, `needs-you`,
 | `~/.buffy/runtime.json` | daemon pid/port while running |
 | `~/.buffy/onboarding.json` | first-run acknowledgement |
 | `~/.buffy/installs.json` | installer manifest (scope, files, launcher, backups) |
-| `~/.buffy/hook-last.json` | last hook event seen (health only) |
+| `~/.buffy/hook-last-<agent>.json` | last hook event seen per agent (health only) |
+| `~/.buffy/hook-last.json` | legacy Claude health record (still written for compatibility) |
 | `~/.buffy/bin/` | stable packaged hook launcher |
 | `~/.buffy/sprites/` | generated hatch PNGs |
 
@@ -477,6 +547,8 @@ the command; the key is never written to Buffy state or logged.
 - The watcher is local and never reads file contents.
 - The composer deliberately cannot send a prompt. It hands a URL to the OS and
   clears the draft only after a successful launch with no intervening edit.
+- Buffy never installs Cursor's `preToolUse` permission hook, so the companion
+  cannot approve or deny a tool call.
 - Prompt-bearing URLs are never written to logs.
 - Dictation never falls back to a cloud service.
 

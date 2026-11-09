@@ -47,6 +47,24 @@
     celebrate: { state: 'done', poseOverride: 'celebrate' },
   };
 
+  const CONNECTION_META = {
+    claude: {
+      name: 'Claude Code',
+      description:
+        'The packaged helper installs a stable launcher in your Buffy folder and merges hooks into your user-level Claude Code settings. It preserves unrelated hooks, respects disableAllHooks, and never blocks Claude.',
+    },
+    gemini: {
+      name: 'Gemini CLI',
+      description:
+        'Merges Buffy lifecycle hooks into your user-level Gemini CLI settings. Existing settings and hook groups are preserved, hooksConfig is respected, and every hook returns an empty JSON object without blocking.',
+    },
+    cursor: {
+      name: 'Cursor',
+      description:
+        'Adds observational hooks to your user-level Cursor hooks.json. Buffy does not install Cursor’s preToolUse permission hook, so it can never approve or block a tool call.',
+    },
+  };
+
   const CLOTHING_LABELS = {
     outfit: 'Outfit',
     bow: 'Bow',
@@ -140,6 +158,7 @@
       const result = await window.buffySettings.action(type, payload);
       if (result?.prefs) setLocal(result.prefs);
       if (result?.connection) data.connection = result.connection;
+      if (result?.connections) data.connections = result.connections;
       if (result?.shortcut) data.shortcut = result.shortcut;
       if (result?.update) data.update = { ...data.update, ready: result.update, deferred: result.deferred };
       if (!result?.ok && result?.error) toast(result.error);
@@ -398,36 +417,44 @@
       installed: 'Installed, waiting for an event',
       repair: 'Needs repair',
       'not-installed': 'Not connected',
-      disabled: 'Claude hooks are disabled',
+      disabled: 'Hooks are disabled',
       error: 'Connection error',
       unknown: 'Checking',
     }[state] || 'Unknown';
   }
 
+  function connectionCard(agent, connection) {
+    const meta = CONNECTION_META[agent];
+    const state = connection?.state || 'unknown';
+    return card(
+      meta.name,
+      meta.description,
+      `<div class="status" data-state="${esc(state)}">
+        <span class="status-dot"></span>
+        <span><strong>${esc(connectionLabel(state))}.</strong> ${esc(connection?.detail || '')}</span>
+      </div>
+      <div class="kv">
+        <span>Settings</span><strong class="mono">${esc(connection?.settingsPath || '—')}</strong>
+        <span>Launcher</span><strong class="mono">${esc(connection?.launcher || '—')}</strong>
+        <span>Last hook</span><strong>${connection?.lastHookAt ? esc(new Date(connection.lastHookAt).toLocaleString()) : 'No event observed yet'}</strong>
+      </div>
+      <div class="row-actions">
+        <button type="button" class="button primary" data-connection="install" data-agent="${esc(agent)}">${state === 'not-installed' ? `Connect ${esc(meta.name)}` : state === 'repair' ? 'Repair connection' : 'Reinstall hooks'}</button>
+        <button type="button" class="button" data-connection="check" data-agent="${esc(agent)}">Check again</button>
+        <button type="button" class="button" data-connection="uninstall" data-agent="${esc(agent)}">Remove hooks</button>
+      </div>
+      <p class="note">Installing only writes the hook configuration. A successful install does not prove an event has arrived; “Connected” requires a recent hook event.</p>`,
+    );
+  }
+
   function renderConnection() {
-    const connection = data.connection || {};
+    const connections = data.connections || { claude: data.connection || {} };
     const health = data.health;
     const watch = data.watch;
     panel.innerHTML = [
-      card(
-        'Claude Code',
-        'The packaged helper installs a stable launcher in your Buffy folder and merges hooks into your user-level Claude Code settings. It preserves unrelated hooks, respects disableAllHooks, and never blocks Claude.',
-        `<div class="status" data-state="${esc(connection.state || 'unknown')}">
-          <span class="status-dot"></span>
-          <span><strong>${esc(connectionLabel(connection.state))}.</strong> ${esc(connection.detail || '')}</span>
-        </div>
-        <div class="kv">
-          <span>Settings</span><strong class="mono">${esc(connection.settingsPath || '—')}</strong>
-          <span>Launcher</span><strong class="mono">${esc(connection.launcher || '—')}</strong>
-          <span>Last hook</span><strong>${connection.lastHookAt ? esc(new Date(connection.lastHookAt).toLocaleString()) : 'No event observed yet'}</strong>
-        </div>
-        <div class="row-actions">
-          <button type="button" class="button primary" data-connection="install">${connection.state === 'not-installed' ? 'Connect Claude Code' : 'Repair connection'}</button>
-          <button type="button" class="button" data-connection="check">Check again</button>
-          <button type="button" class="button" data-connection="uninstall">Remove hooks</button>
-        </div>
-        <p class="note">Installing only writes the hook configuration. A successful install does not prove an event has arrived; “Connected” requires a recent hook event.</p>`,
-      ),
+      connectionCard('claude', connections.claude || {}),
+      connectionCard('gemini', connections.gemini || {}),
+      connectionCard('cursor', connections.cursor || {}),
       card(
         'Freebuff watcher',
         'Freebuff has no hook stream. Buffy watches the project for file activity and labels those events as inferred.',
@@ -452,7 +479,7 @@
       ),
       card(
         'Documentation',
-        'Setup, Claude hook details, Freebuff inference, and packaging notes live in the README.',
+        'Setup for Claude Code, Gemini CLI, Cursor, Freebuff inference, and packaging notes live in the README.',
         '<div class="row-actions"><button type="button" class="button" data-docs>Open setup guide</button></div>',
       ),
     ].join('');
@@ -638,12 +665,23 @@
     const connectionButton = event.target.closest('[data-connection]');
     if (connectionButton) {
       const operation = connectionButton.dataset.connection;
+      const agent = connectionButton.dataset.agent || 'claude';
+      const meta = CONNECTION_META[agent] || CONNECTION_META.claude;
       connectionButton.disabled = true;
       connectionButton.textContent = operation === 'install' ? 'Connecting…' : 'Checking…';
-      const result = await action('connection', { operation });
+      const result = await action('connection', { operation, agent });
       render();
-      if (result?.ok) toast(operation === 'install' ? 'Claude Code hooks installed.' : 'Connection checked.');
-      else if (result?.skipped) toast(result.notes?.[0] || 'Claude Code has hooks disabled.');
+      if (result?.ok) {
+        toast(
+          operation === 'install'
+            ? `${meta.name} hooks installed.`
+            : operation === 'uninstall'
+              ? `${meta.name} hooks removed.`
+              : 'Connection checked.',
+        );
+      } else if (result?.skipped) {
+        toast(result.notes?.[0] || `${meta.name} has hooks disabled.`);
+      }
       return;
     }
     const restart = event.target.closest('[data-restart-daemon]');
@@ -818,6 +856,7 @@
     if (next.prefs) setLocal(next.prefs);
     if (next.shortcut) data.shortcut = next.shortcut;
     if (next.connection) data.connection = next.connection;
+    if (next.connections) data.connections = next.connections;
     if (next.update) data.update = { ...data.update, ...next.update };
   });
 
@@ -875,8 +914,9 @@
       BuffyCharacters.preload(characterId);
       render();
       startPreview();
-      if (data.connection?.state === 'not-installed') {
-        setTimeout(() => toast('Claude Code is not connected yet. Open Connection to install the hooks.'), 900);
+      const connections = Object.values(data.connections || {});
+      if (connections.length && connections.every((connection) => connection.state === 'not-installed')) {
+        setTimeout(() => toast('Connect Claude Code, Gemini CLI, or Cursor in Connection.'), 900);
       }
     } catch (error) {
       panel.innerHTML = `<section class="card"><h2>Settings could not load</h2><p class="hint">${esc(error.message)}</p></section>`;

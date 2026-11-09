@@ -511,7 +511,7 @@
         empty.className = 'empty';
         empty.textContent = state.offline
           ? 'The local daemon is offline. Buffy reconnects automatically when it returns.'
-          : 'No agent activity right now. Start Claude Code or a Freebuff session and Buffy will follow along.';
+          : 'No agent activity right now. Start Claude Code, Gemini CLI, Cursor, or a Freebuff session and Buffy will follow along.';
         body.append(empty);
       }
     } else {

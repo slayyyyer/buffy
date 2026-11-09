@@ -37,6 +37,36 @@ export const CLAUDE_HOOKS = [
   { event: 'SessionEnd' },
 ];
 
+/** Gemini CLI lifecycle events that map cleanly onto Buffy's state model. */
+export const GEMINI_HOOKS = [
+  { event: 'SessionStart' },
+  { event: 'BeforeAgent' },
+  { event: 'BeforeTool' },
+  { event: 'AfterTool' },
+  { event: 'AfterAgent' },
+  { event: 'Notification' },
+  { event: 'PreCompress' },
+  { event: 'SessionEnd' },
+];
+
+/**
+ * Cursor hooks are observational. Buffy deliberately does not install
+ * preToolUse: it is a permission hook, and a status companion must not
+ * auto-approve tool calls.
+ */
+export const CURSOR_HOOKS = [
+  { event: 'sessionStart' },
+  { event: 'sessionEnd' },
+  { event: 'beforeSubmitPrompt' },
+  { event: 'postToolUse' },
+  { event: 'postToolUseFailure' },
+  { event: 'afterFileEdit' },
+  { event: 'afterShellExecution' },
+  { event: 'preCompact' },
+  { event: 'subagentStop' },
+  { event: 'stop' },
+];
+
 function quote(value) {
   return `"${String(value).replace(/\\/g, '/')}"`;
 }
@@ -46,7 +76,14 @@ export function cliPrefix() {
 }
 
 export function launcherPath(env = process.env) {
-  return buffyFile(path.join('bin', process.platform === 'win32' ? 'buffy-hook.cmd' : 'buffy-hook'), env);
+  return agentLauncherPath('claude', env);
+}
+
+export function agentLauncherPath(agent = 'claude', env = process.env) {
+  const suffixes = { claude: '', gemini: '-gemini', cursor: '-cursor' };
+  const suffix = suffixes[agent] ?? `-${agent}`;
+  const name = `buffy-hook${suffix}${process.platform === 'win32' ? '.cmd' : ''}`;
+  return buffyFile(path.join('bin', name), env);
 }
 
 export function commandLauncherPath(env = process.env) {
@@ -95,12 +132,12 @@ function writeLauncher(file, { entry, exe, args = '' }) {
   }
 }
 
-export function ensureLauncher({ env = process.env, packaged = false } = {}) {
+export function ensureLauncher({ env = process.env, packaged = false, agent = 'claude' } = {}) {
   if (!packaged) return null;
-  return writeLauncher(launcherPath(env), {
+  return writeLauncher(agentLauncherPath(agent, env), {
     entry: packagedHookEntry(),
     exe: process.execPath,
-    args: 'hook claude',
+    args: `hook ${agent}`,
   });
 }
 
@@ -113,10 +150,17 @@ export function ensureCommandLauncher({ env = process.env, packaged = false } = 
   });
 }
 
-export function hookCommand(event, { env = process.env, packaged = false, launcher = null } = {}) {
-  const stable = launcher || (packaged ? ensureLauncher({ env, packaged }) : null);
-  if (stable) return `${quote(stable)} ${event}`;
-  return `${cliPrefix()} hook claude ${event}`;
+export function hookCommand(
+  event,
+  { env = process.env, packaged = false, launcher = null, agent = 'claude' } = {},
+) {
+  const stable = launcher || (packaged ? ensureLauncher({ env, packaged, agent }) : null);
+  const command = stable
+    ? `${quote(stable)} ${event}`
+    : `${cliPrefix()} hook ${agent} ${event}`;
+  // Cursor runs command hooks through PowerShell on Windows. A quoted path at
+  // the start of a PowerShell command needs the call operator.
+  return agent === 'cursor' && process.platform === 'win32' ? `& ${command}` : command;
 }
 
 export function claudePaths({ cwd = process.cwd(), global = false } = {}) {
@@ -125,6 +169,16 @@ export function claudePaths({ cwd = process.cwd(), global = false } = {}) {
     settings: path.join(base, 'settings.json'),
     command: path.join(base, 'commands', `${COMMAND_NAME}.md`),
   };
+}
+
+export function geminiPaths({ cwd = process.cwd(), global = false } = {}) {
+  const base = global ? path.join(os.homedir(), '.gemini') : path.join(cwd, '.gemini');
+  return { settings: path.join(base, 'settings.json') };
+}
+
+export function cursorPaths({ cwd = process.cwd(), global = false } = {}) {
+  const base = global ? path.join(os.homedir(), '.cursor') : path.join(cwd, '.cursor');
+  return { settings: path.join(base, 'hooks.json') };
 }
 
 function readSettings(file) {
@@ -145,14 +199,31 @@ function readSettings(file) {
   }
 }
 
-function isBuffyHook(entry, env) {
+function commandOwnsAgent(command, agent, env) {
+  if (typeof command !== 'string') return false;
+  const normalized = command.replace(/\\/g, '/');
+  const stable = agentLauncherPath(agent, env).replace(/\\/g, '/');
+  if (normalized.includes(stable)) return true;
+  return normalized.includes(BIN_POSIX) && new RegExp(`hook\\s+${agent}\\b`).test(command);
+}
+
+function isBuffyHook(entry, env, agent = 'claude') {
   const hooks = Array.isArray(entry?.hooks) ? entry.hooks : [];
-  const stable = launcherPath(env).replace(/\\/g, '/');
-  return hooks.some((hook) => {
-    if (typeof hook?.command !== 'string') return false;
-    const command = hook.command.replace(/\\/g, '/');
-    if (command.includes(stable)) return true;
-    return command.includes(BIN_POSIX) && /hook\s+claude\b/.test(hook.command);
+  return hooks.some((hook) => commandOwnsAgent(hook?.command, agent, env));
+}
+
+function isBuffyCursorEntry(entry, env) {
+  return commandOwnsAgent(entry?.command, 'cursor', env);
+}
+
+/** Whether a settings object already contains Buffy's hooks for one agent. */
+export function hasBuffyHooks(agent, data, env = process.env) {
+  const hooks = data?.hooks && typeof data.hooks === 'object' && !Array.isArray(data.hooks) ? data.hooks : {};
+  return Object.values(hooks).some((list) => {
+    if (!Array.isArray(list)) return false;
+    return list.some((entry) =>
+      agent === 'cursor' ? isBuffyCursorEntry(entry, env) : isBuffyHook(entry, env, agent),
+    );
   });
 }
 
@@ -406,6 +477,244 @@ export function uninstallClaude({ cwd = process.cwd(), global = false, env = pro
   }
 
   forgetInstall('claude', scope, env);
+  return result;
+}
+
+/**
+ * Merge Buffy's hook groups into Gemini CLI settings. Gemini keeps hooks in
+ * the same settings.json as the rest of its configuration, so every unrelated
+ * key and existing hook group is preserved.
+ */
+export function installGemini({
+  cwd = process.cwd(),
+  global = false,
+  env = process.env,
+  now = Date.now(),
+  packaged = false,
+} = {}) {
+  const paths = geminiPaths({ cwd, global });
+  const scope = global ? 'user' : 'project';
+  const result = {
+    agent: 'gemini',
+    scope,
+    settingsPath: paths.settings,
+    backups: [],
+    changed: [],
+    notes: [],
+    hooks: GEMINI_HOOKS.map((hook) => hook.event),
+    launcher: null,
+    skipped: false,
+  };
+
+  const { text, data } = readSettings(paths.settings);
+  if (data.hooksConfig?.enabled === false) {
+    result.skipped = true;
+    result.notes.push('Gemini CLI hooks are disabled. Buffy left the settings untouched; enable hooks in Gemini CLI first.');
+    return result;
+  }
+
+  const launcher = packaged ? ensureLauncher({ env, packaged, agent: 'gemini' }) : null;
+  result.launcher = launcher;
+  if (packaged && !launcher) {
+    result.notes.push('The stable Gemini launcher could not be created; hooks may not run until this is fixed.');
+  }
+
+  const settings = { ...data };
+  const existingHooks =
+    settings.hooks && typeof settings.hooks === 'object' && !Array.isArray(settings.hooks) ? settings.hooks : {};
+  const hooks = { ...existingHooks };
+
+  for (const { event } of GEMINI_HOOKS) {
+    const current = Array.isArray(hooks[event]) ? hooks[event] : [];
+    const kept = current.filter((entry) => !isBuffyHook(entry, env, 'gemini'));
+    hooks[event] = [
+      ...kept,
+      {
+        hooks: [
+          {
+            name: 'buffy',
+            type: 'command',
+            command: hookCommand(event, { env, packaged, launcher, agent: 'gemini' }),
+            timeout: 10_000,
+            description: 'Mirror this Gemini CLI session in Buffy',
+          },
+        ],
+      },
+    ];
+  }
+  settings.hooks = hooks;
+
+  const nextSettings = `${JSON.stringify(settings, null, 2)}\n`;
+  if (nextSettings !== text) {
+    if (text.trim()) result.backups.push(backup(paths.settings, now));
+    writeFile(paths.settings, nextSettings);
+    result.changed.push(paths.settings);
+  }
+
+  recordInstall(
+    {
+      kind: 'gemini',
+      scope,
+      settings: paths.settings,
+      launcher,
+      backups: result.backups,
+      installedAt: new Date(now).toISOString(),
+    },
+    env,
+  );
+
+  if (global) result.notes.push('user scope applies to every Gemini CLI project on this machine');
+  if (launcher) result.notes.push(`stable launcher: ${launcher}`);
+  result.notes.push('Gemini hooks write an empty JSON object and never block the agent.');
+  return result;
+}
+
+export function uninstallGemini({ cwd = process.cwd(), global = false, env = process.env } = {}) {
+  const paths = geminiPaths({ cwd, global });
+  const scope = global ? 'user' : 'project';
+  const result = {
+    agent: 'gemini',
+    scope,
+    settingsPath: paths.settings,
+    removedHooks: 0,
+    changed: [],
+    notes: [],
+  };
+
+  if (fs.existsSync(paths.settings)) {
+    const { text, data } = readSettings(paths.settings);
+    if (data.hooks && typeof data.hooks === 'object' && !Array.isArray(data.hooks)) {
+      const hooks = { ...data.hooks };
+      for (const event of Object.keys(hooks)) {
+        const list = Array.isArray(hooks[event]) ? hooks[event] : [];
+        const kept = list.filter((entry) => !isBuffyHook(entry, env, 'gemini'));
+        result.removedHooks += list.length - kept.length;
+        if (kept.length) hooks[event] = kept;
+        else delete hooks[event];
+      }
+      data.hooks = hooks;
+      if (!Object.keys(hooks).length) delete data.hooks;
+
+      const nextSettings = `${JSON.stringify(data, null, 2)}\n`;
+      if (nextSettings !== text) {
+        writeFile(paths.settings, nextSettings);
+        result.changed.push(paths.settings);
+      }
+    }
+  }
+
+  forgetInstall('gemini', scope, env);
+  return result;
+}
+
+/** Merge Buffy's observational hooks into Cursor's hooks.json. */
+export function installCursor({
+  cwd = process.cwd(),
+  global = false,
+  env = process.env,
+  now = Date.now(),
+  packaged = false,
+} = {}) {
+  const paths = cursorPaths({ cwd, global });
+  const scope = global ? 'user' : 'project';
+  const result = {
+    agent: 'cursor',
+    scope,
+    settingsPath: paths.settings,
+    backups: [],
+    changed: [],
+    notes: [],
+    hooks: CURSOR_HOOKS.map((hook) => hook.event),
+    launcher: null,
+    skipped: false,
+  };
+
+  const { text, data } = readSettings(paths.settings);
+  const launcher = packaged ? ensureLauncher({ env, packaged, agent: 'cursor' }) : null;
+  result.launcher = launcher;
+  if (packaged && !launcher) {
+    result.notes.push('The stable Cursor launcher could not be created; hooks may not run until this is fixed.');
+  }
+
+  const settings = { ...data };
+  settings.version = Number.isInteger(data.version) && data.version > 0 ? data.version : 1;
+  const existingHooks =
+    settings.hooks && typeof settings.hooks === 'object' && !Array.isArray(settings.hooks) ? settings.hooks : {};
+  const hooks = { ...existingHooks };
+
+  for (const { event } of CURSOR_HOOKS) {
+    const current = Array.isArray(hooks[event]) ? hooks[event] : [];
+    const kept = current.filter((entry) => !isBuffyCursorEntry(entry, env));
+    hooks[event] = [
+      ...kept,
+      {
+        command: hookCommand(event, { env, packaged, launcher, agent: 'cursor' }),
+        timeout: 10,
+      },
+    ];
+  }
+  settings.hooks = hooks;
+
+  const nextSettings = `${JSON.stringify(settings, null, 2)}\n`;
+  if (nextSettings !== text) {
+    if (text.trim()) result.backups.push(backup(paths.settings, now));
+    writeFile(paths.settings, nextSettings);
+    result.changed.push(paths.settings);
+  }
+
+  recordInstall(
+    {
+      kind: 'cursor',
+      scope,
+      settings: paths.settings,
+      launcher,
+      backups: result.backups,
+      installedAt: new Date(now).toISOString(),
+    },
+    env,
+  );
+
+  if (global) result.notes.push('user scope applies to every Cursor workspace on this machine');
+  if (launcher) result.notes.push(`stable launcher: ${launcher}`);
+  result.notes.push('Buffy does not install Cursor preToolUse, so it never approves or blocks a tool call.');
+  return result;
+}
+
+export function uninstallCursor({ cwd = process.cwd(), global = false, env = process.env } = {}) {
+  const paths = cursorPaths({ cwd, global });
+  const scope = global ? 'user' : 'project';
+  const result = {
+    agent: 'cursor',
+    scope,
+    settingsPath: paths.settings,
+    removedHooks: 0,
+    changed: [],
+    notes: [],
+  };
+
+  if (fs.existsSync(paths.settings)) {
+    const { text, data } = readSettings(paths.settings);
+    if (data.hooks && typeof data.hooks === 'object' && !Array.isArray(data.hooks)) {
+      const hooks = { ...data.hooks };
+      for (const event of Object.keys(hooks)) {
+        const list = Array.isArray(hooks[event]) ? hooks[event] : [];
+        const kept = list.filter((entry) => !isBuffyCursorEntry(entry, env));
+        result.removedHooks += list.length - kept.length;
+        if (kept.length) hooks[event] = kept;
+        else delete hooks[event];
+      }
+      data.hooks = hooks;
+      if (!Object.keys(hooks).length) delete data.hooks;
+
+      const nextSettings = `${JSON.stringify(data, null, 2)}\n`;
+      if (nextSettings !== text) {
+        writeFile(paths.settings, nextSettings);
+        result.changed.push(paths.settings);
+      }
+    }
+  }
+
+  forgetInstall('cursor', scope, env);
   return result;
 }
 

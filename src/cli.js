@@ -8,8 +8,20 @@ import { normalizeState } from './machine.js';
 import { applyIdleDecay, levelFromXp, loadState } from './state.js';
 import * as client from './client.js';
 import { generateHatch } from './hatch.js';
-import { runClaudeHook } from './hook.js';
-import { CLAUDE_HOOKS, installClaude, installFreebuff, uninstallClaude, uninstallFreebuff } from './install.js';
+import { runAgentHook } from './hook.js';
+import {
+  CLAUDE_HOOKS,
+  CURSOR_HOOKS,
+  GEMINI_HOOKS,
+  installClaude,
+  installCursor,
+  installFreebuff,
+  installGemini,
+  uninstallClaude,
+  uninstallCursor,
+  uninstallFreebuff,
+  uninstallGemini,
+} from './install.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -20,7 +32,7 @@ Usage:
   buffy daemon                     run the daemon in the foreground
   buffy event <state> [options]    send a state change
       --msg "text"                 speech bubble text
-      --source claude|freebuff|…   who sent it (shown in the bubble)
+      --source claude|gemini|cursor|…  who sent it (shown in the bubble)
       --session <id>               stable identity for concurrent agents
       --cwd <dir>                  project folder the activity card can open
   buffy pet                        scratch behind the ears
@@ -30,8 +42,12 @@ Usage:
   buffy overlay [--dev] [--onboarding] show the always-on-top pet window
   buffy hatch "<prompt>"           generate a custom sprite with OpenAI Images
   buffy install claude [--global]  wire Claude Code hooks + /buffy command
+  buffy install gemini [--global]  wire Gemini CLI lifecycle hooks
+  buffy install cursor [--global]  wire Cursor lifecycle hooks
   buffy install freebuff           add best-effort event instructions to AGENTS.md
-  buffy uninstall claude [--global] remove them again
+  buffy uninstall claude [--global] remove Claude hooks + /buffy command
+  buffy uninstall gemini [--global] remove Gemini CLI hooks
+  buffy uninstall cursor [--global] remove Cursor hooks
   buffy uninstall freebuff         remove them from AGENTS.md
   buffy help | buffy version
 
@@ -300,6 +316,12 @@ async function hatchCommand(prompt, config) {
   }
 }
 
+const HOOK_AGENTS = {
+  claude: { label: 'Claude Code', hooks: CLAUDE_HOOKS, install: installClaude },
+  gemini: { label: 'Gemini CLI', hooks: GEMINI_HOOKS, install: installGemini },
+  cursor: { label: 'Cursor', hooks: CURSOR_HOOKS, install: installCursor },
+};
+
 function installCommand(agent, flags) {
   if (agent === 'freebuff') {
     if (flags.global) {
@@ -318,18 +340,29 @@ function installCommand(agent, flags) {
       return 1;
     }
   }
-  if (agent !== 'claude') {
-    fail('buffy: install supports "claude" or "freebuff".');
+  const selected = HOOK_AGENTS[agent];
+  if (!selected) {
+    fail('buffy: install supports "claude", "gemini", "cursor", or "freebuff".');
     return 2;
   }
   try {
-    const result = installClaude({ global: Boolean(flags.global) });
-    print(`buffy installed for Claude Code (${result.scope} scope)`);
-    print(`  hooks    ${CLAUDE_HOOKS.map((hook) => hook.event).join(', ')}`);
+    const result = selected.install({ global: Boolean(flags.global) });
+    if (result.skipped) {
+      print(`No changes for ${selected.label}: ${result.notes[0]}`);
+      return 0;
+    }
+    print(`buffy installed for ${selected.label} (${result.scope} scope)`);
+    print(`  hooks    ${selected.hooks.map((hook) => hook.event).join(', ')}`);
     print(`  settings ${result.settingsPath}`);
-    print(`  command  ${result.commandPath}`);
+    if (result.commandPath) print(`  command  ${result.commandPath}`);
+    if (result.launcher) print(`  launcher ${result.launcher}`);
     if (result.backups.length) print(`  backups  ${result.backups.join(', ')}`);
-    print('Start the overlay with `buffy overlay`, then use /buffy in Claude Code.');
+    for (const note of result.notes) print(`  note     ${note}`);
+    print(
+      agent === 'claude'
+        ? 'Start the overlay with `buffy overlay`, then use /buffy in Claude Code.'
+        : `Start the overlay with \`buffy overlay\`, then open ${selected.label}.`,
+    );
     return 0;
   } catch (error) {
     fail(`buffy: ${error.message}`);
@@ -358,8 +391,26 @@ function uninstallCommand(agent, flags) {
       return 1;
     }
   }
+  if (agent === 'gemini' || agent === 'cursor') {
+    try {
+      const result = (agent === 'gemini' ? uninstallGemini : uninstallCursor)({
+        global: Boolean(flags.global),
+      });
+      if (!result.removedHooks) {
+        print(`Nothing to remove for ${agent === 'gemini' ? 'Gemini CLI' : 'Cursor'} (${result.scope} scope).`);
+      } else {
+        print(`buffy removed from ${agent === 'gemini' ? 'Gemini CLI' : 'Cursor'} (${result.scope} scope)`);
+        print(`  hooks removed  ${result.removedHooks}`);
+      }
+      for (const note of result.notes) print(`  note  ${note}`);
+      return 0;
+    } catch (error) {
+      fail(`buffy: ${error.message}`);
+      return 1;
+    }
+  }
   if (agent !== 'claude') {
-    fail('buffy: uninstall supports "claude" or "freebuff".');
+    fail('buffy: uninstall supports "claude", "gemini", "cursor", or "freebuff".');
     return 2;
   }
   try {
@@ -413,7 +464,8 @@ export async function main(argv = process.argv.slice(2)) {
       return hatchCommand(args.slice(1).join(' ').trim(), config);
     case 'hook': {
       const rest = args.slice(1);
-      return runClaudeHook(rest[0] === 'claude' ? rest[1] : rest[0]);
+      const agent = ['claude', 'gemini', 'cursor'].includes(rest[0]) ? rest[0] : 'claude';
+      return runAgentHook(agent, agent === rest[0] ? rest[1] : rest[0]);
     }
     case 'install':
       return installCommand(args[1], flags);
