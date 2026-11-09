@@ -416,6 +416,22 @@
 
     const actions = document.createElement('div');
     actions.className = 'card-actions';
+    const canDecide =
+      state.prefs?.permissions?.claudeDecisions === true &&
+      request.kind === 'permission' &&
+      Boolean(request.decisionId);
+    if (canDecide) {
+      const allow = makeButton('Allow once', 'decide-permission', {
+        permission: request.decisionId,
+        behavior: 'allow',
+      });
+      allow.className = 'allow';
+      allow.title = 'Answer Claude’s live permission request for this tool call.';
+      actions.append(
+        allow,
+        makeButton('Deny', 'decide-permission', { permission: request.decisionId, behavior: 'deny' }, true),
+      );
+    }
     if (request.cwd) {
       actions.append(makeButton('Show project', 'focus-session', { session: request.sessionId, cwd: request.cwd }));
     }
@@ -498,7 +514,9 @@
       if (requests.length) {
         const notice = document.createElement('p');
         notice.className = 'notice';
-        notice.textContent = 'Show project opens the folder that session reported. Opening Claude starts a new composer; neither resolves the request.';
+        notice.textContent = requests.some((request) => request.decisionId)
+          ? 'Allow once and Deny answer Claude’s live permission request. Show project opens its folder; Open Claude starts a new composer.'
+          : 'Show project opens the folder that session reported. Opening Claude starts a new composer; neither resolves the request.';
         body.append(notice);
       }
       requests.forEach((request) => body.append(requestCard(request)));
@@ -1035,6 +1053,35 @@
           showToast('That session has no folder to open.');
         }
         action.disabled = false;
+        return;
+      }
+      if (action.dataset.action === 'decide-permission') {
+        if (state.decidingPermission) return;
+        const id = action.dataset.permission;
+        const behavior = action.dataset.behavior;
+        if (!id || (behavior !== 'allow' && behavior !== 'deny')) return;
+        state.decidingPermission = id;
+        const card = action.closest?.('.card');
+        card?.querySelectorAll('button').forEach((button) => {
+          button.disabled = true;
+        });
+        action.textContent = behavior === 'allow' ? 'Allowing…' : 'Denying…';
+        try {
+          const result = await window.buffy.decidePermission({ id, behavior });
+          if (result?.ok) {
+            if (result.state) applySnapshot(result.state);
+            else renderCards();
+            showToast(behavior === 'allow' ? 'Claude’s tool request was allowed.' : 'Claude’s tool request was denied.');
+          } else {
+            showToast(result?.error || 'That permission request is no longer waiting.');
+            renderCards();
+          }
+        } catch {
+          showToast('Buffy could not answer that permission request.');
+          renderCards();
+        } finally {
+          state.decidingPermission = null;
+        }
         return;
       }
       if (action.dataset.action === 'dismiss') {

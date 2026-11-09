@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -72,6 +73,11 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
 
   const machine = createMachine({ doneHoldMs: config.doneHoldMs, sessionTtlMs: config.sessionTtlMs });
   const clients = new Set();
+  const decisions = new Map();
+  // This token is written only to the user's runtime file. It keeps a browser
+  // or other origin from answering a permission request through the loopback
+  // HTTP server. Every decision is still scoped to one live request id.
+  const controlToken = crypto.randomBytes(32).toString('hex');
   const startedAt = Date.now();
   let reaction = null;
   let celebration = null;
@@ -88,8 +94,28 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     git: false,
   };
 
+  function withDecision(request) {
+    if (!request) return request;
+    return {
+      ...request,
+      decisionId: request.decisionId && decisions.has(request.decisionId) ? request.decisionId : null,
+    };
+  }
+
+  function decorateSnapshot(current) {
+    return {
+      ...current,
+      requests: (current.requests || []).map(withDecision),
+      pendingRequestsList: (current.pendingRequestsList || []).map(withDecision),
+      sessions: (current.sessions || []).map((session) => ({
+        ...session,
+        requests: (session.requests || []).map(withDecision),
+      })),
+    };
+  }
+
   function snapshot(now = Date.now()) {
-    const current = machine.snapshot(now);
+    const current = decorateSnapshot(machine.snapshot(now));
     return {
       version: VERSION,
       online: true,
@@ -170,6 +196,86 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     saveState(store, env);
     broadcast();
     return current;
+  }
+
+  function controlAuthorized(req) {
+    if (req.headers.origin) return false;
+    const supplied = req.headers['x-buffy-control'];
+    if (typeof supplied !== 'string' || supplied.length !== controlToken.length) return false;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(controlToken));
+    } catch {
+      return false;
+    }
+  }
+
+  function finishDecision(waiter, behavior, reason = null) {
+    if (!waiter || waiter.done) return false;
+    waiter.done = true;
+    clearTimeout(waiter.timer);
+    decisions.delete(waiter.id);
+
+    if (behavior && waiter.requestId) {
+      try {
+        dispatch({
+          state: 'working',
+          message: behavior === 'allow' ? 'permission allowed' : 'permission denied',
+          source: waiter.source,
+          sessionId: waiter.sessionId,
+          category: 'permission',
+          resolveRequests: [waiter.requestId],
+        });
+      } catch {
+        broadcast();
+      }
+    } else {
+      broadcast();
+    }
+
+    if (!waiter.res.writableEnded) {
+      try {
+        sendJson(waiter.res, 200, {
+          ok: true,
+          decision: behavior ? { behavior } : null,
+          reason,
+        });
+      } catch {
+        /* the hook may have already timed out */
+      }
+    }
+    return true;
+  }
+
+  function waitForDecision(decision, current, res) {
+    const id = cleanText(decision?.id, 96);
+    if (!id || !/^[A-Za-z0-9_-]{16,96}$/.test(id) || decisions.has(id) || clients.size === 0) {
+      return false;
+    }
+    const request = (current.pendingRequestsList || []).find((entry) => entry.decisionId === id);
+    if (!request) return false;
+
+    const requested = Number(decision.timeoutMs);
+    const timeoutMs = Number.isFinite(requested)
+      ? Math.min(15_000, Math.max(500, Math.round(requested)))
+      : 8000;
+    const waiter = {
+      id,
+      requestId: request.id,
+      sessionId: request.sessionId,
+      source: request.source || 'claude',
+      res,
+      done: false,
+      timer: null,
+    };
+    decisions.set(id, waiter);
+    waiter.timer = setTimeout(() => finishDecision(waiter, null, 'timeout'), timeoutMs);
+    res.on('close', () => {
+      if (!res.writableEnded) finishDecision(waiter, null, 'client-closed');
+    });
+    // The first broadcast happened before the waiter existed. Send another so
+    // the activity card can reveal its Allow/Deny actions immediately.
+    broadcast();
+    return true;
   }
 
   function dismissSession(input, now = Date.now()) {
@@ -328,6 +434,8 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
         doneHoldMs: config.doneHoldMs,
         watch: watchInfo,
         pendingRequests: snapshot().pendingRequests ?? 0,
+        decisions: true,
+        overlayConnected: clients.size > 0,
       });
     }
 
@@ -369,6 +477,27 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       return;
     }
 
+    if (req.method === 'POST' && url.pathname === '/permission/decision') {
+      if (!controlAuthorized(req)) {
+        return sendJson(res, 403, { ok: false, error: 'permission decision is not authorized' });
+      }
+      readJsonBody(req, (err, body) => {
+        if (err) return sendJson(res, err.status || 400, { ok: false, error: err.message });
+        const id = cleanText(body?.id, 96);
+        const behavior = body?.behavior === 'allow' ? 'allow' : body?.behavior === 'deny' ? 'deny' : null;
+        if (!id || !behavior) {
+          return sendJson(res, 400, { ok: false, error: 'a decision id and allow/deny behavior are required' });
+        }
+        const waiter = decisions.get(id);
+        if (!waiter) {
+          return sendJson(res, 409, { ok: false, error: 'that permission request is no longer waiting' });
+        }
+        finishDecision(waiter, behavior, 'user');
+        return sendJson(res, 200, { ok: true, decision: { behavior }, state: snapshot() });
+      });
+      return;
+    }
+
     if (req.method === 'GET' && url.pathname === '/events') {
       res.writeHead(200, {
         'content-type': 'text/event-stream; charset=utf-8',
@@ -387,7 +516,9 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
         }
       }, 15_000);
       ping.unref?.();
-      req.on('close', () => {
+      // Track the response lifetime, not the GET request stream: the request
+      // stream can close while the SSE response is still live.
+      res.on('close', () => {
         clearInterval(ping);
         clients.delete(res);
       });
@@ -408,6 +539,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
             sessionId,
             source: body.source || req.headers['x-buffy-source'],
           });
+          if (body.decision && waitForDecision(body.decision, current, res)) return;
           sendJson(res, 200, { ok: true, current, state: snapshot() });
         } catch (error) {
           sendJson(res, 400, { ok: false, error: error.message });
@@ -465,6 +597,17 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   }
 
   async function close() {
+    for (const waiter of decisions.values()) {
+      clearTimeout(waiter.timer);
+      if (!waiter.res.writableEnded) {
+        try {
+          waiter.res.end();
+        } catch {
+          /* already closed */
+        }
+      }
+    }
+    decisions.clear();
     const currentWatcher = watcher;
     watcher = null;
     await currentWatcher?.close();
@@ -486,7 +629,20 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     }
   }
 
-  return { listen, close, snapshot, dispatch, dismissSession, pet, celebrate, machine, server, store };
+  return {
+    listen,
+    close,
+    snapshot,
+    dispatch,
+    dismissSession,
+    pet,
+    celebrate,
+    machine,
+    server,
+    store,
+    controlToken,
+    decisions,
+  };
 }
 
 export async function startDaemon({ config = readConfig(), env = process.env, port = config.port, quiet = false } = {}) {
@@ -498,8 +654,15 @@ export async function startDaemon({ config = readConfig(), env = process.env, po
     port: actualPort,
     startedAt: new Date().toISOString(),
     version: VERSION,
+    controlToken: daemon.controlToken,
   };
-  fs.writeFileSync(buffyFile('runtime.json', env), `${JSON.stringify(runtime, null, 2)}\n`);
+  const runtimeFile = buffyFile('runtime.json', env);
+  fs.writeFileSync(runtimeFile, `${JSON.stringify(runtime, null, 2)}\n`);
+  try {
+    fs.chmodSync(runtimeFile, 0o600);
+  } catch {
+    /* Windows and some filesystems do not expose POSIX modes */
+  }
   if (!quiet) {
     process.stderr.write(`buffy daemon: http://127.0.0.1:${actualPort} (state: ${buffyFile('state.json', env)})\n`);
   }

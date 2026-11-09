@@ -94,18 +94,18 @@ export async function ensureDaemon({ port, env = process.env, waitMs = 6000 } = 
   throw new Error(`daemon did not start on port ${port}. Try \`buffy daemon\` to see why.`);
 }
 
-export async function postEvent(port, event) {
+export async function postEvent(port, event, { timeout = 1500, full = false } = {}) {
   const { status, data } = await httpJson({
     port,
     method: 'POST',
     path: '/event',
     body: event,
-    timeout: 1500,
+    timeout,
     source: event.source,
     session: event.sessionId || event.session,
   });
   if (status !== 200 || !data?.ok) throw new Error(data?.error || `daemon returned ${status}`);
-  return data.state;
+  return full ? data : data.state;
 }
 
 export async function getState(port, timeout = 900) {

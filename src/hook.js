@@ -1,13 +1,16 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 
 import { buffyFile, ensureBuffyDir, readConfig } from './config.js';
 import { ensureDaemon, postEvent, sendCelebration } from './client.js';
 import { explicitSuccess } from './celebrate.js';
 import { mapAgentHook, mapClaudeHook, mapClaudeEvent } from './events.js';
+import { loadPrefs } from './prefs.js';
 
 export { mapAgentHook, mapClaudeHook, mapClaudeEvent };
 
 const AGENTS = new Set(['claude', 'gemini', 'cursor']);
+const DECISION_WAIT_MS = 8000;
 
 function clean(value, max = 180) {
   if (typeof value !== 'string') return null;
@@ -94,6 +97,38 @@ function writeHookOutput(agent, eventName) {
   }
 }
 
+function permissionDecisionsEnabled(env) {
+  try {
+    return loadPrefs({ env }).permissions?.claudeDecisions === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Attach a one-shot decision id without trusting the hook payload for it. */
+function attachDecision(mapped) {
+  const decisionId = crypto.randomUUID();
+  const request = mapped.request && typeof mapped.request === 'object' ? { ...mapped.request } : { kind: 'permission' };
+  request.id = clean(request.id, 120) || decisionId;
+  request.decisionId = decisionId;
+  mapped.request = request;
+  return { id: decisionId, requestId: request.id, timeoutMs: DECISION_WAIT_MS };
+}
+
+function writePermissionDecision(decision) {
+  const behavior = decision?.behavior === 'allow' ? 'allow' : 'deny';
+  const payload = {
+    hookSpecificOutput: {
+      hookEventName: 'PermissionRequest',
+      decision: {
+        behavior,
+        ...(behavior === 'deny' ? { message: 'Denied from Buffy' } : {}),
+      },
+    },
+  };
+  process.stdout.write(`${JSON.stringify(payload)}\n`);
+}
+
 /**
  * Run one agent hook. Always exits 0: stderr is the only place for diagnostics,
  * so a broken daemon can never block the agent loop.
@@ -129,14 +164,33 @@ export async function runAgentHook(agentName, eventName, { env = process.env } =
   }
 
   const sessionId = clean(mapped.sessionId, 80);
-  const { sessionId: _rawSession, ...rest } = mapped;
+  const wantsDecision =
+    agent === 'claude' &&
+    String(event).toLowerCase() === 'permissionrequest' &&
+    mapped.request &&
+    permissionDecisionsEnabled(env);
   const config = readConfig(env);
   try {
-    await ensureDaemon({ port: config.port, env, waitMs: 2500 });
-    await postEvent(config.port, {
-      ...rest,
-      ...(sessionId ? { sessionId: `${agent}:${sessionId}` } : {}),
-    });
+    const health = await ensureDaemon({ port: config.port, env, waitMs: 2500 });
+    // Do not hold Claude's native prompt when nobody is watching the overlay.
+    const decision =
+      wantsDecision && health?.decisions === true && health?.overlayConnected === true
+        ? attachDecision(mapped)
+        : null;
+    const { sessionId: _rawSession, ...rest } = mapped;
+    const result = await postEvent(
+      config.port,
+      {
+        ...rest,
+        ...(sessionId ? { sessionId: `${agent}:${sessionId}` } : {}),
+        ...(decision ? { decision } : {}),
+      },
+      decision ? { timeout: DECISION_WAIT_MS + 2000, full: true } : undefined,
+    );
+    if (decision && result?.decision?.behavior) {
+      writePermissionDecision(result.decision);
+      return 0;
+    }
     if (agent === 'claude') {
       const success = explicitSuccess(payload);
       if (success) await sendCelebration(config.port, success.message);

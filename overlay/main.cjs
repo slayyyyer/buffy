@@ -391,7 +391,7 @@ async function summonCompanion() {
   if (win && !win.isDestroyed()) win.webContents.send('summon');
 }
 
-async function postJson(pathname, body, timeout = 1500) {
+async function postJson(pathname, body, timeout = 1500, headers = {}) {
   return new Promise((resolve, reject) => {
     const payload = Buffer.from(JSON.stringify(body ?? {}));
     const req = http.request(
@@ -405,6 +405,7 @@ async function postJson(pathname, body, timeout = 1500) {
           accept: 'application/json',
           'content-type': 'application/json',
           'content-length': payload.length,
+          ...headers,
         },
       },
       (res) => {
@@ -1621,6 +1622,44 @@ ipcMain.handle('dismiss-session', async (_event, sessionId) => {
     return { ok: true, removed: Boolean(result.removed), state: result.state };
   } catch (error) {
     return { ok: false, error: error.message };
+  }
+});
+
+function daemonControlToken() {
+  try {
+    const runtime = JSON.parse(fs.readFileSync(path.join(HOME, 'runtime.json'), 'utf8'));
+    if (Number(runtime.port) === PORT && typeof runtime.controlToken === 'string' && runtime.controlToken) {
+      return runtime.controlToken;
+    }
+  } catch {
+    /* the daemon may still be starting */
+  }
+  return embeddedDaemon?.controlToken || null;
+}
+
+// Permission decisions are opt-in and scoped to the live Claude request id.
+// The token keeps a browser origin from using Buffy's loopback port to answer.
+ipcMain.handle('permission:decide', async (_event, payload) => {
+  if (prefs?.permissions?.claudeDecisions !== true) {
+    return { ok: false, error: 'Permission decisions are turned off in Settings.' };
+  }
+  const id = typeof payload?.id === 'string' ? payload.id.trim().slice(0, 96) : '';
+  const behavior = payload?.behavior === 'allow' ? 'allow' : payload?.behavior === 'deny' ? 'deny' : null;
+  if (!id || !behavior) return { ok: false, error: 'A permission request id and allow/deny choice are required.' };
+  const token = daemonControlToken();
+  if (!token) {
+    return { ok: false, error: 'Restart Buffy’s local daemon before answering permission requests.' };
+  }
+  try {
+    const result = await postJson('/permission/decision', { id, behavior }, 2500, {
+      'x-buffy-control': token,
+    });
+    if (!result?.ok) {
+      return { ok: false, error: result?.error || 'That permission request is no longer waiting.' };
+    }
+    return { ok: true, behavior: result.decision?.behavior || behavior, state: result.state };
+  } catch (error) {
+    return { ok: false, error: error.message || 'Buffy’s local daemon did not answer.' };
   }
 });
 

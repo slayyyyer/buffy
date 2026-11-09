@@ -37,6 +37,10 @@ export const DEFAULT_SHORTCUTS = Object.freeze({
   summon: 'CommandOrControl+Shift+B',
 });
 
+export const DEFAULT_PERMISSIONS = Object.freeze({
+  claudeDecisions: false,
+});
+
 export function defaultCharacterPrefs(look) {
   return {
     look: { outfit: 'dress', bow: 'none', hat: 'none', glasses: 'none', wand: 'none', theme: 'plum', ...(look || {}) },
@@ -67,6 +71,7 @@ export function defaultPrefs() {
     personality: { ...DEFAULT_PERSONALITY },
     shortcuts: { ...DEFAULT_SHORTCUTS },
     alerts: { ...DEFAULT_ALERTS },
+    permissions: { ...DEFAULT_PERMISSIONS },
     connection: {
       freebuffWatcher: true,
     },
@@ -234,6 +239,7 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
   const personality = raw.personality && typeof raw.personality === 'object' ? raw.personality : {};
   const shortcuts = raw.shortcuts && typeof raw.shortcuts === 'object' ? raw.shortcuts : {};
   const alerts = raw.alerts && typeof raw.alerts === 'object' ? raw.alerts : {};
+  const permissions = raw.permissions && typeof raw.permissions === 'object' ? raw.permissions : {};
   const connection = raw.connection && typeof raw.connection === 'object' ? raw.connection : {};
   const updates = raw.updates && typeof raw.updates === 'object' ? raw.updates : {};
 
@@ -279,6 +285,9 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
         ? Math.min(100, Math.max(0, Math.round(Number(alerts.soundVolume))))
         : base.alerts.soundVolume,
       snoozeUntil: normalizeSnooze(alerts.snoozeUntil, now),
+    },
+    permissions: {
+      claudeDecisions: permissions.claudeDecisions === true,
     },
     connection: {
       freebuffWatcher: connection.freebuffWatcher !== false,

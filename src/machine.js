@@ -151,6 +151,7 @@ export function createMachine({
       kind: request.kind,
       label: request.label,
       toolName: request.toolName,
+      decisionId: request.decisionId ?? null,
       createdAt: request.createdAt,
     };
   }
@@ -332,6 +333,7 @@ export function createMachine({
         clean(request.label) ||
         (kind === 'permission' ? 'Claude needs permission' : 'Claude has a question'),
       toolName: clean(request.toolName, 60),
+      decisionId: clean(request.decisionId, 96),
       createdAt: now,
     };
     session.requests.set(id, entry);

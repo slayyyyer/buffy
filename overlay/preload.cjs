@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('buffy', {
 
   pet: () => ipcRenderer.invoke('pet'),
   dismissSession: (sessionId) => ipcRenderer.invoke('dismiss-session', sessionId),
+  decidePermission: (payload) => ipcRenderer.invoke('permission:decide', payload && typeof payload === 'object' ? payload : {}),
   focusSession: (payload) => ipcRenderer.invoke('session:focus', payload && typeof payload === 'object' ? payload : {}),
   getSnapshot: () => ipcRenderer.invoke('snapshot:get'),
   getComposer: () => ipcRenderer.invoke('composer:get'),

@@ -59,6 +59,9 @@ project jumps, sound choices, and per-display corners:
   returns an empty JSON object on stdout so its strict parser never sees a
   blocking hook; Cursor intentionally does not install `preToolUse`, so Buffy
   never approves or blocks a tool call.
+- **Opt-in permission decisions.** Claude Code permission requests can now show
+  **Allow once** and **Deny** in the activity card. It is off by default, scoped
+  to one live `PermissionRequest`, and never enabled for Gemini or Cursor.
 
 ### 2.2.0
 
@@ -323,7 +326,7 @@ The settings window has six sections:
 2. **Personality** — hobbies, gestures, sleep, bubbles, motion, reactions
 3. **Shortcuts** — global summon shortcut and conflict status
 4. **Alerts** — request/completion/sound switches and snooze
-5. **Connection** — Claude, Gemini CLI, and Cursor hook health, Freebuff watcher, daemon status, dictation
+5. **Connection** — Claude, Gemini CLI, and Cursor hook health, Claude permission decisions, Freebuff watcher, daemon status, dictation
 6. **Updates** — current version, update check, install guard
 
 The right-hand preview draws the current character at full size with selectable
@@ -355,8 +358,9 @@ The installer:
 - respects Claude's `disableAllHooks` and refuses to claim a connection when
   hooks are disabled
 - records the install in `~/.buffy/installs.json`
-- never blocks the agent: a hook always exits 0 and writes diagnostics only to
-  stderr
+- observes without blocking by default: every hook exits 0 and writes
+  diagnostics only to stderr. The opt-in decision path waits for at most eight
+  seconds, then falls through to Claude's normal prompt.
 
 The installed hook vocabulary:
 
@@ -365,7 +369,7 @@ The installed hook vocabulary:
 | `SessionStart` | session visibility |
 | `UserPromptSubmit` | thinking |
 | `PreToolUse` | working, with a tool category |
-| `PermissionRequest` | explicit permission request |
+| `PermissionRequest` | explicit permission request; optional Allow/Deny from the pet while the hook is live |
 | `PostToolUse` | working; resolves matching requests |
 | `PostToolUseFailure` | error |
 | `Notification` | question/permission request, or informational idle reminder |
@@ -378,6 +382,23 @@ The settings page distinguishes **not connected**, **installed but no event
 seen**, **repair needed**, **hooks disabled**, **connected** (a hook event was
 seen within 30 minutes), and **error**. Installation alone is not reported as a
 verified connection.
+
+### Permission decisions from the pet
+
+**Off by default.** Enable **Settings → Connection → Permission decisions from
+Buffy**. While Claude's `PermissionRequest` hook is waiting, the activity card
+shows **Allow once** and **Deny** for that one request. Buffy holds Claude's own
+prompt for up to eight seconds; if nobody answers, the hook exits without a
+decision and Claude's normal prompt appears. If the overlay is not connected,
+Buffy does not wait at all.
+
+The response is limited to Claude Code. Gemini permission notifications and
+Cursor hooks stay view-only because neither exposes a safe response channel.
+The daemon requires a local control token for decisions, rejects browser
+`Origin` requests, and removes the action as soon as the hook times out or the
+request is resolved. The token is written to `~/.buffy/runtime.json`; it is not
+an OS-level boundary against other software running as your user, so enable this
+only on a machine you trust.
 
 ## Gemini CLI
 
@@ -548,7 +569,10 @@ the command; the key is never written to Buffy state or logged.
 - The composer deliberately cannot send a prompt. It hands a URL to the OS and
   clears the draft only after a successful launch with no intervening edit.
 - Buffy never installs Cursor's `preToolUse` permission hook, so the companion
-  cannot approve or deny a tool call.
+  cannot approve or deny a Cursor tool call.
+- Claude permission decisions are opt-in, scoped to one live request, and require
+  the daemon's local control token. The token is a same-user file, not a sandbox
+  against malicious local processes.
 - Prompt-bearing URLs are never written to logs.
 - Dictation never falls back to a cloud service.
 
@@ -564,6 +588,9 @@ the command; the key is never written to Buffy state or logged.
   session. "Connected" requires an event within the last 30 minutes.
 - **Hooks are disabled.** Claude's `disableAllHooks` is on. Buffy leaves the
   settings untouched and reports the disabled state.
+- **Allow once / Deny is missing.** Enable **Settings → Connection → Permission
+  decisions from Buffy**. It only appears while Claude's hook is waiting (up to
+  eight seconds) and the overlay is connected; otherwise Claude prompts normally.
 - **Watcher does not react.** Check **Settings → Connection**; the watched
   directory is the daemon's working directory. Restart the daemon after
   changing the watcher switch or start it from the project root.

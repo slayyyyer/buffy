@@ -33,6 +33,15 @@ test('the updater only accepts versions newer than the running build', () => {
   assert.equal(isNewerVersion('2.1.0-beta.2', '2.1.0'), false);
 });
 
+test('permission decisions default off and require an explicit opt-in', () => {
+  const prefs = defaultPrefs();
+  assert.equal(prefs.permissions.claudeDecisions, false);
+  assert.equal(normalizePrefs(prefs).permissions.claudeDecisions, false);
+
+  prefs.permissions.claudeDecisions = true;
+  assert.equal(normalizePrefs(prefs).permissions.claudeDecisions, true);
+});
+
 test('alert sounds default to a chime at 60% and normalize bad values', () => {
   const prefs = defaultPrefs();
   assert.equal(prefs.alerts.soundStyle, 'chime');

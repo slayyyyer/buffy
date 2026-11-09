@@ -51,7 +51,7 @@
     claude: {
       name: 'Claude Code',
       description:
-        'The packaged helper installs a stable launcher in your Buffy folder and merges hooks into your user-level Claude Code settings. It preserves unrelated hooks, respects disableAllHooks, and never blocks Claude.',
+        'The packaged helper installs a stable launcher in your Buffy folder and merges hooks into your user-level Claude Code settings. It preserves unrelated hooks and respects disableAllHooks; permission decisions are a separate opt-in below.',
     },
     gemini: {
       name: 'Gemini CLI',
@@ -453,6 +453,18 @@
     const watch = data.watch;
     panel.innerHTML = [
       connectionCard('claude', connections.claude || {}),
+      card(
+        'Permission decisions from Buffy',
+        'Claude Code only, off by default. When enabled, a live permission request gets Allow once and Deny actions in the activity card instead of requiring a window switch.',
+        toggleRow(
+          'claude-decisions',
+          'Allow decisions from the pet',
+          'Shows Allow once and Deny while Claude’s PermissionRequest hook is waiting. Buffy holds Claude’s own prompt for up to 8 seconds.',
+          prefs.permissions.claudeDecisions === true,
+          'data-permission="claudeDecisions"',
+        ) +
+          '<p class="note rose">This is a security control. It only covers live Claude permission requests; Gemini and Cursor remain view-only. Enable it only on a machine where you trust software running as your user.</p>',
+      ),
       connectionCard('gemini', connections.gemini || {}),
       connectionCard('cursor', connections.cursor || {}),
       card(
@@ -791,6 +803,16 @@
       const key = target.dataset.alertField;
       prefs.alerts[key] = key === 'soundVolume' ? Number(target.value) : target.value;
       scheduleSave();
+      return;
+    }
+    if (target.matches('[data-permission]')) {
+      prefs.permissions[target.dataset.permission] = target.checked;
+      // This is a security boundary, so it takes effect immediately rather
+      // than waiting for the normal debounce.
+      saveState.textContent = 'Saving…';
+      const result = await action('save', { prefs });
+      if (result?.ok) saveState.textContent = 'Saved locally';
+      toast(target.checked ? 'Permission decisions enabled for Claude Code.' : 'Permission decisions disabled.');
       return;
     }
     if (target.matches('[data-watcher]')) {

@@ -81,6 +81,7 @@ test('install merges hooks, preserves user settings and is idempotent', () => {
     }
     assert.equal(settings.hooks.Notification[0].matcher, 'permission_prompt|idle_prompt|agent_needs_input|elicitation_dialog');
     assert.equal(settings.hooks.Stop.find(isOurs).hooks[0].timeout, 10);
+    assert.equal(settings.hooks.PermissionRequest.find(isOurs).hooks[0].timeout, 20);
 
     const commandFile = path.join(project, '.claude', 'commands', 'buffy.md');
     assert.ok(fs.existsSync(commandFile));

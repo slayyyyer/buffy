@@ -23,7 +23,8 @@ export const CLAUDE_HOOKS = [
   { event: 'SessionStart' },
   { event: 'UserPromptSubmit' },
   { event: 'PreToolUse' },
-  { event: 'PermissionRequest' },
+  // PermissionRequest can wait briefly for an opt-in decision from the pet.
+  { event: 'PermissionRequest', timeout: 20 },
   { event: 'PostToolUse' },
   { event: 'PostToolUseFailure' },
   {
@@ -369,11 +370,11 @@ export function installClaude({
     settings.hooks && typeof settings.hooks === 'object' && !Array.isArray(settings.hooks) ? settings.hooks : {};
   const hooks = { ...existingHooks };
 
-  for (const { event, matcher } of CLAUDE_HOOKS) {
+  for (const { event, matcher, timeout = 10 } of CLAUDE_HOOKS) {
     const current = Array.isArray(hooks[event]) ? hooks[event] : [];
     const kept = current.filter((entry) => !isBuffyHook(entry, env));
     const entry = {
-      hooks: [{ type: 'command', command: hookCommand(event, { env, packaged, launcher }), timeout: 10 }],
+      hooks: [{ type: 'command', command: hookCommand(event, { env, packaged, launcher }), timeout }],
     };
     if (matcher) entry.matcher = matcher;
     hooks[event] = [...kept, entry];

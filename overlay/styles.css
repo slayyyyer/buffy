@@ -687,6 +687,11 @@ body.dragging .hit {
   color: #f0b6b6;
 }
 
+.card-actions .allow {
+  border-color: rgba(141, 216, 173, 0.36);
+  color: #b8e8c8;
+}
+
 .empty {
   padding: 14px 8px;
   color: #aa8f9e;
