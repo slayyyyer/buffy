@@ -927,13 +927,17 @@
 
     const theme = themeOf(look.theme);
     const style = character.renderer === 'atlas' ? 'atlas' : 'layered';
+    const atlasCell = character.cell || { width: 256, height: 320 };
+    const atlasCompactCell = character.compactCell || {
+      x: 0,
+      y: 0,
+      width: atlasCell.width,
+      height: atlasCell.height * 0.7,
+    };
     const source = style === 'atlas'
-      ? {
-          x: 0,
-          y: 0,
-          width: character.cell?.width || 256,
-          height: character.cell?.height || 320,
-        }
+      ? compact
+        ? atlasCompactCell
+        : { x: 0, y: 0, width: atlasCell.width, height: atlasCell.height }
       : compact && character.compactCrop
         ? character.compactCrop
         : { x: 0, y: 0, width: character.size?.width || 512, height: character.size?.height || 640 };
@@ -1028,15 +1032,15 @@
 
     if (style === 'atlas') {
       const atlas = imageFor(character.id, character.atlas);
-      const cellW = character.cell.width;
-      const cellH = character.cell.height;
+      const cellW = atlasCell.width;
+      const cellH = atlasCell.height;
       const index = Math.max(0, (character.order || []).indexOf(pose));
       const columns = character.columns || 3;
       const sx = (index % columns) * cellW;
       const sy = Math.floor(index / columns) * cellH;
       ctx.save();
       if (compact) {
-        const crop = character.compactCell || { x: 0, y: 0, width: cellW, height: cellH * 0.7 };
+        const crop = atlasCompactCell;
         ctx.drawImage(atlas, sx + crop.x, sy + crop.y, crop.width, crop.height, 0, 0, drawWidth, drawHeight);
       } else {
         ctx.drawImage(atlas, sx, sy, cellW, cellH, 0, 0, drawWidth, drawHeight);

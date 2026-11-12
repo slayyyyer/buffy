@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="rosebudSkirt" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#e598ad"/>
+      <stop offset="0.55" stop-color="#c25d7b"/>
+      <stop offset="1" stop-color="#963b59"/>
+    </linearGradient>
+    <linearGradient id="rosebudBodice" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#f1c3cd"/>
+      <stop offset="1" stop-color="#c2637c"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-rosebud-ballgown" stroke-linejoin="round">
+    <!-- ballgown skirt -->
+    <path d="M198 446 C162 486 138 538 132 578 C180 604 332 604 380 578 C374 538 350 486 314 446 Z"
+      fill="url(#rosebudSkirt)" stroke="#5c3150" stroke-width="8"/>
+    <!-- inner petal layers -->
+    <path d="M210 454 C182 494 166 540 160 574 C202 596 310 596 352 574 C346 540 330 494 302 454 Z"
+      fill="#de8ba0" stroke="#8d3b54" stroke-width="4" opacity="0.92"/>
+    <path d="M224 458 C202 496 190 540 186 572 C218 588 294 588 326 572 C322 540 310 496 288 458 Z"
+      fill="#f0b8c5" stroke="#8d3b54" stroke-width="3.5" opacity="0.85"/>
+    <!-- scalloped petal hem -->
+    <path d="M154 572 C166 592 188 592 200 576 C212 596 234 596 246 576 C258 596 280 596 292 576 C304 592 326 592 338 576 C350 590 368 584 378 572"
+      fill="none" stroke="#f6d4d7" stroke-width="9" stroke-linecap="round"/>
+    <!-- petal folds -->
+    <g fill="none" stroke="#a74662" stroke-width="3" stroke-linecap="round" opacity="0.7">
+      <path d="M218 482 Q208 530 204 566"/>
+      <path d="M256 476 V576"/>
+      <path d="M294 482 Q304 530 308 566"/>
+      <path d="M238 510 Q232 542 230 566"/>
+      <path d="M274 510 Q280 542 282 566"/>
+    </g>
+    <!-- corset bodice -->
+    <path d="M198 380 C192 408 192 438 202 458 C226 470 286 470 310 458 C320 438 320 408 314 380 C292 370 220 370 198 380 Z"
+      fill="url(#rosebudBodice)" stroke="#5c3150" stroke-width="8"/>
+    <!-- off-shoulder lace neckline -->
+    <path d="M208 384 Q232 406 256 390 Q280 406 304 384"
+      fill="none" stroke="#fff0e8" stroke-width="7" stroke-linecap="round"/>
+    <path d="M212 380 Q230 394 244 386 M300 380 Q282 394 268 386"
+      fill="none" stroke="#f2c7af" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+    <!-- corset boning -->
+    <g fill="none" stroke="#8d3b54" stroke-width="2.5" stroke-linecap="round" opacity="0.7">
+      <path d="M222 400 Q228 430 226 452"/>
+      <path d="M256 394 V456"/>
+      <path d="M290 400 Q284 430 286 452"/>
+    </g>
+    <!-- off-shoulder sleeves -->
+    <ellipse cx="184" cy="404" rx="22" ry="24" fill="#e9adbb" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="328" cy="404" rx="22" ry="24" fill="#e9adbb" stroke="#5c3150" stroke-width="6"/>
+    <!-- rose corsage at the waist -->
+    <g transform="translate(256 452)">
+      <ellipse cx="-17" cy="-2" rx="13" ry="8" fill="#e8879d" stroke="#6f2d45" stroke-width="3" transform="rotate(-25)"/>
+      <ellipse cx="17" cy="-2" rx="13" ry="8" fill="#e8879d" stroke="#6f2d45" stroke-width="3" transform="rotate(25)"/>
+      <ellipse cx="-6" cy="-12" rx="10" ry="8" fill="#f0a6b6" stroke="#6f2d45" stroke-width="3" transform="rotate(-35)"/>
+      <ellipse cx="7" cy="-12" rx="10" ry="8" fill="#f0a6b6" stroke="#6f2d45" stroke-width="3" transform="rotate(35)"/>
+      <ellipse cx="0" cy="4" rx="10" ry="8" fill="#d66c86" stroke="#6f2d45" stroke-width="3"/>
+      <circle cx="0" cy="-3" r="5" fill="#f4cf82" stroke="#8a6224" stroke-width="2"/>
+      <path d="M-24 8 Q-34 22 -28 32 M24 8 Q34 18 30 28" fill="none" stroke="#728a5e" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-30 24 Q-22 20 -20 30 Q-28 34 -30 24 Z M28 22 Q20 18 18 28 Q26 32 28 22 Z" fill="#95b083" stroke="#5f7353" stroke-width="2"/>
+    </g>
+    <!-- satin waistband -->
+    <path d="M194 444 C224 456 288 456 318 444 L318 456 C288 468 224 468 194 456 Z"
+      fill="#a44862" stroke="#5c3150" stroke-width="4.5"/>
+    <!-- tiny pearls on skirt -->
+    <g fill="#ffece6" opacity="0.9">
+      <circle cx="196" cy="510" r="2.4"/><circle cx="224" cy="546" r="2.2"/>
+      <circle cx="302" cy="516" r="2.4"/><circle cx="330" cy="550" r="2.2"/>
+    </g>
+  </g>
+</svg>

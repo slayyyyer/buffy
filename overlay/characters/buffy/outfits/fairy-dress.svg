@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="fairySkirt" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#f5e9ff"/>
+      <stop offset="0.6" stop-color="#d9c1ef"/>
+      <stop offset="1" stop-color="#b892d6"/>
+    </linearGradient>
+    <linearGradient id="fairyBodice" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#f8edff"/>
+      <stop offset="1" stop-color="#c7a5e5"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-fairy-dress" stroke-linejoin="round">
+    <!-- soft underskirt -->
+    <path d="M206 448 C188 486 176 524 172 552 C210 570 302 570 340 552 C336 524 324 486 306 448 Z"
+      fill="url(#fairySkirt)" stroke="#5c3150" stroke-width="7"/>
+    <!-- petal layers -->
+    <path d="M196 522 C172 530 160 546 160 558 C186 568 210 562 222 548 C230 560 244 566 256 566 C268 566 282 560 290 548 C302 562 326 568 352 558 C352 546 340 530 316 522 C294 540 218 540 196 522 Z"
+      fill="#e8c9f2" stroke="#5c3150" stroke-width="6"/>
+    <path d="M214 500 C196 512 186 528 186 542 C208 552 228 546 238 534 C244 544 254 550 264 550 C276 550 288 542 294 532 C306 544 328 550 346 540 C346 526 334 510 316 500 C294 516 234 516 214 500 Z"
+      fill="#f3d8f2" stroke="#5c3150" stroke-width="5" opacity="0.95"/>
+    <!-- petal veins -->
+    <g fill="none" stroke="#b98fd2" stroke-width="2.5" stroke-linecap="round" opacity="0.8">
+      <path d="M194 530 Q208 542 218 550"/>
+      <path d="M318 530 Q304 542 294 550"/>
+      <path d="M228 510 Q238 526 244 538"/>
+      <path d="M284 510 Q274 526 268 538"/>
+    </g>
+    <!-- bodice -->
+    <path d="M196 382 C190 408 190 438 200 458 C226 470 286 470 312 458 C322 438 322 408 316 382 C294 372 218 372 196 382 Z"
+      fill="url(#fairyBodice)" stroke="#5c3150" stroke-width="8"/>
+    <!-- leaf-petal neckline -->
+    <path d="M208 386 Q226 402 238 390 Q248 410 256 400 Q264 410 274 390 Q286 402 304 386"
+      fill="none" stroke="#fff8e8" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#9fc99b" stroke="#5c6f4d" stroke-width="1.8">
+      <path d="M232 390 Q240 378 250 384 Q246 396 236 396 Z"/>
+      <path d="M280 390 Q272 378 262 384 Q266 396 276 396 Z"/>
+    </g>
+    <!-- flutter sleeves -->
+    <path d="M184 404 C162 412 148 430 154 446 C170 452 188 438 196 422 Z"
+      fill="#ead3f5" opacity="0.9" stroke="#5c3150" stroke-width="5"/>
+    <path d="M328 404 C350 412 364 430 358 446 C342 452 324 438 316 422 Z"
+      fill="#ead3f5" opacity="0.9" stroke="#5c3150" stroke-width="5"/>
+    <!-- waist flower -->
+    <g transform="translate(256 456)">
+      <ellipse cx="-15" cy="-4" rx="10" ry="6" fill="#f6c1d8" stroke="#5c3150" stroke-width="3" transform="rotate(-24)"/>
+      <ellipse cx="15" cy="-4" rx="10" ry="6" fill="#f6c1d8" stroke="#5c3150" stroke-width="3" transform="rotate(24)"/>
+      <ellipse cx="0" cy="-11" rx="7" ry="10" fill="#f8d6e3" stroke="#5c3150" stroke-width="3"/>
+      <ellipse cx="0" cy="4" rx="8" ry="7" fill="#efb0cc" stroke="#5c3150" stroke-width="3"/>
+      <circle cx="0" cy="-1" r="4.5" fill="#f4d27a" stroke="#8a6224" stroke-width="2"/>
+    </g>
+    <!-- tiny sparkles around the skirt -->
+    <g fill="#fff1bf">
+      <path d="M188 482 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 Z"/>
+      <path d="M324 498 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/>
+      <circle cx="210" cy="556" r="2.5"/>
+      <circle cx="302" cy="556" r="2"/>
+    </g>
+  </g>
+</svg>

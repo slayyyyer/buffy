@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="balletBodice" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#ffe5ef"/>
+      <stop offset="1" stop-color="#f2a8c5"/>
+    </linearGradient>
+    <linearGradient id="tulle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd9e8" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#f2a4c3" stop-opacity="0.78"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-ballet-tutu" stroke-linejoin="round">
+    <!-- layered tutu, widest at the bottom -->
+    <path d="M214 462 C182 476 150 504 142 532 C188 554 324 554 370 532 C362 504 330 476 298 462 Z"
+      fill="url(#tulle)" stroke="#5c3150" stroke-width="6" opacity="0.78"/>
+    <path d="M210 468 C186 482 166 504 160 526 C200 544 312 544 352 526 C346 504 326 482 302 468 Z"
+      fill="#ffd0e1" stroke="#5c3150" stroke-width="5" opacity="0.92"/>
+    <path d="M220 474 C202 488 190 504 186 522 C214 536 298 536 326 522 C322 504 310 488 292 474 Z"
+      fill="#ffe4ee" stroke="#c97599" stroke-width="3.5" opacity="0.9"/>
+    <!-- tulle ruffles -->
+    <path d="M144 528 Q165 542 186 530 Q207 546 228 532 Q249 548 270 532 Q291 548 312 532 Q333 546 354 530 Q366 538 370 532"
+      fill="none" stroke="#fff4f8" stroke-width="7" stroke-linecap="round"/>
+    <path d="M162 514 Q180 526 198 516 Q216 530 234 518 Q252 532 270 518 Q288 532 306 518 Q324 530 342 516"
+      fill="none" stroke="#f8bfd4" stroke-width="4" stroke-linecap="round"/>
+    <!-- leotard bodice -->
+    <path d="M198 382 C192 408 192 438 202 458 C226 468 286 468 310 458 C320 438 320 408 314 382 C292 372 220 372 198 382 Z"
+      fill="url(#balletBodice)" stroke="#5c3150" stroke-width="8"/>
+    <!-- sweetheart neckline -->
+    <path d="M208 386 Q232 408 256 392 Q280 408 304 386"
+      fill="none" stroke="#fff8ef" stroke-width="7" stroke-linecap="round"/>
+    <!-- crisscross ribbon laces -->
+    <g fill="none" stroke="#b95f82" stroke-width="3.5" stroke-linecap="round">
+      <path d="M238 406 L276 424 M276 406 L238 424 M238 428 L276 446 M276 428 L238 446"/>
+    </g>
+    <g fill="#f8d6e2" stroke="#b95f82" stroke-width="2">
+      <circle cx="238" cy="406" r="3"/><circle cx="276" cy="406" r="3"/>
+      <circle cx="238" cy="446" r="3"/><circle cx="276" cy="446" r="3"/>
+    </g>
+    <!-- puff cap sleeves -->
+    <ellipse cx="186" cy="408" rx="20" ry="23" fill="#f7c3d7" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="326" cy="408" rx="20" ry="23" fill="#f7c3d7" stroke="#5c3150" stroke-width="6"/>
+    <!-- satin waistband -->
+    <path d="M196 450 C226 462 286 462 316 450 L317 464 C286 476 226 476 195 464 Z"
+      fill="#e991b1" stroke="#5c3150" stroke-width="5"/>
+    <!-- leg ribbons and ballet slippers -->
+    <g fill="none" stroke="#f8d6e2" stroke-width="7" stroke-linecap="round">
+      <path d="M214 520 C218 538 216 552 210 566"/>
+      <path d="M298 520 C294 538 296 552 302 566"/>
+      <path d="M202 540 L226 550 M310 540 L286 550"/>
+    </g>
+    <ellipse cx="204" cy="570" rx="27" ry="14" fill="#f7b6cf" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="308" cy="570" rx="27" ry="14" fill="#f7b6cf" stroke="#5c3150" stroke-width="6"/>
+    <path d="M180 568 Q204 580 228 568 M284 568 Q308 580 332 568" fill="none" stroke="#fff3f8" stroke-width="4" stroke-linecap="round"/>
+    <!-- tiny bow at the bodice -->
+    <g transform="translate(256 414)">
+      <path d="M0 0 C-8 -8 -20 -5 -18 2 C-16 8 -6 8 0 3 Z" fill="#d97396" stroke="#5c3150" stroke-width="2.5"/>
+      <path d="M0 0 C8 -8 20 -5 18 2 C16 8 6 8 0 3 Z" fill="#d97396" stroke="#5c3150" stroke-width="2.5"/>
+      <circle cx="0" cy="2" r="3" fill="#f6cf7d" stroke="#8a6224" stroke-width="1.5"/>
+    </g>
+  </g>
+</svg>

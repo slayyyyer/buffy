@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="pearlSatin" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="0.58" stop-color="#f5e6d1"/>
+      <stop offset="1" stop-color="#dfc5ab"/>
+    </linearGradient>
+    <linearGradient id="pearlTulle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff8e8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#e8d3bd" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-pearl-party" stroke-linejoin="round">
+    <!-- satin shift skirt -->
+    <path d="M204 450 C190 492 180 532 176 562 C210 582 302 582 336 562 C332 532 322 492 308 450 Z"
+      fill="url(#pearlSatin)" stroke="#5c3150" stroke-width="7"/>
+    <!-- tulle hem overlay -->
+    <path d="M186 546 C208 566 304 566 326 546 C322 562 310 578 302 584 C272 596 240 596 210 584 C202 578 190 562 186 546 Z"
+      fill="url(#pearlTulle)" stroke="#d6bda4" stroke-width="3"/>
+    <path d="M188 552 Q206 566 224 554 Q242 568 260 554 Q278 568 296 554 Q314 566 324 552"
+      fill="none" stroke="#fff9ec" stroke-width="6" stroke-linecap="round"/>
+    <!-- pearl hem drops -->
+    <g fill="#fff9ec" stroke="#bda383" stroke-width="1.2">
+      <circle cx="196" cy="568" r="4"/><circle cx="220" cy="578" r="3.5"/>
+      <circle cx="244" cy="584" r="4"/><circle cx="268" cy="584" r="3.5"/>
+      <circle cx="292" cy="578" r="4"/><circle cx="316" cy="568" r="3.5"/>
+    </g>
+    <!-- bodice -->
+    <path d="M198 380 C192 408 192 438 202 458 C226 470 286 470 310 458 C320 438 320 408 314 380 C292 370 220 370 198 380 Z"
+      fill="url(#pearlSatin)" stroke="#5c3150" stroke-width="8"/>
+    <!-- scoop neckline with pearl edge -->
+    <path d="M208 384 Q232 408 256 404 Q280 408 304 384"
+      fill="none" stroke="#fff9ec" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#fff9ec" stroke="#bda383" stroke-width="1.2">
+      <circle cx="214" cy="390" r="3"/><circle cx="230" cy="400" r="3"/>
+      <circle cx="248" cy="405" r="3"/><circle cx="264" cy="405" r="3"/>
+      <circle cx="282" cy="400" r="3"/><circle cx="298" cy="390" r="3"/>
+    </g>
+    <!-- pearl shoulder straps -->
+    <path d="M212 382 C210 362 214 348 222 340 M300 382 C302 362 298 348 290 340"
+      fill="none" stroke="#5c3150" stroke-width="6" stroke-linecap="round"/>
+    <g fill="#fff9ec" stroke="#bda383" stroke-width="1.2">
+      <circle cx="211" cy="370" r="3.4"/><circle cx="213" cy="356" r="3.4"/><circle cx="217" cy="344" r="3.4"/>
+      <circle cx="301" cy="370" r="3.4"/><circle cx="299" cy="356" r="3.4"/><circle cx="295" cy="344" r="3.4"/>
+    </g>
+    <!-- cap sleeves -->
+    <path d="M198 390 C180 394 172 408 178 420 C190 428 200 416 206 404 Z"
+      fill="#f7ead8" stroke="#5c3150" stroke-width="5"/>
+    <path d="M314 390 C332 394 340 408 334 420 C322 428 312 416 306 404 Z"
+      fill="#f7ead8" stroke="#5c3150" stroke-width="5"/>
+    <!-- satin waistband -->
+    <path d="M196 450 C224 462 288 462 316 450 L317 464 C288 476 224 476 195 464 Z"
+      fill="#e1c9ac" stroke="#5c3150" stroke-width="4.5"/>
+    <!-- pearl bow -->
+    <g transform="translate(256 460)">
+      <path d="M0 0 C-16 -14 -36 -8 -32 3 C-29 13 -12 14 0 5 Z" fill="#fff5e6" stroke="#5c3150" stroke-width="3.5"/>
+      <path d="M0 0 C16 -14 36 -8 32 3 C29 13 12 14 0 5 Z" fill="#fff5e6" stroke="#5c3150" stroke-width="3.5"/>
+      <path d="M-4 6 L-12 24 L-2 21 Z M4 6 L12 24 L2 21 Z" fill="#f3e2ce" stroke="#5c3150" stroke-width="3"/>
+      <ellipse cx="0" cy="2" rx="6" ry="7" fill="#d8b98f" stroke="#5c3150" stroke-width="2.5"/>
+      <circle cx="0" cy="1" r="2.5" fill="#fff9ec"/>
+    </g>
+    <!-- pearl buttons -->
+    <g fill="#fff9ec" stroke="#bda383" stroke-width="1.2">
+      <circle cx="256" cy="420" r="3"/><circle cx="256" cy="436" r="3"/>
+    </g>
+    <!-- cream shoes -->
+    <ellipse cx="204" cy="578" rx="28" ry="14" fill="#f5e3cd" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="308" cy="578" rx="28" ry="14" fill="#f5e3cd" stroke="#5c3150" stroke-width="6"/>
+    <path d="M178 574 Q204 586 230 574 M282 574 Q308 586 334 574" fill="none" stroke="#fff9ec" stroke-width="4" stroke-linecap="round"/>
+    <g fill="#fff9ec" stroke="#c7aa88" stroke-width="1">
+      <circle cx="204" cy="574" r="3.4"/><circle cx="308" cy="574" r="3.4"/>
+    </g>
+  </g>
+</svg>

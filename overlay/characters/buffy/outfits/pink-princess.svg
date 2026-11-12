@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="pinkGown" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#ffd9e8"/>
+      <stop offset="0.58" stop-color="#f4a8c7"/>
+      <stop offset="1" stop-color="#dc789f"/>
+    </linearGradient>
+    <linearGradient id="pinkOver" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#ffe8f1"/>
+      <stop offset="1" stop-color="#f7bfd4"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-pink-princess" stroke-linejoin="round">
+    <!-- full ballgown skirt -->
+    <path d="M198 448 C166 486 142 536 136 576 C182 602 330 602 376 576 C370 536 346 486 314 448 Z"
+      fill="url(#pinkGown)" stroke="#5c3150" stroke-width="8"/>
+    <!-- soft overskirt -->
+    <path d="M210 452 C186 492 170 538 164 570 C202 590 310 590 348 570 C342 538 326 492 302 452 Z"
+      fill="url(#pinkOver)" stroke="#5c3150" stroke-width="5" opacity="0.92"/>
+    <!-- scalloped cream hem -->
+    <path d="M166 570 Q184 588 202 570 Q220 588 238 570 Q256 588 274 570 Q292 588 310 570 Q328 588 346 570"
+      fill="none" stroke="#fff6e7" stroke-width="10" stroke-linecap="round"/>
+    <!-- pleat shadows -->
+    <path d="M220 470 C206 510 198 546 196 578 M256 468 V584 M292 470 C306 510 314 546 316 578"
+      fill="none" stroke="#d76f96" stroke-width="3.5" stroke-linecap="round" opacity="0.65"/>
+    <!-- bodice -->
+    <path d="M196 382 C190 408 190 438 200 458 C226 470 286 470 312 458 C322 438 322 408 316 382 C294 372 218 372 196 382 Z"
+      fill="url(#pinkOver)" stroke="#5c3150" stroke-width="8"/>
+    <!-- off-shoulder puff sleeves -->
+    <ellipse cx="182" cy="408" rx="25" ry="27" fill="#ffe9f2" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="330" cy="408" rx="25" ry="27" fill="#ffe9f2" stroke="#5c3150" stroke-width="7"/>
+    <path d="M164 418 Q182 430 200 418 M312 418 Q330 430 348 418"
+      fill="none" stroke="#f7bfd4" stroke-width="4" stroke-linecap="round"/>
+    <!-- sweetheart neckline -->
+    <path d="M204 384 Q232 408 256 390 Q280 408 308 384"
+      fill="none" stroke="#fff6e7" stroke-width="7" stroke-linecap="round"/>
+    <!-- pearl bodice trim -->
+    <g fill="#fff8ec" stroke="#c48ba2" stroke-width="1.4">
+      <circle cx="214" cy="397" r="3.4"/><circle cx="228" cy="407" r="3.4"/>
+      <circle cx="244" cy="413" r="3.4"/><circle cx="268" cy="413" r="3.4"/>
+      <circle cx="284" cy="407" r="3.4"/><circle cx="298" cy="397" r="3.4"/>
+    </g>
+    <!-- waist sash and bow -->
+    <path d="M192 448 C224 462 288 462 320 448 L322 468 C288 480 224 480 190 468 Z"
+      fill="#d96891" stroke="#5c3150" stroke-width="6"/>
+    <g transform="translate(256 464)">
+      <path d="M0 0 C-20 -20 -46 -12 -42 3 C-39 17 -15 18 0 6 Z" fill="#f7a9c5" stroke="#5c3150" stroke-width="4.5"/>
+      <path d="M0 0 C20 -20 46 -12 42 3 C39 17 15 18 0 6 Z" fill="#f7a9c5" stroke="#5c3150" stroke-width="4.5"/>
+      <path d="M-5 7 L-16 29 L-3 25 Z" fill="#e88faf" stroke="#5c3150" stroke-width="4"/>
+      <path d="M5 7 L16 29 L3 25 Z" fill="#e88faf" stroke="#5c3150" stroke-width="4"/>
+      <ellipse cx="0" cy="3" rx="7" ry="8" fill="#d96891" stroke="#5c3150" stroke-width="3.5"/>
+    </g>
+    <!-- scattered pearls -->
+    <g fill="#fff8ec" opacity="0.95">
+      <circle cx="198" cy="506" r="3"/><circle cx="224" cy="540" r="2.5"/>
+      <circle cx="286" cy="518" r="3"/><circle cx="312" cy="552" r="2.5"/>
+      <circle cx="246" cy="562" r="2.5"/><circle cx="334" cy="514" r="2"/>
+    </g>
+    <!-- tiny sparkle -->
+    <path d="M184 486 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 Z" fill="#fff4cf"/>
+  </g>
+</svg>

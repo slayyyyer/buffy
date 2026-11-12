@@ -33,18 +33,17 @@ test('Mochi keeps its nine-cell atlas', () => {
 });
 
 test('the atlas companions keep nine poses each', () => {
-  for (const id of ['pip', 'mallow']) {
-    const character = manifest.characters.find((entry) => entry.id === id);
-    assert.ok(character, `${id} is missing from the manifest`);
-    assert.equal(character.supportedPoses.length, 9);
-    assert.equal(character.order.length, 9);
+  for (const character of manifest.characters.filter((entry) => entry.renderer === 'atlas')) {
+    assert.equal(character.supportedPoses.length, 9, `${character.id} should support nine poses`);
+    assert.equal(character.order.length, 9, `${character.id} should order nine poses`);
+    assert.deepEqual(character.order, character.supportedPoses, `${character.id} order should match its supported poses`);
   }
 });
 
 test('every companion ships its character art', () => {
   assert.equal(
     manifest.characters.map((character) => character.id).join(','),
-    'buffy,mochi,pip,mallow',
+    'buffy,mochi,pip,mallow,fairy,retro-robot,knight,fox-wizard,little-ghost,red-panda,axolotl,clockwork-inventor,tiny-witch,star-keeper,little-vampire,cloud-shepherd,moon-bunny,wise-owl,tiny-pirate-captain,ribbon-dancer,sun-prince,dapper-gent',
   );
   for (const character of manifest.characters) {
     assert.ok(character.name);
@@ -81,6 +80,36 @@ test('atlas companions expose complete wardrobe assets', () => {
     for (const preset of builtins) {
       assert.equal(catalog.isLookAvailable(preset.look, id), true, `${preset.name} has an unavailable item`);
     }
+  }
+});
+
+test('Buffy ships every catalog outfit, including the new dress collection', () => {
+  const buffy = catalog.getCharacter('buffy');
+  const outfits = catalog.allowedItems(buffy, 'outfit');
+  const newDresses = [
+    'pink-princess',
+    'blue-princess',
+    'fairy-dress',
+    'ballet-tutu',
+    'rosebud-ballgown',
+    'lavender-lace',
+    'cherry-sundress',
+    'pearl-party',
+    'cranberry-bow-dress',
+    'moonlit-tulle',
+  ];
+  for (const id of newDresses) {
+    assert.ok(outfits.includes(id), `${id} is missing from Buffy's wardrobe`);
+  }
+  assert.ok(outfits.includes('tulip-skirt'), 'the skirt outfit is missing');
+  for (const id of outfits) {
+    if (id === 'none') continue;
+    const rel = catalog.assetFor(buffy, 'outfit', id);
+    assert.ok(rel, `buffy outfit/${id} has no asset entry`);
+    assert.ok(
+      fs.existsSync(new URL(`../overlay/characters/${rel}`, import.meta.url)),
+      `buffy outfit/${id} is missing ${rel}`,
+    );
   }
 });
 

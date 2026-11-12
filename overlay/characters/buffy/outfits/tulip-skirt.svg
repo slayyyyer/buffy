@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="tulipSkirt" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#f2b7c7"/>
+      <stop offset="0.58" stop-color="#e394ab"/>
+      <stop offset="1" stop-color="#c9718c"/>
+    </linearGradient>
+    <linearGradient id="mintKnit" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#d7f4e5"/>
+      <stop offset="1" stop-color="#9fd8c0"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-tulip-skirt" stroke-linejoin="round">
+    <!-- cream blouse under the cardigan -->
+    <path d="M204 382 C198 408 198 432 206 446 C228 456 284 456 306 446 C314 432 314 408 308 382 C286 372 226 372 204 382 Z"
+      fill="#fff8eb" stroke="#5c3150" stroke-width="7"/>
+    <!-- blouse collar -->
+    <path d="M218 380 Q234 396 246 384 Q256 392 266 384 Q280 396 294 380 Q274 370 256 376 Q238 370 218 380 Z"
+      fill="#fffdf6" stroke="#5c3150" stroke-width="3.5"/>
+    <!-- cropped mint cardigan -->
+    <path d="M202 388 C194 406 194 430 202 444 L222 444 L222 394 Z"
+      fill="url(#mintKnit)" stroke="#5c3150" stroke-width="5.5"/>
+    <path d="M310 388 C318 406 318 430 310 444 L290 444 L290 394 Z"
+      fill="url(#mintKnit)" stroke="#5c3150" stroke-width="5.5"/>
+    <path d="M202 388 C212 382 220 380 228 380 M310 388 C300 382 292 380 284 380"
+      fill="none" stroke="#5c3150" stroke-width="5" stroke-linecap="round"/>
+    <!-- cardigan buttons -->
+    <g fill="#fdf8e8" stroke="#7fbfa4" stroke-width="1.4">
+      <circle cx="219" cy="408" r="2.8"/><circle cx="219" cy="426" r="2.8"/>
+      <circle cx="293" cy="408" r="2.8"/><circle cx="293" cy="426" r="2.8"/>
+    </g>
+    <!-- ribbed cardigan hem -->
+    <path d="M200 438 C208 444 216 444 224 440 M312 438 C304 444 296 444 288 440"
+      fill="none" stroke="#7fbfa4" stroke-width="4" stroke-linecap="round"/>
+    <!-- high-waisted tulip skirt -->
+    <path d="M210 448 C192 480 180 516 174 542 C202 558 310 558 338 542 C332 516 320 480 302 448 Z"
+      fill="url(#tulipSkirt)" stroke="#5c3150" stroke-width="7"/>
+    <!-- waistband -->
+    <path d="M206 442 C228 452 284 452 306 442 L308 460 C284 470 228 470 204 460 Z"
+      fill="#d9819a" stroke="#5c3150" stroke-width="4.5"/>
+    <!-- pleats -->
+    <g fill="none" stroke="#b95e7b" stroke-width="3.5" stroke-linecap="round" opacity="0.78">
+      <path d="M220 466 Q208 504 202 538"/>
+      <path d="M238 466 Q232 506 230 544"/>
+      <path d="M256 466 V548"/>
+      <path d="M274 466 Q280 506 282 544"/>
+      <path d="M292 466 Q304 504 310 538"/>
+    </g>
+    <!-- tulip overlap at the hem -->
+    <path d="M202 536 C226 550 286 550 310 536 C300 556 280 564 256 564 C232 564 212 556 202 536 Z"
+      fill="#d9819a" stroke="#5c3150" stroke-width="4" opacity="0.8"/>
+    <path d="M206 536 Q232 548 256 542 Q280 548 306 536" fill="none" stroke="#f8d6de" stroke-width="5" stroke-linecap="round"/>
+    <!-- tiny tulip pin on the cardigan -->
+    <g transform="translate(238 404)">
+      <path d="M0 6 C-8 0 -5 -10 0 -10 C5 -10 8 0 0 6 Z" fill="#f6c1d8" stroke="#a9546d" stroke-width="2"/>
+      <path d="M0 6 V12" stroke="#6f8d52" stroke-width="2" stroke-linecap="round"/>
+      <path d="M0 10 Q-7 8 -8 2 M0 9 Q7 7 8 2" fill="none" stroke="#6f8d52" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <!-- white socks and Mary Janes -->
+    <path d="M198 548 C194 558 194 568 198 578 L220 578 C224 568 224 556 220 548 Z"
+      fill="#fff9ec" stroke="#5c3150" stroke-width="5"/>
+    <path d="M292 548 C288 558 288 568 292 578 L314 578 C318 568 318 556 314 548 Z"
+      fill="#fff9ec" stroke="#5c3150" stroke-width="5"/>
+    <ellipse cx="204" cy="582" rx="27" ry="13" fill="#8f4b60" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="308" cy="582" rx="27" ry="13" fill="#8f4b60" stroke="#5c3150" stroke-width="6"/>
+    <path d="M180 578 Q204 590 228 578 M284 578 Q308 590 332 578" fill="none" stroke="#f8d6de" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M188 570 L194 558 M320 570 L314 558" fill="none" stroke="#8f4b60" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

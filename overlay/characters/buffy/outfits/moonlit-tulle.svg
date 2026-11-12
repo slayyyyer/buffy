@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="moonSkirt" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#6d5796"/>
+      <stop offset="0.55" stop-color="#4e3a73"/>
+      <stop offset="1" stop-color="#36264f"/>
+    </linearGradient>
+    <linearGradient id="moonBodice" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#6f5a99"/>
+      <stop offset="1" stop-color="#3d2b5b"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-moonlit-tulle" stroke-linejoin="round">
+    <!-- tulle skirt -->
+    <path d="M208 450 C184 486 166 526 160 558 C202 580 310 580 352 558 C346 526 328 486 304 450 Z"
+      fill="url(#moonSkirt)" stroke="#5c3150" stroke-width="7"/>
+    <!-- sheer overlay -->
+    <path d="M224 454 C206 490 194 528 190 558 C222 574 292 574 322 558 C318 528 306 490 288 454 Z"
+      fill="#9b86c4" opacity="0.35"/>
+    <!-- layered tulle hem -->
+    <path d="M170 548 Q190 566 210 550 Q230 568 250 550 Q270 568 290 550 Q310 566 330 548"
+      fill="none" stroke="#d1c2e8" stroke-width="7" stroke-linecap="round"/>
+    <path d="M180 560 Q198 574 216 560 Q234 576 252 560 Q270 576 288 560 Q306 574 324 560"
+      fill="none" stroke="#8f7bb8" stroke-width="4" stroke-linecap="round"/>
+    <!-- crescent moons -->
+    <g fill="#f4d182" stroke="#a97d2d" stroke-width="1.4">
+      <path d="M210 500 C198 506 196 522 208 528 C202 519 204 508 214 504 Z"/>
+      <path d="M312 520 C300 526 298 542 310 548 C304 539 306 528 316 524 Z"/>
+      <path d="M286 482 C278 486 277 496 284 500 C280 494 281 487 288 484 Z"/>
+    </g>
+    <!-- stars -->
+    <g fill="#f8df9d">
+      <path d="M226 538 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 Z"/>
+      <path d="M300 558 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z"/>
+      <path d="M246 482 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 Z"/>
+      <circle cx="322" cy="496" r="2.5"/>
+    </g>
+    <!-- bodice -->
+    <path d="M198 380 C192 408 192 438 202 458 C226 470 286 470 310 458 C320 438 320 408 314 380 C292 370 220 370 198 380 Z"
+      fill="url(#moonBodice)" stroke="#5c3150" stroke-width="8"/>
+    <!-- sweetheart neckline with gold trim -->
+    <path d="M208 384 Q232 406 256 390 Q280 406 304 384"
+      fill="none" stroke="#f4d182" stroke-width="6" stroke-linecap="round"/>
+    <!-- thin straps -->
+    <path d="M212 382 C210 364 214 350 222 342 M300 382 C302 364 298 350 290 342"
+      fill="none" stroke="#5c3150" stroke-width="6" stroke-linecap="round"/>
+    <path d="M212 382 C210 364 214 350 222 342 M300 382 C302 364 298 350 290 342"
+      fill="none" stroke="#8d76b5" stroke-width="3" stroke-linecap="round"/>
+    <!-- cap sleeves -->
+    <path d="M198 390 C180 394 172 408 178 422 C190 430 200 418 206 406 Z"
+      fill="#5c477f" stroke="#5c3150" stroke-width="5"/>
+    <path d="M314 390 C332 394 340 408 334 422 C322 430 312 418 306 406 Z"
+      fill="#5c477f" stroke="#5c3150" stroke-width="5"/>
+    <!-- gold waistband -->
+    <path d="M196 450 C224 462 288 462 316 450 L317 464 C288 476 224 476 195 464 Z"
+      fill="#d8b263" stroke="#5c3150" stroke-width="4.5"/>
+    <circle cx="256" cy="462" r="5" fill="#f4d182" stroke="#8a6224" stroke-width="2"/>
+    <!-- tiny moon on the bodice -->
+    <path d="M256 412 C247 418 246 433 256 438 C250 431 251 419 259 416 Z" fill="#f4d182" stroke="#a97d2d" stroke-width="1.2"/>
+    <!-- gold shoes -->
+    <ellipse cx="204" cy="570" rx="27" ry="13" fill="#d8b263" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="308" cy="570" rx="27" ry="13" fill="#d8b263" stroke="#5c3150" stroke-width="6"/>
+    <path d="M180 567 Q204 578 228 567 M284 567 Q308 578 332 567" fill="none" stroke="#fff2c7" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+</svg>

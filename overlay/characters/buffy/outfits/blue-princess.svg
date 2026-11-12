@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="blueGown" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#dcefff"/>
+      <stop offset="0.55" stop-color="#a9d4f5"/>
+      <stop offset="1" stop-color="#78aedb"/>
+    </linearGradient>
+    <linearGradient id="blueOver" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#f6fbff"/>
+      <stop offset="1" stop-color="#c9e5fb"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-blue-princess" stroke-linejoin="round">
+    <path d="M198 448 C164 488 140 538 136 576 C182 602 330 602 376 576 C370 538 346 488 314 448 Z"
+      fill="url(#blueGown)" stroke="#5c3150" stroke-width="8"/>
+    <!-- sheer layered overskirt -->
+    <path d="M214 452 C190 492 174 540 168 572 C204 592 308 592 344 572 C338 540 322 492 298 452 Z"
+      fill="#dcefff" opacity="0.58" stroke="#5c3150" stroke-width="4"/>
+    <path d="M230 456 C210 496 198 542 194 574 C220 588 292 588 318 574 C314 542 302 496 282 456 Z"
+      fill="#f8fcff" opacity="0.55"/>
+    <!-- silver scalloped hem -->
+    <path d="M166 570 Q184 588 202 570 Q220 588 238 570 Q256 588 274 570 Q292 588 310 570 Q328 588 346 570"
+      fill="none" stroke="#f7fbff" stroke-width="9" stroke-linecap="round"/>
+    <!-- snow-star sparkles -->
+    <g fill="#f9fdff" stroke="#9cc9e8" stroke-width="1.2">
+      <path d="M212 500 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 Z"/>
+      <path d="M302 532 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 Z"/>
+      <path d="M286 486 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 Z"/>
+    </g>
+    <!-- bodice -->
+    <path d="M196 382 C190 408 190 438 200 458 C226 470 286 470 312 458 C322 438 322 408 316 382 C294 372 218 372 196 382 Z"
+      fill="url(#blueOver)" stroke="#5c3150" stroke-width="8"/>
+    <!-- square neckline with silver band -->
+    <path d="M214 382 L298 382 L295 402 L217 402 Z"
+      fill="#d7edfc" stroke="#5c3150" stroke-width="5"/>
+    <path d="M218 386 L294 386" stroke="#f9fdff" stroke-width="4" stroke-linecap="round"/>
+    <!-- puff sleeves -->
+    <ellipse cx="182" cy="408" rx="24" ry="26" fill="#e9f6ff" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="330" cy="408" rx="24" ry="26" fill="#e9f6ff" stroke="#5c3150" stroke-width="7"/>
+    <path d="M164 418 Q182 429 200 418 M312 418 Q330 429 348 418"
+      fill="none" stroke="#a9d4f5" stroke-width="4" stroke-linecap="round"/>
+    <!-- pearl-drop bodice detail -->
+    <g fill="#f9fdff" stroke="#86aecd" stroke-width="1.3">
+      <circle cx="232" cy="416" r="3.2"/><circle cx="244" cy="430" r="3.2"/>
+      <circle cx="268" cy="430" r="3.2"/><circle cx="280" cy="416" r="3.2"/>
+    </g>
+    <!-- silver waist sash -->
+    <path d="M192 448 C224 462 288 462 320 448 L322 468 C288 480 224 480 190 468 Z"
+      fill="#c8e4f7" stroke="#5c3150" stroke-width="6"/>
+    <path d="M198 452 C228 464 284 464 314 452" fill="none" stroke="#f9fdff" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- bow at the back of the sash -->
+    <g transform="translate(256 464)">
+      <path d="M0 0 C-17 -17 -40 -11 -36 3 C-33 15 -13 16 0 6 Z" fill="#a9d4f5" stroke="#5c3150" stroke-width="4"/>
+      <path d="M0 0 C17 -17 40 -11 36 3 C33 15 13 16 0 6 Z" fill="#a9d4f5" stroke="#5c3150" stroke-width="4"/>
+      <path d="M-4 7 L-12 25 L-2 22 Z M4 7 L12 25 L2 22 Z" fill="#dcefff" stroke="#5c3150" stroke-width="3.5"/>
+      <ellipse cx="0" cy="3" rx="6.5" ry="7.5" fill="#78aedb" stroke="#5c3150" stroke-width="3.2"/>
+    </g>
+    <!-- little silver stars on the bodice -->
+    <path d="M206 424 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="#fff8d9"/>
+    <path d="M306 424 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="#fff8d9"/>
+  </g>
+</svg>

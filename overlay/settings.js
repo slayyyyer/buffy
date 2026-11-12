@@ -265,7 +265,7 @@
             )
             .join('')}
         </div>
-        <p class="hint" style="margin-bottom:0">${char ? esc(char.tagline || '') : ''}</p>`,
+        <p class="hint" style="margin-bottom:0">${catalog.characters.length} companions · ${char ? esc(char.tagline || '') : ''}</p>`,
       ),
       card(
         'On your desktop',

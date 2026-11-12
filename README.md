@@ -31,28 +31,48 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.1.0**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.2.0**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
 project jumps, sound choices, and per-display corners. 3.0 made the interaction
 and stored identity companion-first, added three outfits, and gave her a larger
-face and a three-beat hello. 3.1 adds Pip and Mallow, a portrait-based picker,
-and pose-aligned wardrobes for both new companions:
+face and a three-beat hello. 3.1 introduced Pip and Mallow, a portrait-based
+picker, and pose-aligned wardrobes for both new companions. 3.2 expands the cast
+to twenty-two companions, adds Buffy's dress collection, and keeps every
+portrait in proportion:
 
-- [x] Buffy's layered artwork and the Mochi, Pip, and Mallow atlases, rendered by one engine
-- [x] four companions with live portrait cards and per-character wardrobes
+- [x] Buffy's layered artwork and the 21 atlas companions, rendered by one engine
+- [x] twenty-two companions with live portrait cards and per-character looks
+- [x] Buffy's wardrobe of 19 outfits, including ten dresses and a pleated skirt
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
 - [x] reactions: flustered, tapping, squish, waiting, and an explicit-only celebrate
 - [x] full composer for Claude with draft-safe `claude://` handoff
 - [x] request-aware concurrent sessions with pending badges that only count requests
 - [x] three lifecycles: 30s completion presentation, 5m recent completions, 30m stale sessions
 - [x] six-section settings window with live preview, wardrobe, alerts, connection, updates
-- [x] per-character wardrobe, independent clothing switches, favorites, 32 saved looks
+- [x] wardrobe layers for Buffy, Pip, and Mallow, independent clothing switches, favorites, 32 saved looks
 - [x] opt-in daily rotation that starts the next local day and skips unavailable art
 - [x] default-off request/completion notifications, sounds, and 15m/1h/4h snooze
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+
+### 3.2.0
+
+- **The full companion roster.** Fairy, Retro robot, Knight, Fox wizard,
+  Little ghost, Red panda, Axolotl, Clockwork inventor, Tiny witch, Star keeper,
+  Little vampire, Cloud shepherd, Moon bunny, Wise owl, Tiny pirate captain,
+  Ribbon dancer, Sun prince, and Dapper gent join Buffy, Mochi, Pip, and
+  Mallow. Each new friend is a 3×3 atlas with all nine shared poses, a
+  signature baked-in look, and their own picker portrait.
+- **Buffy's dress collection.** Ten new dresses and a pleated Tulip skirt join
+  her wardrobe, from Pink princess and Blue princess to Ballet tutu, Moonlit
+  tulle, and Cherry sundress. Buffy now has 19 outfits, all pose-aligned across
+  her layered art.
+- **Portraits keep their shape.** The companion picker and compact overlay now
+  size atlas art from the compact crop instead of the full cell, so no
+  companion gets stretched horizontally. The picker also shows all 22
+  companions with readable names and taglines.
 
 ### 3.1.0
 
@@ -168,12 +188,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **3.1.0** ships for Windows, macOS, and Linux:
+Buffy **3.2.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-linux-x86_64.AppImage.sha256)
 
 The packaged app includes Buffy, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
@@ -241,11 +261,14 @@ same renderer.
 
 **Buffy** is the plush storm-cloud, drawn as layered SVG. **Mochi** is a
 pocket bunny, **Pip** is a comet fox with a star-tipped tail, and **Mallow** is
-a mint marshmallow bear. Mochi, Pip, and Mallow each use a 3×3 atlas and
-exercise the atlas path. Pip and Mallow also ship pose-aligned outfit and
-accessory overlays, with signature built-in looks; Pip has the Comet capelet
-and Stargazer vest, while Mallow has the Marshmallow shrug and Moonlight
-pinafore. All four support:
+a mint marshmallow bear. The 3.2 roster adds Fairy, Retro robot, Knight, Fox
+wizard, Little ghost, Red panda, Axolotl, Clockwork inventor, Tiny witch, Star
+keeper, Little vampire, Cloud shepherd, Moon bunny, Wise owl, Tiny pirate
+captain, Ribbon dancer, Sun prince, and Dapper gent. Each new companion uses a
+3×3 atlas and ships with a signature baked-in look. Pip and Mallow also ship
+pose-aligned outfit and accessory overlays, with signature built-in looks; Pip
+has the Comet capelet and Stargazer vest, while Mallow has the Marshmallow shrug
+and Moonlight pinafore. Every companion supports:
 
 `idle` · `typingLeft` · `typingRight` · `happy` · `wave` · `sleepy` · `reading` · `tea` · `gardening`
 
@@ -272,6 +295,7 @@ Open **Settings → Companion & wardrobe** to:
 - change name and pronouns
 - mix outfits, bows, hats, glasses, wands, and themes
 - switch each clothing slot off without deleting the underlying look
+- keep a signature look for the 18 new companions, whose outfits are baked in
 - wear built-in looks or save your own (up to **32 per character**)
 - favorite looks, rename/replace/delete saved looks, and choose which saved looks
   participate in rotation
@@ -281,7 +305,7 @@ Clothing selections are stored per character. Unavailable art is disabled in
 the choice list rather than silently deleting a saved selection.
 
 <p align="center">
-  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing four companion portraits, the Size control set to Medium, the live character preview in a berry pinafore, and the new outfit chips">
+  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing the 22-companion roster with Fairy selected, the Size control set to Medium, the live character preview, and the wardrobe chips">
 </p>
 
 ### Daily rotation

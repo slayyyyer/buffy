@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="cranberry" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#c75a70"/>
+      <stop offset="0.55" stop-color="#a8324e"/>
+      <stop offset="1" stop-color="#7f2039"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-cranberry-bow-dress" stroke-linejoin="round">
+    <!-- pleated A-line skirt -->
+    <path d="M202 450 C188 490 176 532 172 562 C208 582 304 582 340 562 C336 532 324 490 310 450 Z"
+      fill="url(#cranberry)" stroke="#5c3150" stroke-width="7"/>
+    <!-- white hem trim -->
+    <path d="M178 556 Q196 572 214 556 Q232 572 250 556 Q268 572 286 556 Q304 572 322 556 Q332 566 336 556"
+      fill="none" stroke="#fff8ec" stroke-width="8" stroke-linecap="round"/>
+    <!-- pleats -->
+    <g fill="none" stroke="#85243d" stroke-width="3" stroke-linecap="round" opacity="0.7">
+      <path d="M214 468 Q206 510 202 556"/>
+      <path d="M236 466 Q232 512 230 562"/>
+      <path d="M278 466 Q282 512 284 562"/>
+      <path d="M300 468 Q308 510 312 556"/>
+    </g>
+    <!-- bodice -->
+    <path d="M198 380 C192 408 192 438 202 458 C226 470 286 470 310 458 C320 438 320 408 314 380 C292 370 220 370 198 380 Z"
+      fill="url(#cranberry)" stroke="#5c3150" stroke-width="8"/>
+    <!-- white Peter Pan collar -->
+    <path d="M216 380 Q232 398 246 382 Q256 394 266 382 Q280 398 296 380 Q274 368 256 374 Q238 368 216 380 Z"
+      fill="#fff8ec" stroke="#5c3150" stroke-width="4.5"/>
+    <!-- puff sleeves with white cuffs -->
+    <ellipse cx="184" cy="406" rx="23" ry="25" fill="#b84358" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="328" cy="406" rx="23" ry="25" fill="#b84358" stroke="#5c3150" stroke-width="6"/>
+    <path d="M168 424 Q184 432 200 424 M312 424 Q328 432 344 424"
+      fill="none" stroke="#fff8ec" stroke-width="6" stroke-linecap="round"/>
+    <!-- center buttons -->
+    <g fill="#fff8ec" stroke="#8d2941" stroke-width="1.3">
+      <circle cx="256" cy="412" r="3.4"/>
+      <circle cx="256" cy="428" r="3.4"/>
+      <circle cx="256" cy="444" r="3.4"/>
+    </g>
+    <!-- big white bow at the waist -->
+    <g transform="translate(256 460)">
+      <path d="M0 0 C-24 -22 -52 -12 -46 4 C-42 18 -16 18 0 7 Z" fill="#fff8ec" stroke="#5c3150" stroke-width="4.5"/>
+      <path d="M0 0 C24 -22 52 -12 46 4 C42 18 16 18 0 7 Z" fill="#fff8ec" stroke="#5c3150" stroke-width="4.5"/>
+      <path d="M-5 8 L-18 33 L-3 28 Z" fill="#f0dce0" stroke="#5c3150" stroke-width="4"/>
+      <path d="M5 8 L18 33 L3 28 Z" fill="#f0dce0" stroke="#5c3150" stroke-width="4"/>
+      <ellipse cx="0" cy="3" rx="8" ry="9" fill="#a8324e" stroke="#5c3150" stroke-width="3.5"/>
+    </g>
+    <!-- waistband -->
+    <path d="M196 450 C224 462 288 462 316 450 L317 462 C288 474 224 474 195 462 Z"
+      fill="#8d2941" stroke="#5c3150" stroke-width="4"/>
+    <!-- tiny bow at the collar -->
+    <g transform="translate(256 390)">
+      <path d="M0 0 C-7 -5 -15 -3 -13 1 C-11 4 -4 4 0 2 Z" fill="#d98da0" stroke="#8d2941" stroke-width="1.8"/>
+      <path d="M0 0 C7 -5 15 -3 13 1 C11 4 4 4 0 2 Z" fill="#d98da0" stroke="#8d2941" stroke-width="1.8"/>
+      <circle cx="0" cy="1.5" r="2" fill="#fff8ec"/>
+    </g>
+    <!-- dark shoes -->
+    <ellipse cx="204" cy="578" rx="28" ry="14" fill="#7f2039" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="308" cy="578" rx="28" ry="14" fill="#7f2039" stroke="#5c3150" stroke-width="6"/>
+    <path d="M178 574 Q204 586 230 574 M282 574 Q308 586 334 574" fill="none" stroke="#fff8ec" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

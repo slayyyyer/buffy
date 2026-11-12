@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="cherryFabric" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#ef7288"/>
+      <stop offset="0.58" stop-color="#db506b"/>
+      <stop offset="1" stop-color="#b83350"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-cherry-sundress" stroke-linejoin="round">
+    <!-- flared sundress skirt -->
+    <path d="M204 450 C188 484 176 522 170 552 C208 572 304 572 342 552 C336 522 324 484 308 450 Z"
+      fill="url(#cherryFabric)" stroke="#5c3150" stroke-width="7"/>
+    <!-- white ruffle hem -->
+    <path d="M176 548 Q190 566 204 550 Q218 568 232 550 Q246 568 260 550 Q274 568 288 550 Q302 568 316 550 Q330 568 338 548"
+      fill="none" stroke="#fff7ea" stroke-width="10" stroke-linecap="round"/>
+    <path d="M180 546 Q194 560 208 546 Q222 560 236 546 Q250 560 264 546 Q278 560 292 546 Q306 560 320 546 Q330 558 334 546"
+      fill="none" stroke="#f4d7dc" stroke-width="4" stroke-linecap="round"/>
+    <!-- polka dots -->
+    <g fill="#fff8ec" opacity="0.94">
+      <circle cx="202" cy="480" r="5"/><circle cx="232" cy="506" r="4.5"/>
+      <circle cx="274" cy="486" r="5"/><circle cx="306" cy="512" r="4.5"/>
+      <circle cx="214" cy="530" r="4"/><circle cx="248" cy="544" r="4.5"/>
+      <circle cx="292" cy="536" r="4"/><circle cx="322" cy="470" r="4"/>
+      <circle cx="188" cy="512" r="3.5"/><circle cx="332" cy="536" r="3.5"/>
+    </g>
+    <!-- bodice -->
+    <path d="M198 380 C192 408 192 436 202 456 C226 468 286 468 310 456 C320 436 320 408 314 380 C292 370 220 370 198 380 Z"
+      fill="url(#cherryFabric)" stroke="#5c3150" stroke-width="8"/>
+    <!-- sweetheart neckline with white trim -->
+    <path d="M208 384 Q232 406 256 388 Q280 406 304 384"
+      fill="none" stroke="#fff7ea" stroke-width="7" stroke-linecap="round"/>
+    <path d="M210 380 Q232 398 256 382 Q280 398 302 380" fill="none" stroke="#f3cbd3" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- thin shoulder straps -->
+    <path d="M210 382 C208 366 212 352 220 344 M302 382 C304 366 300 352 292 344"
+      fill="none" stroke="#5c3150" stroke-width="6" stroke-linecap="round"/>
+    <path d="M210 382 C208 366 212 352 220 344 M302 382 C304 366 300 352 292 344"
+      fill="none" stroke="#e86a80" stroke-width="3" stroke-linecap="round"/>
+    <!-- fitted waist with tie -->
+    <path d="M198 448 C224 458 288 458 314 448 L315 460 C288 470 224 470 198 460 Z"
+      fill="#a92d48" stroke="#5c3150" stroke-width="4.5"/>
+    <path d="M258 456 C278 468 288 484 284 500" fill="none" stroke="#fff7ea" stroke-width="4" stroke-linecap="round"/>
+    <path d="M256 456 C238 470 230 486 234 500" fill="none" stroke="#fff7ea" stroke-width="4" stroke-linecap="round"/>
+    <path d="M232 500 Q240 494 246 502 Q240 510 232 500 Z M276 500 Q284 494 290 502 Q284 510 276 500 Z"
+      fill="#fff7ea" stroke="#b83350" stroke-width="2"/>
+    <!-- cherry pocket motif -->
+    <g transform="translate(288 476)">
+      <path d="M-10 0 C-18 -18 -2 -26 4 -10 C12 -24 26 -12 16 4 C8 16 -4 14 -10 0 Z"
+        fill="#fff7ea" stroke="#a92d48" stroke-width="2.5"/>
+      <circle cx="0" cy="1" r="6" fill="#c52d49" stroke="#7f1f33" stroke-width="2"/>
+      <circle cx="14" cy="3" r="5" fill="#c52d49" stroke="#7f1f33" stroke-width="2"/>
+      <path d="M0 -5 C2 -12 8 -16 14 -15 M14 -2 C17 -10 22 -13 26 -12" fill="none" stroke="#6f8d52" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M14 -15 Q20 -20 24 -15 Q20 -10 14 -15 Z" fill="#8aa86a" stroke="#526b3e" stroke-width="1.5"/>
+    </g>
+    <!-- little white buttons -->
+    <g fill="#fff7ea">
+      <circle cx="256" cy="412" r="2.8"/>
+      <circle cx="256" cy="428" r="2.8"/>
+    </g>
+    <!-- red Mary Janes -->
+    <ellipse cx="204" cy="574" rx="29" ry="15" fill="#b83350" stroke="#5c3150" stroke-width="6"/>
+    <ellipse cx="308" cy="574" rx="29" ry="15" fill="#b83350" stroke="#5c3150" stroke-width="6"/>
+    <path d="M178 568 Q204 580 230 568 M282 568 Q308 580 334 568" fill="none" stroke="#fff7ea" stroke-width="4" stroke-linecap="round"/>
+    <path d="M186 560 L192 548 M326 560 L320 548" fill="none" stroke="#b83350" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>

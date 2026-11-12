@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="laceDress" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#f3e9fb"/>
+      <stop offset="0.58" stop-color="#d8c1ea"/>
+      <stop offset="1" stop-color="#b697d1"/>
+    </linearGradient>
+    <linearGradient id="laceTrim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff9fd"/>
+      <stop offset="1" stop-color="#e6d6f2"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-lavender-lace" stroke-linejoin="round">
+    <!-- A-line lace skirt -->
+    <path d="M202 450 C184 492 170 536 164 568 C204 590 308 590 348 568 C342 536 328 492 310 450 Z"
+      fill="url(#laceDress)" stroke="#5c3150" stroke-width="7"/>
+    <!-- sheer overskirt -->
+    <path d="M216 454 C202 494 192 536 188 566 C220 582 292 582 324 566 C320 536 310 494 296 454 Z"
+      fill="#f9f1ff" opacity="0.35"/>
+    <!-- scalloped lace hem -->
+    <path d="M172 564 Q186 580 200 564 Q214 580 228 564 Q242 580 256 564 Q270 580 284 564 Q298 580 312 564 Q326 580 340 564"
+      fill="none" stroke="url(#laceTrim)" stroke-width="9" stroke-linecap="round"/>
+    <!-- lace trellis pattern -->
+    <g fill="none" stroke="#b99ad4" stroke-width="2" stroke-linecap="round" opacity="0.75">
+      <path d="M206 478 Q224 506 218 554 M232 470 Q246 508 242 566 M280 470 Q266 508 270 566 M306 478 Q288 506 294 554"/>
+      <path d="M196 500 Q224 488 246 506 Q272 524 314 508 M190 532 Q222 520 246 536 Q274 552 318 536"/>
+    </g>
+    <!-- tiny lace flowers -->
+    <g fill="#fff8fc" stroke="#c6aadb" stroke-width="1.2">
+      <circle cx="212" cy="520" r="3"/><circle cx="208" cy="526" r="3"/><circle cx="216" cy="526" r="3"/><circle cx="212" cy="532" r="3"/>
+      <circle cx="298" cy="490" r="2.8"/><circle cx="294" cy="496" r="2.8"/><circle cx="302" cy="496" r="2.8"/><circle cx="298" cy="502" r="2.8"/>
+      <circle cx="286" cy="548" r="2.6"/><circle cx="282" cy="554" r="2.6"/><circle cx="290" cy="554" r="2.6"/>
+    </g>
+    <!-- bodice -->
+    <path d="M198 380 C192 408 192 438 202 458 C226 470 286 470 310 458 C320 438 320 408 314 380 C292 370 220 370 198 380 Z"
+      fill="url(#laceDress)" stroke="#5c3150" stroke-width="8"/>
+    <!-- square neckline with lace edge -->
+    <path d="M214 382 L298 382 L295 404 L217 404 Z"
+      fill="#fbf5ff" stroke="#5c3150" stroke-width="4.5"/>
+    <path d="M218 386 L294 386" stroke="#d8c1ea" stroke-width="3" stroke-linecap="round"/>
+    <path d="M218 400 L294 400" stroke="#b697d1" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- cap sleeves -->
+    <path d="M198 388 C176 392 168 408 174 424 C188 432 198 418 204 406 Z"
+      fill="#e7d6f1" stroke="#5c3150" stroke-width="5.5"/>
+    <path d="M314 388 C336 392 344 408 338 424 C324 432 314 418 308 406 Z"
+      fill="#e7d6f1" stroke="#5c3150" stroke-width="5.5"/>
+    <path d="M178 414 Q190 418 198 410 M334 414 Q322 418 314 410"
+      fill="none" stroke="#fff9fd" stroke-width="3" stroke-linecap="round"/>
+    <!-- pearl buttons -->
+    <g fill="#fff9f0" stroke="#b79a7e" stroke-width="1.2">
+      <circle cx="256" cy="416" r="3.6"/>
+      <circle cx="256" cy="432" r="3.6"/>
+      <circle cx="256" cy="448" r="3.6"/>
+    </g>
+    <!-- waistband -->
+    <path d="M198 452 C226 462 286 462 314 452 L315 464 C286 474 226 474 198 464 Z"
+      fill="#d9c2e9" stroke="#5c3150" stroke-width="4.5"/>
+    <!-- small tulle bow at the back -->
+    <g transform="translate(256 462)">
+      <path d="M0 0 C-12 -10 -28 -7 -25 2 C-23 9 -10 10 0 4 Z" fill="#c7acdf" stroke="#5c3150" stroke-width="3"/>
+      <path d="M0 0 C12 -10 28 -7 25 2 C23 9 10 10 0 4 Z" fill="#c7acdf" stroke="#5c3150" stroke-width="3"/>
+      <circle cx="0" cy="2" r="4" fill="#8f6caa" stroke="#5c3150" stroke-width="2"/>
+    </g>
+    <!-- lace cuffs -->
+    <path d="M174 422 Q182 430 190 422 M338 422 Q330 430 322 422"
+      fill="none" stroke="#fff9fd" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>
