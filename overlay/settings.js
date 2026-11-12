@@ -362,7 +362,7 @@
         'Keyboard',
         'Local shortcuts only work while Buffy is focused.',
         `<div class="kv"><span>Compose</span><strong>C</strong><span>Activity</span><strong>A</strong><span>Send draft</span><strong>Ctrl / Cmd + Enter</strong><span>Close panel</span><strong>Esc</strong></div>
-        <p class="hint" style="margin-bottom:0">Clicking the character pets her. Dragging the character moves the window.</p>`,
+        <p class="hint" style="margin-bottom:0">Clicking the character says hi. Dragging the character moves the window.</p>`,
       ),
     ].join('');
   }
@@ -458,7 +458,7 @@
         'Claude Code only, off by default. When enabled, a live permission request gets Allow once and Deny actions in the activity card instead of requiring a window switch.',
         toggleRow(
           'claude-decisions',
-          'Allow decisions from the pet',
+          'Allow decisions from Buffy',
           'Shows Allow once and Deny while Claude’s PermissionRequest hook is waiting. Buffy holds Claude’s own prompt for up to 8 seconds.',
           prefs.permissions.claudeDecisions === true,
           'data-permission="claudeDecisions"',

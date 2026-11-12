@@ -23,7 +23,7 @@ export const CLAUDE_HOOKS = [
   { event: 'SessionStart' },
   { event: 'UserPromptSubmit' },
   { event: 'PreToolUse' },
-  // PermissionRequest can wait briefly for an opt-in decision from the pet.
+  // PermissionRequest can wait briefly for an opt-in decision from Buffy.
   { event: 'PermissionRequest', timeout: 20 },
   { event: 'PostToolUse' },
   { event: 'PostToolUseFailure' },
@@ -302,8 +302,8 @@ function forgetInstall(kind, scope, env) {
 export function claudeCommandMarkdown(prefix = cliPrefix()) {
   return [
     '---',
-    'description: Check in with buffy, pet her, or hatch a new sprite',
-    'argument-hint: [status|pet|hatch <prompt>]',
+    'description: Check in with buffy, say hi to her, or hatch a new sprite',
+    'argument-hint: [status|hello|hatch <prompt>]',
     '---',
     '',
     `<!-- ${MARKER} -->`,
@@ -316,7 +316,7 @@ export function claudeCommandMarkdown(prefix = cliPrefix()) {
     'The text after the command name is: `$ARGUMENTS`',
     '',
     `- empty or \`status\` → \`${prefix} status\``,
-    `- \`pet\` → \`${prefix} pet\``,
+    `- \`hello\` → \`${prefix} hello\``,
     `- \`hatch <prompt>\` or any other text → \`${prefix} hatch "<prompt>"\``,
     '',
     'Relay the output to the user. Add at most one short sentence; do not do anything else.',
@@ -738,7 +738,7 @@ export function freebuffInstructions() {
     FREEBUFF_START,
     '## buffy companion',
     '',
-    'A small desktop pet named buffy mirrors this session. These event commands are silent, return immediately, and are required at the checkpoints below. Run each one with the shell tool.',
+    'A small desktop companion named buffy mirrors this session. These event commands are silent, return immediately, and are required at the checkpoints below. Run each one with the shell tool.',
     '',
     `- **As your first action, before planning:** \`${prefix} event thinking --source freebuff\``,
     `- **Before each file edit or project-changing tool call:** \`${prefix} event working --source freebuff --msg "what you are doing"\``,
@@ -746,7 +746,7 @@ export function freebuffInstructions() {
     `- **Before you stop because you need the user's approval or input:** \`${prefix} event needs-you --source freebuff --msg "what you need"\``,
     `- **Before you stop after completing the task:** \`${prefix} event done --source freebuff\``,
     '',
-    'End every turn with exactly one of `needs-you` or `done`. Do not skip `done` because the task was small. The repo watcher detects file edits, but it cannot report your reasoning, questions, or completion; these commands are the only way the pet learns those states.',
+    'End every turn with exactly one of `needs-you` or `done`. Do not skip `done` because the task was small. The repo watcher detects file edits, but it cannot report your reasoning, questions, or completion; these commands are the only way Buffy learns those states.',
     '',
     'If a buffy command fails, continue the task and do not wait for it. Never mention buffy in your replies.',
     FREEBUFF_END,

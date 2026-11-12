@@ -48,8 +48,9 @@ test('health and initial state', async () => {
   assert.equal(state.body.current.state, 'idle');
   assert.deepEqual(state.body.sessions, []);
   assert.equal(state.body.watch.enabled, false);
-  assert.ok(state.body.pet.name);
-  assert.equal(state.body.pet.sprite.type, 'placeholder');
+  assert.ok(state.body.companion.name);
+  assert.equal(state.body.companion.sprite.type, 'placeholder');
+  assert.equal('pet' in state.body, false);
 });
 
 test('events drive the machine with source and message', async () => {
@@ -82,13 +83,13 @@ test('needs-you sticks until another event', async () => {
   assert.equal(state.current.message, 'need a decision');
 });
 
-test('petting raises mood and xp', async () => {
+test('saying hello raises mood and xp', async () => {
   const before = (await get('/state')).body;
-  const result = await post('/pet', {});
+  const result = await post('/hello', {});
   assert.equal(result.status, 200);
 
   const after = result.body.state;
-  assert.equal(after.reaction.kind, 'pet');
+  assert.equal(after.reaction.kind, 'hello');
   assert.ok(after.mood >= before.mood);
   assert.ok(after.xp > before.xp);
 });

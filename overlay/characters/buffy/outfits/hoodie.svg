@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="hoodie" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#f1e9fb"/>
+      <stop offset="0.62" stop-color="#ddcdf1"/>
+      <stop offset="1" stop-color="#c7b1e4"/>
+    </linearGradient>
+    <linearGradient id="hoodieRib" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#dccdf0"/>
+      <stop offset="1" stop-color="#c2a9df"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-hoodie">
+    <!-- bunched hood behind the neck -->
+    <path d="M192 398 C190 380 204 370 228 372 C242 366 270 366 284 372 C308 370 322 380 320 398 C304 408 208 408 192 398 Z"
+      fill="#e9e0f7" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- oversized body -->
+    <path d="M174 392 C156 432 152 488 160 528 C198 548 314 548 352 528 C360 488 356 432 338 392 C312 374 200 374 174 392 Z"
+      fill="url(#hoodie)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- hood opening -->
+    <path d="M202 388 C214 410 234 420 256 420 C278 420 298 410 310 388"
+      fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+    <path d="M212 388 C222 404 238 412 256 412 C274 412 290 404 300 388"
+      fill="none" stroke="#c2a9df" stroke-width="4" stroke-linecap="round"/>
+    <!-- kangaroo pocket -->
+    <path d="M200 468 C224 478 288 478 312 468 L316 508 C284 520 228 520 196 508 Z"
+      fill="url(#hoodieRib)" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M204 486 C228 494 284 494 308 486" fill="none" stroke="#b9a0dd" stroke-width="3" stroke-linecap="round"/>
+    <!-- drawstrings -->
+    <path d="M238 418 C236 438 234 452 237 466" fill="none" stroke="#fff8ec" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="237" cy="468" r="5" fill="#fff8ec" stroke="#5c3150" stroke-width="2.5"/>
+    <path d="M274 418 C276 438 278 452 275 466" fill="none" stroke="#fff8ec" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="275" cy="468" r="5" fill="#fff8ec" stroke="#5c3150" stroke-width="2.5"/>
+    <!-- ribbed hem -->
+    <path d="M160 524 C198 544 314 544 352 524 L354 544 C314 562 198 562 158 544 Z"
+      fill="url(#hoodieRib)" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
+    <g stroke="#b095cf" stroke-width="3" opacity="0.8">
+      <path d="M178 538 V552"/><path d="M210 548 V562"/><path d="M242 552 V566"/>
+      <path d="M274 552 V566"/><path d="M306 548 V562"/><path d="M338 538 V552"/>
+    </g>
+    <!-- star patch -->
+    <path d="M296 428 L300 438 L310 439 L302 446 L305 456 L296 450 L287 456 L290 446 L282 439 L292 438 Z"
+      fill="#f6cf7d" stroke="#8a6224" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- tiny stitched heart -->
+    <path d="M216 444 C216 437 227 436 227 444 C227 437 238 437 238 444 C238 452 227 458 227 458 C227 458 216 452 216 444 Z"
+      fill="#dc9a8e"/>
+  </g>
+</svg>

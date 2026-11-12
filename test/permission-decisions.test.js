@@ -236,3 +236,40 @@ test('a denied permission returns a deny decision to Claude', async () => {
   assert.equal(snapshot.pendingRequests, 0);
   assert.equal(snapshot.current.message, 'permission denied');
 });
+
+test('an unanswered permission request times out and leaves the decision to Claude', { timeout: 15_000 }, async () => {
+  writePrefs(true);
+  await waitFor(async () => (await fetch(`${base}/health`).then((response) => response.json())).overlayConnected);
+
+  const startedAt = Date.now();
+  const hook = startHook({
+    hook_event_name: 'PermissionRequest',
+    session_id: 'timeout-session',
+    tool_name: 'Bash',
+    tool_input: { command: 'echo no-response' },
+    permission_request_id: 'timeout-request',
+  });
+  const request = await waitFor(async () => {
+    const snapshot = await state();
+    return snapshot.pendingRequestsList.find((entry) => entry.sessionId === 'claude:timeout-session');
+  });
+  assert.match(request.decisionId, /^[a-f0-9-]{16,96}$/);
+
+  const result = await hook.done;
+  const elapsed = Date.now() - startedAt;
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, '');
+  // The daemon's eight-second waiter, not the hook's ten-second HTTP timeout,
+  // must release Claude. Empty stdout means Claude's native prompt proceeds.
+  assert.ok(elapsed >= 7900, `the unanswered request returned too early (${elapsed}ms)`);
+  assert.ok(elapsed < 9500, `the unanswered request did not time out at eight seconds (${elapsed}ms)`);
+
+  const snapshot = await state();
+  const expired = snapshot.pendingRequestsList.find((entry) => entry.sessionId === 'claude:timeout-session');
+  assert.ok(expired);
+  assert.equal(expired.decisionId, null);
+  assert.equal(snapshot.current.state, 'needs-you');
+  assert.notEqual(snapshot.current.message, 'permission allowed');
+  assert.notEqual(snapshot.current.message, 'permission denied');
+  await dismissAll();
+});

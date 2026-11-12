@@ -39,7 +39,7 @@
     done: 'Finished',
     offline: 'Offline',
     sleepy: 'Resting',
-    pet: 'Happy',
+    hello: 'Happy',
     wave: 'Hi',
   };
   const CATEGORY_LABELS = {
@@ -78,7 +78,7 @@
     cardsOpen: false,
     tab: 'live',
     greetingAt: 0,
-    petAt: 0,
+    helloAt: 0,
     celebrateAt: 0,
     lastCelebrationAt: 0,
     bubbleUntil: 0,
@@ -134,7 +134,7 @@
   }
 
   function companionName() {
-    return state.prefs?.companion?.name || state.snapshot?.pet?.name || 'Buffy';
+    return state.prefs?.companion?.name || state.snapshot?.companion?.name || 'Buffy';
   }
 
   function baseState() {
@@ -162,7 +162,7 @@
     if (state.offline) return 'offline';
     const base = baseState();
     if (base !== 'idle') return base;
-    if (now - state.petAt < 1700) return 'pet';
+    if (state.helloAt > 0 && now - state.helloAt < 1700) return 'hello';
     if (now - state.greetingAt < 1600 && personality().returnGreetings !== false) return 'wave';
     if (isSleepy(now) && !state.hovered) return 'sleepy';
     return 'idle';
@@ -359,9 +359,9 @@
     if (state.mode === 'compact' && compactMessage) pillState.textContent = compactMessage;
     pill.title = `${companionName()} — ${pillState.textContent}${project ? ` in ${project}` : ''}`;
     updateBadges();
-    if (state.snapshot?.reaction?.kind === 'pet' && state.snapshot.reaction.at !== state.lastReactionAt) {
+    if (state.snapshot?.reaction?.kind === 'hello' && state.snapshot.reaction.at !== state.lastReactionAt) {
       state.lastReactionAt = state.snapshot.reaction.at;
-      state.petAt = now;
+      state.helloAt = now;
       scheduler.activity(now);
       showBubble('That tickles!', 'you', 'explicit', false, 1900);
     }
@@ -780,7 +780,7 @@
   }
 
   function syncCustomImage(snapshot) {
-    const sprite = snapshot?.pet?.sprite;
+    const sprite = snapshot?.companion?.sprite;
     const port = snapshot?.port;
     if (!sprite || sprite.type !== 'image' || !port) {
       state.customImage = null;
@@ -890,6 +890,7 @@
       pending: pendingCount(),
       waiting,
       celebration: celebrating,
+      stateSince: local === 'hello' ? state.helloAt : local === 'wave' ? state.greetingAt : 0,
       customImage: state.customImage,
     });
     drawTrail(now);
@@ -914,20 +915,20 @@
     scheduler.activity(now);
   }
 
-  async function petCompanion() {
+  async function sayHello() {
     wake();
     try {
-      const result = await window.buffy.pet();
+      const result = await window.buffy.hello();
       if (!result?.ok) {
-        showToast('Buffy’s daemon is offline; the pet could not react.');
+        showToast('Buffy’s daemon is offline; she could not react.');
         return;
       }
-      state.petAt = performance.now();
+      state.helloAt = performance.now();
       state.greetingAt = performance.now();
       scheduler.activity(performance.now());
       showBubble('That tickles!', 'you', 'explicit', false, 1900);
     } catch {
-      showToast('Buffy’s daemon is offline; the pet could not react.');
+      showToast('Buffy’s daemon is offline; she could not react.');
     }
   }
 
@@ -950,8 +951,8 @@
           if (state.cardsOpen) closeCards();
           else openCards();
           break;
-        case 'pet':
-          petCompanion();
+        case 'hello':
+          sayHello();
           break;
         case 'dictate':
           showToast(state.dictationReason || 'Local dictation is unavailable on this system.');
@@ -1162,7 +1163,7 @@
         /* pointer already released */
       }
       window.buffy.dragEnd();
-      if (!pointer.moved) petCompanion();
+      if (!pointer.moved) sayHello();
     };
     hit.addEventListener('pointerup', finish);
     hit.addEventListener('pointercancel', (event) => {
@@ -1181,7 +1182,7 @@
     hit.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        petCompanion();
+        sayHello();
       }
     });
   }

@@ -60,13 +60,13 @@ test('buffy status --json reflects the event', async () => {
   assert.equal(snapshot.daemonPort, daemon.port);
 });
 
-test('buffy pet prints a reaction', async () => {
-  const pet = await run(['pet']);
-  assert.equal(pet.status, 0, pet.stderr);
-  assert.match(pet.stdout, /seems pleased/);
+test('buffy hello prints a reaction', async () => {
+  const hello = await run(['hello']);
+  assert.equal(hello.status, 0, hello.stderr);
+  assert.match(hello.stdout, /seems pleased/);
 
   const snapshot = JSON.parse((await run(['status', '--json'])).stdout);
-  assert.equal(snapshot.reaction.kind, 'pet');
+  assert.equal(snapshot.reaction.kind, 'hello');
 });
 
 test('buffy celebrate records an explicit pass', async () => {
@@ -97,7 +97,7 @@ test('status falls back to persisted state when the daemon is down', async () =>
 
   const snapshot = JSON.parse(result.stdout);
   assert.equal(snapshot.online, false);
-  assert.equal(snapshot.pet.name, 'Offline Momo');
+  assert.equal(snapshot.companion.name, 'Offline Momo');
   fs.rmSync(offlineHome, { recursive: true, force: true });
 });
 

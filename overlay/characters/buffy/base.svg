@@ -28,12 +28,20 @@
   <g id="buffy-base">
     <!-- feet, tucked behind the body -->
     <g id="feet">
-      <ellipse cx="202" cy="548" rx="40" ry="27" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
-      <ellipse cx="310" cy="548" rx="40" ry="27" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
-      <path d="M170 560 Q202 578 234 560" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
-      <path d="M278 560 Q310 578 342 560" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="184" cy="542" r="5" fill="#f6cfd8" opacity="0.9"/>
-      <circle cx="292" cy="542" r="5" fill="#f6cfd8" opacity="0.9"/>
+      <ellipse cx="204" cy="550" rx="34" ry="23" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
+      <ellipse cx="308" cy="550" rx="34" ry="23" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
+      <path d="M176 562 Q204 576 232 562" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
+      <path d="M280 562 Q308 576 336 562" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="186" cy="544" r="5" fill="#f6cfd8" opacity="0.9"/>
+      <circle cx="290" cy="544" r="5" fill="#f6cfd8" opacity="0.9"/>
+      <g fill="#e2b7b2" opacity="0.9">
+        <ellipse cx="196" cy="558" rx="3.4" ry="2.6"/>
+        <ellipse cx="204" cy="560" rx="3.4" ry="2.6"/>
+        <ellipse cx="212" cy="558" rx="3.4" ry="2.6"/>
+        <ellipse cx="300" cy="558" rx="3.4" ry="2.6"/>
+        <ellipse cx="308" cy="560" rx="3.4" ry="2.6"/>
+        <ellipse cx="316" cy="558" rx="3.4" ry="2.6"/>
+      </g>
     </g>
 
     <!-- plush cloud body: one clean silhouette with soft lobes -->
@@ -98,14 +106,14 @@
     </g>
 
     <!-- cheeks peek out around the screen -->
-    <circle cx="146" cy="342" r="30" fill="url(#cheek)"/>
-    <circle cx="366" cy="342" r="30" fill="url(#cheek)"/>
+    <circle cx="134" cy="344" r="32" fill="url(#cheek)"/>
+    <circle cx="378" cy="344" r="32" fill="url(#cheek)"/>
 
     <!-- face screen: the renderer draws the expression here -->
-    <rect x="168" y="252" width="176" height="112" rx="34" fill="url(#screen)" stroke="#5c3150" stroke-width="8"/>
-    <rect x="178" y="262" width="156" height="92" rx="26" fill="none" stroke="#ffc7dd" stroke-width="2" opacity="0.2"/>
-    <path d="M192 270 Q216 258 246 260" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.16"/>
-    <circle cx="330" cy="280" r="4" fill="#ffc7dd" opacity="0.55"/>
+    <rect x="160" y="246" width="192" height="120" rx="36" fill="url(#screen)" stroke="#5c3150" stroke-width="8"/>
+    <rect x="170" y="256" width="172" height="100" rx="28" fill="none" stroke="#ffc7dd" stroke-width="2" opacity="0.2"/>
+    <path d="M186 264 Q212 252 246 254" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.16"/>
+    <circle cx="338" cy="276" r="4" fill="#ffc7dd" opacity="0.55"/>
 
     <!-- tiny stitch details on the body -->
     <path d="M118 380 L108 398" stroke="#d9a3a5" stroke-width="4" stroke-linecap="round" opacity="0.7"/>

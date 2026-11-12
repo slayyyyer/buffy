@@ -31,10 +31,12 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v2.2.0**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.0.0**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
-real size control and kept compact mode inside its window; 2.2 adds reactions,
-project jumps, sound choices, and per-display corners:
+real size control and kept compact mode inside its window; 2.2 added reactions,
+project jumps, sound choices, and per-display corners. 3.0 makes the
+interaction and stored identity companion-first, adds three outfits, and gives
+her a larger face and a three-beat hello:
 
 - [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
@@ -50,8 +52,16 @@ project jumps, sound choices, and per-display corners:
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
 
-### Unreleased
+### 3.0.0
 
+- **Companion language, everywhere.** The interaction is now `buffy hello`
+  (the toolbar says **Say hi to Buffy**). `buffy pet`, `POST /pet`, and the old
+  `pet` aliases are gone. `state.json` and `buffy status --json` use
+  `companion`; old `pet` keys are not read, so existing state files start fresh.
+- **Three more outfits and a warmer hello.** Buffy now has a cloud hoodie, a
+  berry pinafore, and starry pajamas. Clicking her plays a short three-beat
+  reaction — surprised, heart-eyed, then a soft settle — with a little squash
+  and a bow that follows through. Her face screen is larger at every size.
 - **Gemini CLI and Cursor connections.** **Settings → Connection** can now
   install, repair, check, and remove hooks for Gemini CLI and Cursor alongside
   Claude Code. Both adapters preserve unrelated settings and hook groups, use
@@ -140,14 +150,14 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **2.2.0** ships for Windows, macOS, and Linux:
+Buffy **3.0.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v2.2.0/Buffy-2.2.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-linux-x86_64.AppImage.sha256)
 
-The packaged app includes the pet, the local daemon, and stable hook and CLI
+The packaged app includes Buffy, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
 Connection** to install or repair the hooks and the `/buffy` command. Only the
 optional `buffy` terminal CLI runs from the source checkout.
@@ -165,7 +175,7 @@ buffy overlay        # starts the daemon on demand and shows Buffy
 ```
 
 The overlay is frameless, transparent, and always on top. Drag the character
-to move her, click her to pet her, right-click for the menu, and use the pill
+to move her, click her to say hi, right-click for the menu, and use the pill
 toolbar for compose, activity, wardrobe, compact mode, and settings.
 
 The first-run setup window explains the overlay, the global shortcut, the
@@ -291,7 +301,7 @@ Three lifecycles are intentionally separate:
 
 | Lifecycle | Default | What it means |
 | --- | --- | --- |
-| Completion presentation | 30 seconds | `done` hop/sparkles before the pet returns to idle |
+| Completion presentation | 30 seconds | `done` hop/sparkles before Buffy returns to idle |
 | Recent completions | 5 minutes | Activity cards can still show what finished |
 | Stale session expiry | 30 minutes | Quiet sessions are removed |
 
@@ -369,7 +379,7 @@ The installed hook vocabulary:
 | `SessionStart` | session visibility |
 | `UserPromptSubmit` | thinking |
 | `PreToolUse` | working, with a tool category |
-| `PermissionRequest` | explicit permission request; optional Allow/Deny from the pet while the hook is live |
+| `PermissionRequest` | explicit permission request; optional Allow/Deny from Buffy while the hook is live |
 | `PostToolUse` | working; resolves matching requests |
 | `PostToolUseFailure` | error |
 | `Notification` | question/permission request, or informational idle reminder |
@@ -383,7 +393,7 @@ seen**, **repair needed**, **hooks disabled**, **connected** (a hook event was
 seen within 30 minutes), and **error**. Installation alone is not reported as a
 verified connection.
 
-### Permission decisions from the pet
+### Permission decisions from Buffy
 
 **Off by default.** Enable **Settings → Connection → Permission decisions from
 Buffy**. While Claude's `PermissionRequest` hook is waiting, the activity card
@@ -481,7 +491,7 @@ keyboard shortcuts remain available.
 | --- | --- |
 | `buffy daemon` | Run the local daemon in the foreground |
 | `buffy event <state> [--msg "text"] [--source name] [--session id] [--cwd dir]` | Send a state change |
-| `buffy pet` | Pet reaction, mood, and XP |
+| `buffy hello` | Say hi, mood, and XP |
 | `buffy celebrate [message]` | Explicit celebration for a verified test or build pass |
 | `buffy dismiss <session>` | Clear one active session |
 | `buffy status [--json]` | Current state, sessions, mood, XP, daemon health |
@@ -504,7 +514,7 @@ States accepted by `buffy event`: `idle`, `thinking`, `working`, `needs-you`,
 | Path | Contents |
 | --- | --- |
 | `~/.buffy/preferences.json` | v3 identity, character looks, personality, shortcuts, alerts, connection, updates |
-| `~/.buffy/state.json` | pet identity, sprite, mood, XP, counters |
+| `~/.buffy/state.json` | companion identity, sprite, mood, XP, counters |
 | `~/.buffy/window.json` | full/compact positions, size (80–175% scale), and the remembered corner per display |
 | `~/.buffy/config.json` | port, timing, watcher, hatch settings |
 | `~/.buffy/runtime.json` | daemon pid/port while running |
@@ -551,7 +561,7 @@ main process normalizes them before every save.
 ## Hatching a sprite
 
 `buffy hatch` generates a transparent PNG with OpenAI Images, stores it in
-`~/.buffy/sprites/`, and swaps it into the running pet. The overlay keeps its
+`~/.buffy/sprites/`, and swaps it into the running companion. The overlay keeps its
 bob and state effects; the generated art replaces the layered body. A custom
 sprite is a full-body replacement, so procedural outfits, accessories, and
 hobby props are not drawn over it. Set `OPENAI_API_KEY` in the shell that runs
@@ -578,7 +588,7 @@ the command; the key is never written to Buffy state or logged.
 
 ## Troubleshooting
 
-- **Pet does not appear.** Run `buffy status`; if the daemon is offline, run
+- **Buffy does not appear.** Run `buffy status`; if the daemon is offline, run
   `buffy daemon` in a terminal to see the error. Electron must be installed
   (`npm install`).
 - **Port already in use.** Change `port` in `~/.buffy/config.json`.

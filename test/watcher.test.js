@@ -110,7 +110,7 @@ test('file churn sets working, quiet sets done, then idle', async () => {
   assert.equal(idle.current.state, 'idle');
 });
 
-test('ignored paths do not disturb the pet', async () => {
+test('ignored paths do not disturb Buffy', async () => {
   await post({ state: 'idle', source: 'test' });
   await waitFor((state) => state.current.state === 'idle');
 

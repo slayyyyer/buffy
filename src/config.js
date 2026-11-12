@@ -8,7 +8,7 @@ export const VERSION = PACKAGE.version;
 export const DEFAULT_PORT = 4517;
 export const DEFAULT_SESSION_TTL_MS = 30 * 60 * 1000;
 
-/** The six states the pet can be in. Everything else is mapped onto these. */
+/** The six states the companion can be in. Everything else is mapped onto these. */
 export const STATES = ['idle', 'thinking', 'working', 'needs-you', 'done', 'error'];
 
 export function buffyDir(env = process.env) {

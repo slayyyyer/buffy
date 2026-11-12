@@ -114,8 +114,8 @@ export async function getState(port, timeout = 900) {
   return data;
 }
 
-export async function sendPet(port) {
-  const { status, data } = await httpJson({ port, method: 'POST', path: '/pet', timeout: 1500 });
+export async function sendHello(port) {
+  const { status, data } = await httpJson({ port, method: 'POST', path: '/hello', timeout: 1500 });
   if (status !== 200 || !data?.ok) throw new Error(data?.error || `daemon returned ${status}`);
   return data.state;
 }

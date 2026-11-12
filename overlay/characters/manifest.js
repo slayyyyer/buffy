@@ -31,6 +31,9 @@
   const buffyOutfits = {
     dress: 'buffy/outfits/dress.svg',
     cozy: 'buffy/outfits/cozy.svg',
+    hoodie: 'buffy/outfits/hoodie.svg',
+    pinafore: 'buffy/outfits/pinafore.svg',
+    pajamas: 'buffy/outfits/pajamas.svg',
     rainy: 'buffy/outfits/rainy.svg',
     starlight: 'buffy/outfits/starlight.svg',
     overalls: 'buffy/outfits/overalls.svg',
@@ -73,8 +76,8 @@
         base: 'buffy/base.svg',
         poses: buffyPoseFiles,
         compactCrop: { x: 56, y: 62, width: 400, height: 400 },
-        face: { x: 256, y: 308, width: 176, height: 112 },
-        outfits: ['none', 'dress', 'cozy', 'rainy', 'starlight', 'overalls'],
+        face: { x: 256, y: 308, width: 192, height: 120 },
+        outfits: ['none', 'dress', 'cozy', 'hoodie', 'pinafore', 'pajamas', 'rainy', 'starlight', 'overalls'],
         outfitAssets: buffyOutfits,
         accessories: {
           bow: ['none', 'pink', 'lavender', 'mint', 'gold'],

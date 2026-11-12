@@ -35,11 +35,11 @@ Usage:
       --source claude|gemini|cursor|…  who sent it (shown in the bubble)
       --session <id>               stable identity for concurrent agents
       --cwd <dir>                  project folder the activity card can open
-  buffy pet                        scratch behind the ears
+  buffy hello                      say hi to buffy
   buffy celebrate [message]        celebrate a verified test or build pass
   buffy dismiss <session>          clear one concurrent agent session
   buffy status [--json]            state, mood, XP, daemon health
-  buffy overlay [--dev] [--onboarding] show the always-on-top pet window
+  buffy overlay [--dev] [--onboarding] show the always-on-top companion window
   buffy hatch "<prompt>"           generate a custom sprite with OpenAI Images
   buffy install claude [--global]  wire Claude Code hooks + /buffy command
   buffy install gemini [--global]  wire Gemini CLI lifecycle hooks
@@ -52,7 +52,7 @@ Usage:
   buffy help | buffy version
 
 States: ${STATES.join(', ')}
-Overlay: drag to move, click to wave, right-click for the menu.
+Overlay: drag to move, click to say hi, right-click for the menu.
 Docs: README.md
 `;
 
@@ -104,7 +104,7 @@ function offlineSnapshot() {
   return {
     online: false,
     version: VERSION,
-    pet: stored?.pet ?? null,
+    companion: stored?.companion ?? null,
     xp: stored?.xp ?? 0,
     level: levelFromXp(stored?.xp ?? 0),
     mood: Math.round(stored?.mood ?? 70),
@@ -115,10 +115,10 @@ function offlineSnapshot() {
 }
 
 function printStatus(snapshot, config) {
-  const pet = snapshot.pet;
-  const sprite = pet?.sprite;
+  const companion = snapshot.companion;
+  const sprite = companion?.sprite;
   const custom = sprite?.type === 'image' || sprite?.type === 'sheet';
-  print(`${pet?.name ?? 'buffy'} · ${custom ? 'custom sprite' : 'placeholder blob'} · Lv ${snapshot.level} · ${snapshot.xp} xp`);
+  print(`${companion?.name ?? 'buffy'} · ${custom ? 'custom sprite' : 'placeholder blob'} · Lv ${snapshot.level} · ${snapshot.xp} xp`);
   const source = snapshot.current?.source;
   const since = snapshot.current?.since ? `, ${ago(Date.now() - snapshot.current.since)} ago` : '';
   print(`state   ${snapshot.current?.state ?? 'idle'}${source ? ` (${source}${since})` : ''}`);
@@ -146,7 +146,7 @@ async function statusCommand(flags, config) {
   try {
     snapshot = await client.getState(config.port);
   } catch {
-    /* genuinely offline; fall back to the persisted pet */
+    /* genuinely offline; fall back to the persisted companion */
   }
   if (!snapshot) snapshot = offlineSnapshot();
   const payload = { ...snapshot, daemonPort: config.port };
@@ -193,11 +193,11 @@ async function eventCommand(rest, flags, config) {
   return 0;
 }
 
-async function petCommand(config) {
+async function helloCommand(config) {
   try {
     await client.ensureDaemon({ port: config.port });
-    const snapshot = await client.sendPet(config.port);
-    print(`${snapshot.pet.name} seems pleased. (mood ${snapshot.mood}/100 · ${snapshot.xp} xp)`);
+    const snapshot = await client.sendHello(config.port);
+    print(`${snapshot.companion.name} seems pleased. (mood ${snapshot.mood}/100 · ${snapshot.xp} xp)`);
     return 0;
   } catch (error) {
     fail(`buffy: ${error.message}`);
@@ -210,7 +210,7 @@ async function celebrateCommand(rest, config) {
   try {
     await client.ensureDaemon({ port: config.port });
     const snapshot = await client.sendCelebration(config.port, message);
-    print(`${snapshot.pet.name} celebrates${message ? `: ${message}` : '.'} (mood ${snapshot.mood}/100 · ${snapshot.xp} xp)`);
+    print(`${snapshot.companion.name} celebrates${message ? `: ${message}` : '.'} (mood ${snapshot.mood}/100 · ${snapshot.xp} xp)`);
     return 0;
   } catch (error) {
     fail(`buffy: ${error.message}`);
@@ -450,8 +450,8 @@ export async function main(argv = process.argv.slice(2)) {
       return daemonCommand(config);
     case 'event':
       return eventCommand(args.slice(1), flags, config);
-    case 'pet':
-      return petCommand(config);
+    case 'hello':
+      return helloCommand(config);
     case 'celebrate':
       return celebrateCommand(args.slice(1), config);
     case 'dismiss':

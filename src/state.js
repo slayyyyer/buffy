@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { buffyFile, ensureBuffyDir } from './config.js';
 import { paletteFromSeed } from './palette.js';
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 export function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n));
@@ -26,7 +26,7 @@ export function createState({ name = 'Momo', seed = randomSeed(), now = Date.now
   const safeName = String(name).replace(/[\r\n\t]+/g, ' ').trim().slice(0, 32) || 'Momo';
   return {
     version: STATE_VERSION,
-    pet: {
+    companion: {
       name: safeName,
       seed,
       createdAt: iso,
@@ -36,7 +36,7 @@ export function createState({ name = 'Momo', seed = randomSeed(), now = Date.now
     mood: 70,
     createdAt: iso,
     lastSeen: iso,
-    counters: { events: 0, pets: 0, sessions: 0 },
+    counters: { events: 0, hellos: 0, sessions: 0 },
   };
 }
 
@@ -44,20 +44,29 @@ export function normalizeState(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const base = createState({ now: Date.now() });
   const state = { ...base, ...raw };
-  const pet = raw.pet && typeof raw.pet === 'object' ? raw.pet : {};
-  const seed = Number.isFinite(pet.seed) ? pet.seed : base.pet.seed;
-  state.pet = {
-    ...base.pet,
-    ...pet,
+  state.version = STATE_VERSION;
+  const companion = raw.companion && typeof raw.companion === 'object' ? raw.companion : {};
+  const seed = Number.isFinite(companion.seed) ? companion.seed : base.companion.seed;
+  state.companion = {
+    ...base.companion,
+    ...companion,
     seed,
-    name: String(pet.name || base.pet.name).slice(0, 32),
-    sprite: pet.sprite && typeof pet.sprite === 'object'
-      ? { type: 'placeholder', seed, palette: paletteFromSeed(seed), ...pet.sprite }
+    name: String(companion.name || base.companion.name).slice(0, 32),
+    sprite: companion.sprite && typeof companion.sprite === 'object'
+      ? { type: 'placeholder', seed, palette: paletteFromSeed(seed), ...companion.sprite }
       : { type: 'placeholder', seed, palette: paletteFromSeed(seed) },
   };
+  delete state.pet;
   state.xp = Number.isFinite(raw.xp) ? Math.max(0, Math.floor(raw.xp)) : 0;
   state.mood = Number.isFinite(raw.mood) ? clamp(raw.mood, 0, 100) : 70;
-  state.counters = { events: 0, pets: 0, sessions: 0, ...(raw.counters || {}) };
+  const rawCounters = raw.counters && typeof raw.counters === 'object' && !Array.isArray(raw.counters)
+    ? raw.counters
+    : {};
+  state.counters = {
+    events: Number.isFinite(rawCounters.events) ? Math.max(0, Math.floor(rawCounters.events)) : 0,
+    hellos: Number.isFinite(rawCounters.hellos) ? Math.max(0, Math.floor(rawCounters.hellos)) : 0,
+    sessions: Number.isFinite(rawCounters.sessions) ? Math.max(0, Math.floor(rawCounters.sessions)) : 0,
+  };
   return state;
 }
 

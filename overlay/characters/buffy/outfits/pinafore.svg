@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <defs>
+    <linearGradient id="berry" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#eba7b7"/>
+      <stop offset="0.6" stop-color="#d97f96"/>
+      <stop offset="1" stop-color="#bd5f79"/>
+    </linearGradient>
+    <linearGradient id="blouse" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="0.72" stop-color="#fbeedb"/>
+      <stop offset="1" stop-color="#efd9c2"/>
+    </linearGradient>
+  </defs>
+  <g id="buffy-pinafore">
+    <!-- skirt -->
+    <path d="M204 442 C188 484 168 528 154 566 C198 588 314 588 358 566 C344 528 324 484 308 442 Z"
+      fill="url(#berry)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- pleats -->
+    <path d="M222 458 C210 500 202 540 200 572" fill="none" stroke="#c46a82" stroke-width="4" stroke-linecap="round"/>
+    <path d="M256 458 V578" fill="none" stroke="#c46a82" stroke-width="4" stroke-linecap="round"/>
+    <path d="M290 458 C302 500 310 540 312 572" fill="none" stroke="#c46a82" stroke-width="4" stroke-linecap="round"/>
+    <!-- lace hem -->
+    <path d="M156 562 Q174 580 192 562 Q210 580 228 562 Q246 580 264 562 Q282 580 300 562 Q318 580 336 562 Q350 574 358 562"
+      fill="none" stroke="#fff6e8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- cream blouse -->
+    <path d="M190 384 C184 410 186 438 196 454 C222 464 290 464 316 454 C326 438 328 410 322 384 C296 372 216 372 190 384 Z"
+      fill="url(#blouse)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+    <!-- puff sleeves -->
+    <ellipse cx="184" cy="412" rx="23" ry="28" fill="url(#blouse)" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="328" cy="412" rx="23" ry="28" fill="url(#blouse)" stroke="#5c3150" stroke-width="7"/>
+    <path d="M166 424 Q184 432 202 424" fill="none" stroke="#e8ceb4" stroke-width="4" stroke-linecap="round"/>
+    <path d="M310 424 Q328 432 346 424" fill="none" stroke="#e8ceb4" stroke-width="4" stroke-linecap="round"/>
+    <!-- scalloped collar -->
+    <path d="M212 382 Q226 402 242 384 Q256 404 270 384 Q286 402 300 382"
+      fill="none" stroke="#fffdf6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- pinafore bib -->
+    <path d="M216 398 L296 398 L302 450 C280 458 232 458 210 450 Z"
+      fill="url(#berry)" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
+    <!-- straps -->
+    <path d="M220 400 C214 386 210 374 208 366" fill="none" stroke="#5c3150" stroke-width="8" stroke-linecap="round"/>
+    <path d="M292 400 C298 386 302 374 304 366" fill="none" stroke="#5c3150" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="220" cy="404" r="5.5" fill="#f6cf7d" stroke="#8a6224" stroke-width="2.5"/>
+    <circle cx="292" cy="404" r="5.5" fill="#f6cf7d" stroke="#8a6224" stroke-width="2.5"/>
+    <!-- ruffle at the bib edge -->
+    <path d="M214 448 Q226 456 238 448 Q250 456 262 448 Q274 456 286 448 Q294 454 300 448"
+      fill="none" stroke="#fff6e8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- heart pocket -->
+    <path d="M266 476 C266 468 278 467 278 476 C278 467 290 468 290 476 C290 486 278 493 278 493 C278 493 266 486 266 476 Z"
+      fill="#f2c6d0" stroke="#a9546d" stroke-width="2.5"/>
+    <!-- waist bow -->
+    <g transform="translate(256 452)">
+      <path d="M0 0 C-14 -14 -34 -10 -30 2 C-27 12 -10 14 0 5 Z" fill="#b95d78" stroke="#5c3150" stroke-width="4"/>
+      <path d="M0 0 C14 -14 34 -10 30 2 C27 12 10 14 0 5 Z" fill="#b95d78" stroke="#5c3150" stroke-width="4"/>
+      <ellipse cx="0" cy="2" rx="6" ry="7" fill="#9a4660" stroke="#5c3150" stroke-width="3.5"/>
+    </g>
+  </g>
+</svg>

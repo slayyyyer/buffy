@@ -306,14 +306,14 @@
   function drawFace(now, state, hue) {
     const ink = `hsl(${hue} 45% 18%)`;
     const eyeY = -9;
-    const blink = now % 4300 < 120 && !['needs-you', 'error', 'pet', 'done', 'offline'].includes(state);
+    const blink = now % 4300 < 120 && !['needs-you', 'error', 'hello', 'done', 'offline'].includes(state);
 
     ctx.strokeStyle = ink;
     ctx.fillStyle = ink;
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
 
-    const happy = state === 'pet' || state === 'done';
+    const happy = state === 'hello' || state === 'done';
     if (happy) {
       [-1, 1].forEach((side) => {
         ctx.beginPath();
@@ -388,7 +388,7 @@
       ctx.beginPath();
       ctx.arc(0, mouthY - 4, 7, 0.2 * Math.PI, 0.8 * Math.PI);
       ctx.stroke();
-    } else if (state === 'pet') {
+    } else if (state === 'hello') {
       ctx.beginPath();
       ctx.ellipse(0, mouthY, 7, 5.5, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -514,11 +514,11 @@
     const pink = '#ff8dcc';
     const glow = '#ff4da3';
     const muted = '#8e657e';
-    const happy = state === 'pet' || state === 'done';
+    const happy = state === 'hello' || state === 'done';
     const hobbyId = hobby && hobby.id;
     const coffeeLift = hobbyId === 'coffee' ? coffeeLiftAt(now, hobby) : 0;
     const hobbyHappy = hobbyId === 'stretch' || (hobbyId === 'coffee' && coffeeLift > 0.45);
-    const blink = now % 4300 < 120 && !['needs-you', 'error', 'pet', 'done', 'offline', 'sleepy'].includes(state);
+    const blink = now % 4300 < 120 && !['needs-you', 'error', 'hello', 'done', 'offline', 'sleepy'].includes(state);
     const eyeY = -31;
     const faceY = centerY - 26 * PET_SCALE;
     const gazeDistance = cursorLocal
@@ -1679,7 +1679,7 @@
       }
     }
 
-    if (state === 'pet') {
+    if (state === 'hello') {
       for (let i = 0; i < 3; i += 1) {
         const progress = ((now / 1400 + i / 3) % 1);
         drawHeart(centerX - 28 + i * 28, centerY - 44 - progress * 34, 5.5, 1 - progress);
@@ -1794,7 +1794,7 @@
 
   function drawPet(now, state, hobby) {
     const palette = currentPalette();
-    const sprite = snapshot && snapshot.pet && snapshot.pet.sprite;
+    const sprite = snapshot && snapshot.companion && snapshot.companion.sprite;
     const width = viewportWidth;
     const height = viewportHeight;
     const baseY = viewportBaseY ?? height - 40;
@@ -1806,7 +1806,7 @@
       'needs-you': Math.abs(Math.sin(now / 260)) * 15,
       done: Math.abs(Math.sin(now / 200)) * 9,
       error: 0,
-      pet: Math.sin(now / 180) * 4,
+      hello: Math.sin(now / 180) * 4,
       wave: Math.sin(now / 180) * 2,
       sleepy: Math.sin(now / 1600) * 2,
       wake: Math.abs(Math.sin(now / 110)) * 2.5,
@@ -1863,7 +1863,7 @@
     viewportBaseY = Number.isFinite(options.baseY) ? options.baseY : null;
     PET_SCALE = Number.isFinite(options.scale) ? options.scale : 1.2;
     customImage = options.customImage || null;
-    snapshot = customImage ? { pet: { sprite: { type: 'image' } } } : null;
+    snapshot = customImage ? { companion: { sprite: { type: 'image' } } } : null;
     drawPet(options.now || 0, options.state || 'idle', options.hobby || null);
   }
 

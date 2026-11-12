@@ -1,5 +1,5 @@
 /**
- * Seeded palette + shape variant. Shared by the daemon (persisted with the pet)
+ * Seeded palette + shape variant. Shared by the daemon (persisted with the companion)
  * and the overlay renderer (draws the placeholder sprite).
  */
 export function mulberry32(seed) {

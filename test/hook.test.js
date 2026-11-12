@@ -85,7 +85,7 @@ test('maps the Claude Code hook vocabulary onto six states', () => {
   assert.equal(mapClaudeHook(undefined, { hook_event_name: 'Stop' }).state, 'done');
 });
 
-test('UserPromptSubmit moves the pet to thinking', async () => {
+test('UserPromptSubmit moves Buffy to thinking', async () => {
   const result = await runHook('UserPromptSubmit', { hook_event_name: 'UserPromptSubmit', prompt: 'hello' });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, '');
@@ -95,7 +95,7 @@ test('UserPromptSubmit moves the pet to thinking', async () => {
   assert.equal(snapshot.current.source, 'claude');
 });
 
-test('Notification moves the pet to needs-you with the message', async () => {
+test('Notification moves Buffy to needs-you with the message', async () => {
   const result = await runHook('Notification', {
     hook_event_name: 'Notification',
     notification_type: 'permission_prompt',
@@ -108,7 +108,7 @@ test('Notification moves the pet to needs-you with the message', async () => {
   assert.equal(snapshot.current.message, 'Claude needs permission to run npm test');
 });
 
-test('Stop moves the pet to done', async () => {
+test('Stop moves Buffy to done', async () => {
   const result = await runHook('Stop', { hook_event_name: 'Stop' });
   assert.equal(result.status, 0, result.stderr);
   assert.equal((await state()).current.state, 'done');

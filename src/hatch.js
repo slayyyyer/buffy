@@ -7,12 +7,12 @@ import { createState, loadState, saveState } from './state.js';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const HATCH_TIMEOUT_MS = 120_000;
 
-/** Turn a short idea into a prompt that produces one usable pet sprite. */
+/** Turn a short idea into a prompt that produces one usable companion sprite. */
 export function buildHatchPrompt(prompt) {
   const clean = String(prompt || '').replace(/\s+/g, ' ').trim().slice(0, 1000);
   if (!clean) throw new Error('hatch needs a prompt');
   return [
-    `Create a single cute desktop-pet character: ${clean}.`,
+    `Create a single cute desktop companion character: ${clean}.`,
     'Full body, front-facing, centered, one character only.',
     'Clean 2D vector-like illustration with soft thick outlines and large expressive eyes.',
     'Transparent background; no scenery, text, border, shadow, watermark, or checkerboard.',
@@ -31,7 +31,7 @@ function imageError(message, code = 'HATCH_FAILED') {
 }
 
 /**
- * Generate one transparent PNG and persist it as the pet's sprite.
+ * Generate one transparent PNG and persist it as the companion's sprite.
  * `fetchImpl` is injectable so tests never call a real provider.
  */
 export async function generateHatch({
@@ -138,7 +138,7 @@ export async function generateHatch({
     model: String(hatch.model).slice(0, 80),
     createdAt: new Date(now).toISOString(),
   };
-  state.pet.sprite = { ...state.pet.sprite, ...sprite };
+  state.companion.sprite = { ...state.companion.sprite, ...sprite };
   state.lastSeen = new Date(now).toISOString();
   saveState(state, env);
 

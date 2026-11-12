@@ -149,13 +149,13 @@ test('generateHatch posts the right request and stores the sprite', async () => 
     assert.match(result.file, /[\\/]sprites[\\/]hatch-/);
 
     const state = loadState(env);
-    assert.equal(state.pet.name, 'Pip');
-    assert.equal(state.pet.seed, 42);
-    assert.equal(state.pet.sprite.type, 'image');
-    assert.equal(state.pet.sprite.file, result.file);
-    assert.equal(state.pet.sprite.prompt, 'a red fox');
-    assert.equal(state.pet.sprite.model, 'gpt-image-1');
-    assert.ok(state.pet.sprite.palette);
+    assert.equal(state.companion.name, 'Pip');
+    assert.equal(state.companion.seed, 42);
+    assert.equal(state.companion.sprite.type, 'image');
+    assert.equal(state.companion.sprite.file, result.file);
+    assert.equal(state.companion.sprite.prompt, 'a red fox');
+    assert.equal(state.companion.sprite.model, 'gpt-image-1');
+    assert.ok(state.companion.sprite.palette);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });
   }
@@ -264,8 +264,8 @@ test('CLI hatch generates, refreshes the daemon, and serves the PNG', async () =
     assert.equal(received.body.output_format, 'png');
 
     const state = await (await fetch(`http://127.0.0.1:${daemon.port}/state`)).json();
-    assert.equal(state.pet.sprite.type, 'image');
-    assert.equal(state.pet.sprite.prompt, 'a tiny moss dragon');
+    assert.equal(state.companion.sprite.type, 'image');
+    assert.equal(state.companion.sprite.prompt, 'a tiny moss dragon');
 
     const sprite = await fetch(`http://127.0.0.1:${daemon.port}/sprite`);
     assert.equal(sprite.status, 200);

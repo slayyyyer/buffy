@@ -60,7 +60,7 @@ function readJsonBody(req, callback) {
 }
 
 /**
- * In-memory runtime (state machine, event history) on top of the persisted pet.
+ * In-memory runtime (state machine, event history) on top of the persisted companion.
  * Everything is loopback-only. Each event belongs to a session and the visible
  * state is the most urgent active session, so concurrent agents cannot stomp
  * one another. The source travels with the event for the bubble.
@@ -122,7 +122,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       pid: process.pid,
       port: server?.address()?.port ?? null,
       startedAt,
-      pet: store.pet,
+      companion: store.companion,
       xp: store.xp,
       level: levelFromXp(store.xp),
       mood: Math.round(store.mood),
@@ -286,11 +286,11 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     return result;
   }
 
-  function pet(now = Date.now()) {
-    reaction = { kind: 'pet', at: now };
+  function hello(now = Date.now()) {
+    reaction = { kind: 'hello', at: now };
     store.xp += 2;
     store.mood = clamp(store.mood + 8, 0, 100);
-    store.counters.pets += 1;
+    store.counters.hellos += 1;
     store.lastSeen = new Date(now).toISOString();
     saveState(store, env);
     broadcast();
@@ -338,7 +338,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   }
 
   /**
-   * The Freebuff signal: edits keep the pet working, then a quiet window ends
+   * The Freebuff signal: edits keep Buffy working, then a quiet window ends
    * the turn. It never overrides an unanswered needs-you alert, and it only
    * settles a state that the watcher itself set.
    */
@@ -440,7 +440,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     }
 
     if (req.method === 'GET' && url.pathname === '/sprite') {
-      const sprite = validSprite(store.pet.sprite);
+      const sprite = validSprite(store.companion.sprite);
       if (!sprite) return sendJson(res, 404, { ok: false, error: 'no sprite' });
       let bytes;
       try {
@@ -553,7 +553,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
         if (err) return sendJson(res, err.status || 400, { ok: false, error: err.message });
         const sprite = validSprite(body?.sprite);
         if (!sprite) return sendJson(res, 400, { ok: false, error: 'invalid sprite' });
-        store.pet.sprite = sprite;
+        store.companion.sprite = sprite;
         store.lastSeen = new Date().toISOString();
         saveState(store, env);
         broadcast();
@@ -562,8 +562,8 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       return;
     }
 
-    if (req.method === 'POST' && url.pathname === '/pet') {
-      const state = pet();
+    if (req.method === 'POST' && url.pathname === '/hello') {
+      const state = hello();
       return sendJson(res, 200, { ok: true, state });
     }
 
@@ -635,7 +635,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     snapshot,
     dispatch,
     dismissSession,
-    pet,
+    hello,
     celebrate,
     machine,
     server,

@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('buffy', {
   onUpdate: (callback) => subscribe('update', callback),
   onChime: (callback) => subscribe('chime', callback),
 
-  pet: () => ipcRenderer.invoke('pet'),
+  hello: () => ipcRenderer.invoke('hello'),
   dismissSession: (sessionId) => ipcRenderer.invoke('dismiss-session', sessionId),
   decidePermission: (payload) => ipcRenderer.invoke('permission:decide', payload && typeof payload === 'object' ? payload : {}),
   focusSession: (payload) => ipcRenderer.invoke('session:focus', payload && typeof payload === 'object' ? payload : {}),

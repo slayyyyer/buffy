@@ -816,7 +816,7 @@ function markOnboardingSeen() {
   try {
     writeJson(ONBOARDING_FILE, { seen: true, seenAt: new Date().toISOString() });
   } catch {
-    /* onboarding should never block the pet */
+    /* onboarding should never block the companion */
   }
 }
 
@@ -1027,7 +1027,7 @@ async function promptInstall() {
     type: 'info',
     title: 'Buffy update ready',
     message: `Buffy ${updateReady.version} is ready to install.`,
-    detail: `Restart Buffy to finish the update. Your pet, looks, and preferences stay put. You are running ${app.getVersion()}.`,
+    detail: `Restart Buffy to finish the update. Your companion, looks, and preferences stay put. You are running ${app.getVersion()}.`,
     buttons: ['Restart and install', 'Later'],
     defaultId: 0,
     cancelId: 1,
@@ -1606,9 +1606,9 @@ ipcMain.on('ui:ignore-mouse', (_event, ignore) => {
   }
 });
 
-ipcMain.handle('pet', async () => {
+ipcMain.handle('hello', async () => {
   try {
-    const result = await postJson('/pet', {});
+    const result = await postJson('/hello', {});
     return { ok: true, state: result.state };
   } catch (error) {
     return { ok: false, error: error.message };
