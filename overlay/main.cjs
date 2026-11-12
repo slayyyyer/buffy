@@ -874,7 +874,9 @@ function showOnboarding({ force = false } = {}) {
     },
   });
   setupWindow.setMenuBarVisibility(false);
-  setupWindow.loadFile(path.join(__dirname, 'onboarding.html'));
+  // The version travels with the load so the welcome label is right on first
+  // paint instead of after an IPC round trip.
+  setupWindow.loadFile(path.join(__dirname, 'onboarding.html'), { query: { version: app.getVersion() } });
   setupWindow.once('ready-to-show', () => {
     if (setupWindow && !setupWindow.isDestroyed()) setupWindow.show();
   });

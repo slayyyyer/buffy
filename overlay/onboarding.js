@@ -5,6 +5,12 @@
   const status = document.getElementById('copy-status');
   let statusTimer = null;
 
+  // The main process loads this window with the running version in its query,
+  // so the label is correct before the first paint. Without it the markup's
+  // plain product name stays, rather than naming a version we do not know.
+  const version = new URLSearchParams(window.location.search).get('version');
+  if (version) document.getElementById('app-version').textContent = `Buffy v${version}`;
+
   function announce(message) {
     status.textContent = message;
     clearTimeout(statusTimer);
