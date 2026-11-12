@@ -685,6 +685,12 @@ daemon restart that keeps honouring the file. It also clicks the locked switch
 to prove it cannot be turned on. It opens a window briefly, so it is not part of
 `npm test`.
 
+`node scripts/watch-freebuff-turn.js` waits on the database path instead: it
+polls `/state` and stops on the first session from Freebuff's own database
+(`source: freebuff-db`), so a live local turn is one command rather than manual
+polling. `--port` picks an instance, `--timeout` bounds the wait, `--json`
+prints a single object, and it exits 2 if no turn arrives.
+
 ## Hatching a sprite
 
 `buffy hatch` generates a transparent PNG with OpenAI Images, stores it in
