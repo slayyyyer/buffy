@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 320" width="256" height="320">
+  <g stroke="#3f2a46" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M90 194 C78 200 72 208 72 218 C86 224 106 225 122 220 L128 202 Z" fill="#4b3a68"/>
+    <path d="M166 194 C178 200 184 208 184 218 C170 224 150 225 134 220 L128 202 Z" fill="#4b3a68"/>
+    <path d="M96 198 C106 204 117 207 128 202 C139 207 150 204 160 198" fill="none" stroke="#f6cf7d" stroke-width="2.6"/>
+    <path d="M122 220 L128 202 L134 220" fill="none" stroke="#f6cf7d" stroke-width="2.6"/>
+    <path d="M72 218 C86 224 106 225 122 220" fill="none" stroke="#f6cf7d" stroke-width="2.2" opacity="0.8"/>
+    <path d="M184 218 C170 224 150 225 134 220" fill="none" stroke="#f6cf7d" stroke-width="2.2" opacity="0.8"/>
+  </g>
+  <path d="M128 190 L131 197 L139 198 L133 203 L135 211 L128 206 L121 211 L123 203 L117 198 L125 197 Z"
+    fill="#f6cf7d" stroke="#8a6224" stroke-width="2.2" stroke-linejoin="round"/>
+  <g fill="#f6cf7d">
+    <circle cx="92" cy="209" r="2.4"/>
+    <circle cx="105" cy="215" r="1.8"/>
+    <circle cx="164" cy="208" r="2.4"/>
+    <circle cx="151" cy="215" r="1.8"/>
+    <path d="M86 202 l1.8 4.2 4.2 1.8 -4.2 1.8 -1.8 4.2 -1.8 -4.2 -4.2 -1.8 4.2 -1.8 Z"/>
+  </g>
+  <path d="M112 196 C118 192 138 192 144 196" fill="none" stroke="#8e7ab0" stroke-width="2" opacity="0.8"/>
+</svg>

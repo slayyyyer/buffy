@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 320" width="256" height="320">
+  <g stroke="#4a2b3c" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M86 198 C78 204 74 212 74 222 C90 228 108 228 122 224 L127 206 Z" fill="#fff4e5"/>
+    <path d="M170 198 C178 204 182 212 182 222 C166 228 148 228 134 224 L129 206 Z" fill="#fff4e5"/>
+    <path d="M86 198 C98 208 113 212 127 206" fill="none" stroke="#f4b7c7" stroke-width="3"/>
+    <path d="M170 198 C158 208 143 212 129 206" fill="none" stroke="#f4b7c7" stroke-width="3"/>
+    <path d="M79 216 C91 222 108 223 121 219 M177 216 C165 222 148 223 135 219" fill="none" stroke="#e8a3b4" stroke-width="2.4"/>
+    <path d="M82 220 L82 225 M90 222 L90 227 M98 223 L98 228 M106 223 L106 228 M114 222 L114 227 M120 221 L120 226 M174 220 L174 225 M166 222 L166 227 M158 223 L158 228 M150 223 L150 228 M142 222 L142 227 M136 221 L136 226" stroke="#e8a3b4" stroke-width="1.5"/>
+  </g>
+  <circle cx="97" cy="207" r="2.2" fill="#fffdf4"/>
+  <circle cx="160" cy="207" r="2.2" fill="#fffdf4"/>
+  <circle cx="106" cy="215" r="1.7" fill="#fffdf4"/>
+  <circle cx="151" cy="215" r="1.7" fill="#fffdf4"/>
+  <path d="M128 199 C125 195 120 198 124 203 C125 204 128 207 128 207 C128 207 131 204 132 203 C136 198 131 195 128 199 Z"
+    fill="#e8a3b4" stroke="#8a4c6b" stroke-width="1.6"/>
+</svg>

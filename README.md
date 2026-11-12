@@ -31,14 +31,16 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.0.0**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.1.0**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
-project jumps, sound choices, and per-display corners. 3.0 makes the
-interaction and stored identity companion-first, adds three outfits, and gives
-her a larger face and a three-beat hello:
+project jumps, sound choices, and per-display corners. 3.0 made the interaction
+and stored identity companion-first, added three outfits, and gave her a larger
+face and a three-beat hello. 3.1 adds Pip and Mallow, a portrait-based picker,
+and pose-aligned wardrobes for both new companions:
 
-- [x] Buffy's layered artwork and Mochi's nine-pose atlas, rendered by one engine
+- [x] Buffy's layered artwork and the Mochi, Pip, and Mallow atlases, rendered by one engine
+- [x] four companions with live portrait cards and per-character wardrobes
 - [x] poses: idle, typing left/right, happy, wave, sleepy, reading, tea, gardening
 - [x] reactions: flustered, tapping, squish, waiting, and an explicit-only celebrate
 - [x] full composer for Claude with draft-safe `claude://` handoff
@@ -51,6 +53,22 @@ her a larger face and a three-beat hello:
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+
+### 3.1.0
+
+- **Two more companions.** Pip is a peach comet fox with a star-tipped tail;
+  Mallow is a mint marshmallow bear with a sleepy streak. Both join Buffy and
+  Mochi in the picker and support the same nine shared poses. Their extra
+  reactions map to the closest hand-drawn mood.
+- **A portrait picker.** **Settings → Companion & wardrobe** now shows a live
+  portrait card above each companion's name and tagline. The cards are drawn by
+  the same character engine as the overlay, not stored screenshots.
+- **Wardrobes for the atlas companions.** Pip and Mallow each have two outfits
+  and four accessory variants, plus signature built-in looks. Their overlays
+  stay aligned across all nine poses and sit above the typing, reading, tea,
+  and gardening props.
+- **Settings, plain and simple.** The tray and right-click menu item is now
+  simply **Settings…**.
 
 ### 3.0.0
 
@@ -78,8 +96,8 @@ her a larger face and a three-beat hello:
 - **She has more feelings.** Five new layered reactions: `flustered` when a
   tool reports an error, `tapping` while she needs you, `squish` while the
   context is compacting, `waiting` after a minute of unbroken work, and
-  `celebrate` for a verified pass. Mochi's nine-cell atlas maps each reaction
-  to its closest hand-drawn mood.
+  `celebrate` for a verified pass. The atlas companions' nine-cell art maps
+  each reaction to its closest hand-drawn mood.
 - **Celebration stays honest.** File churn never celebrates. Send it explicitly
   with `buffy celebrate "tests passed"`, or let the Claude hook forward a test
   or build command whose `tool_response` carries an explicit zero exit code.
@@ -150,12 +168,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **3.0.0** ships for Windows, macOS, and Linux:
+Buffy **3.1.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.0.0/Buffy-3.0.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.1.0/Buffy-3.1.0-linux-x86_64.AppImage.sha256)
 
 The packaged app includes Buffy, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
@@ -221,16 +239,21 @@ Buffy uses an asset-driven character system. A character is either layered
 cell per pose. The overlay, wardrobe preview, and settings preview all use the
 same renderer.
 
-**Buffy** is the plush storm-cloud, drawn as layered SVG. **Mochi** is
-a pocket bunny with a 3×3 atlas and exercises the atlas path. Both support:
+**Buffy** is the plush storm-cloud, drawn as layered SVG. **Mochi** is a
+pocket bunny, **Pip** is a comet fox with a star-tipped tail, and **Mallow** is
+a mint marshmallow bear. Mochi, Pip, and Mallow each use a 3×3 atlas and
+exercise the atlas path. Pip and Mallow also ship pose-aligned outfit and
+accessory overlays, with signature built-in looks; Pip has the Comet capelet
+and Stargazer vest, while Mallow has the Marshmallow shrug and Moonlight
+pinafore. All four support:
 
 `idle` · `typingLeft` · `typingRight` · `happy` · `wave` · `sleepy` · `reading` · `tea` · `gardening`
 
 Buffy also reacts to the moment with five extra layered poses: `flustered`
 when a tool reports an error, `tapping` while she needs you, `squish` while the
 context is compacting, `waiting` after a minute of unbroken work, and
-`celebrate` for a verified pass. Mochi's nine-cell atlas maps each reaction to
-its closest mood.
+`celebrate` for a verified pass. The atlas companions map each reaction to
+their closest mood.
 
 A celebration is never inferred from file churn. Send it explicitly after a
 pass you actually saw:
@@ -258,7 +281,7 @@ Clothing selections are stored per character. Unavailable art is disabled in
 the choice list rather than silently deleting a saved selection.
 
 <p align="center">
-  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing the Size control set to Medium, the live character preview in a berry pinafore, and the new outfit chips">
+  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing four companion portraits, the Size control set to Medium, the live character preview in a berry pinafore, and the new outfit chips">
 </p>
 
 ### Daily rotation

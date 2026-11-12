@@ -1475,7 +1475,7 @@ function menuTemplate(fromTray = false) {
       },
     },
     {
-      label: 'Wardrobe & settings…',
+      label: 'Settings…',
       click: () => openSettings('companion').catch((error) => dialog.showErrorBox('Could not open settings', error.message)),
     },
     { type: 'separator' },

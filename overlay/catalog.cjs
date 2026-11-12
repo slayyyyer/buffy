@@ -36,6 +36,10 @@ const SLOTS = [
       { id: 'rainy', label: 'Raincoat', hint: 'A butter-yellow coat and boots.', swatch: ['#ffe09b', '#d8a53d'] },
       { id: 'starlight', label: 'Starlight', hint: 'Deep plum with tiny gold stars.', swatch: ['#3b2340', '#f6cf7d'] },
       { id: 'overalls', label: 'Garden overalls', hint: 'Dusty rose overalls with a leaf pocket.', swatch: ['#e7a7b8', '#7d9d72'] },
+      { id: 'comet', label: 'Comet capelet', hint: 'A plum capelet with a gold star clasp.', swatch: ['#4b3a68', '#f6cf7d'] },
+      { id: 'stargazer', label: 'Stargazer vest', hint: 'A butter vest with constellation buttons.', swatch: ['#e8c77e', '#8a5a3d'] },
+      { id: 'marshmallow', label: 'Marshmallow shrug', hint: 'A cream shrug with a pink ribbed hem.', swatch: ['#fff4e5', '#e8a3b4'] },
+      { id: 'moonlight', label: 'Moonlight pinafore', hint: 'A lavender pinafore top with a tiny moon.', swatch: ['#bda7df', '#f6cf7d'] },
     ],
   },
   {
@@ -129,6 +133,34 @@ const BUILTIN_PRESETS = [
     name: 'Mochi',
     description: 'The atlas bunny, exactly as drawn.',
     look: { outfit: 'none', bow: 'none', hat: 'none', glasses: 'none', wand: 'none', theme: 'rose' },
+  },
+  {
+    id: 'builtin-comet-trail',
+    characterId: 'pip',
+    name: 'Comet trail',
+    description: 'A plum capelet, a gold bow, and a wish on the way.',
+    look: { outfit: 'comet', bow: 'gold', hat: 'none', glasses: 'star', wand: 'heart', theme: 'sky' },
+  },
+  {
+    id: 'builtin-stargazer',
+    characterId: 'pip',
+    name: 'Stargazer',
+    description: 'A butter vest for charting tiny constellations.',
+    look: { outfit: 'stargazer', bow: 'none', hat: 'beret', glasses: 'star', wand: 'none', theme: 'butter' },
+  },
+  {
+    id: 'builtin-moonlit-nap',
+    characterId: 'mallow',
+    name: 'Moonlit nap',
+    description: 'A cream shrug, a lavender bow, and a sleepy moon.',
+    look: { outfit: 'marshmallow', bow: 'lavender', hat: 'none', glasses: 'round', wand: 'star', theme: 'lavender' },
+  },
+  {
+    id: 'builtin-sunbeam',
+    characterId: 'mallow',
+    name: 'Sunbeam',
+    description: 'A straw hat and a moonlight pinafore for garden days.',
+    look: { outfit: 'moonlight', bow: 'none', hat: 'sunhat', glasses: 'none', wand: 'none', theme: 'mint' },
   },
 ];
 

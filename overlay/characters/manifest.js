@@ -20,8 +20,8 @@
     'gardening',
   ];
 
-  // Buffy's layered renderer can express reactions that need new art. Mochi's
-  // atlas stays at the original nine cells and maps these to nearest poses.
+  // Buffy's layered renderer can express reactions that need new art. Atlas
+  // companions stay at the original nine cells and map these to nearest poses.
   const REACTION_POSES = ['flustered', 'tapping', 'squish', 'waiting', 'celebrate'];
   const BUFFY_POSES = [...POSES, ...REACTION_POSES];
 
@@ -71,6 +71,7 @@
         id: 'buffy',
         name: 'Buffy',
         tagline: 'A plush storm-cloud who keeps you company while you build.',
+        shortTagline: 'Your plush storm-cloud.',
         renderer: 'layered',
         size: { width: 512, height: 640 },
         base: 'buffy/base.svg',
@@ -101,6 +102,7 @@
         id: 'mochi',
         name: 'Mochi',
         tagline: 'A pocket bunny with nine hand-drawn moods.',
+        shortTagline: 'A pocket bunny.',
         renderer: 'atlas',
         atlas: 'mochi/poses.svg',
         cell: { width: 256, height: 320 },
@@ -126,6 +128,86 @@
           glasses: 'none',
           wand: 'none',
           theme: 'rose',
+        },
+        supportedPoses: POSES,
+      },
+      {
+        id: 'pip',
+        name: 'Pip',
+        tagline: 'A pocket comet fox with a star-tipped tail.',
+        shortTagline: 'A comet fox with a star tail.',
+        renderer: 'atlas',
+        atlas: 'pip/poses.svg',
+        cell: { width: 256, height: 320 },
+        columns: 3,
+        rows: 3,
+        order: POSES,
+        compactCell: { x: 0, y: 0, width: 256, height: 210 },
+        accessories: {
+          bow: ['none', 'gold'],
+          hat: ['none', 'beret'],
+          glasses: ['none', 'star'],
+          wand: ['none', 'heart'],
+        },
+        accessoryAssets: {
+          bow: { gold: 'pip/accessories/bow-gold.svg' },
+          hat: { beret: 'pip/accessories/hat-beret.svg' },
+          glasses: { star: 'pip/accessories/glasses-star.svg' },
+          wand: { heart: 'pip/accessories/wand-heart.svg' },
+        },
+        outfits: ['none', 'comet', 'stargazer'],
+        outfitAssets: {
+          comet: 'pip/outfits/comet.svg',
+          stargazer: 'pip/outfits/stargazer.svg',
+        },
+        themes: ['butter', 'rose', 'plum', 'mint', 'sky'],
+        defaultLook: {
+          outfit: 'none',
+          bow: 'none',
+          hat: 'none',
+          glasses: 'none',
+          wand: 'none',
+          theme: 'butter',
+        },
+        supportedPoses: POSES,
+      },
+      {
+        id: 'mallow',
+        name: 'Mallow',
+        tagline: 'A mint marshmallow bear with a sleepy streak.',
+        shortTagline: 'A mint marshmallow bear.',
+        renderer: 'atlas',
+        atlas: 'mallow/poses.svg',
+        cell: { width: 256, height: 320 },
+        columns: 3,
+        rows: 3,
+        order: POSES,
+        compactCell: { x: 0, y: 0, width: 256, height: 210 },
+        accessories: {
+          bow: ['none', 'lavender'],
+          hat: ['none', 'sunhat'],
+          glasses: ['none', 'round'],
+          wand: ['none', 'star'],
+        },
+        accessoryAssets: {
+          bow: { lavender: 'mallow/accessories/bow-lavender.svg' },
+          hat: { sunhat: 'mallow/accessories/hat-sunhat.svg' },
+          glasses: { round: 'mallow/accessories/glasses-round.svg' },
+          wand: { star: 'mallow/accessories/wand-star.svg' },
+        },
+        outfits: ['none', 'marshmallow', 'moonlight'],
+        outfitAssets: {
+          marshmallow: 'mallow/outfits/marshmallow.svg',
+          moonlight: 'mallow/outfits/moonlight.svg',
+        },
+        themes: ['mint', 'lavender', 'rose', 'sky'],
+        defaultLook: {
+          outfit: 'none',
+          bow: 'none',
+          hat: 'none',
+          glasses: 'none',
+          wand: 'none',
+          theme: 'mint',
         },
         supportedPoses: POSES,
       },

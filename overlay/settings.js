@@ -258,9 +258,9 @@
         <div class="character-grid" style="margin-top:12px">
           ${catalog.characters
             .map(
-              (entry) => `<button type="button" class="character" data-character="${esc(entry.id)}" aria-pressed="${entry.id === characterId}">
-                <span class="character-orb" aria-hidden="true">${entry.renderer === 'atlas' ? '❀' : '☁'}</span>
-                <span><strong>${esc(entry.name)}</strong><small>${esc(entry.tagline || '')}</small></span>
+              (entry) => `<button type="button" class="character" data-character="${esc(entry.id)}" aria-pressed="${entry.id === characterId}" title="${esc(entry.tagline || '')}">
+                <canvas class="character-thumb" data-character-thumb="${esc(entry.id)}" width="150" height="64" aria-hidden="true"></canvas>
+                <span class="character-copy"><strong>${esc(entry.name)}</strong><small>${esc(entry.shortTagline || entry.tagline || '')}</small></span>
               </button>`,
             )
             .join('')}
@@ -545,6 +545,52 @@
     }
   }
 
+  let thumbToken = 0;
+
+  function renderCharacterThumbs() {
+    const canvases = [...panel.querySelectorAll('[data-character-thumb]')];
+    if (!canvases.length) return;
+    const token = ++thumbToken;
+    for (const canvas of canvases) {
+      const id = canvas.dataset.characterThumb;
+      const entry = catalog?.characters?.find((character) => character.id === id);
+      if (!entry) continue;
+      BuffyCharacters.preload(id).then(() => {
+        if (token !== thumbToken || !canvas.isConnected) return;
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(1, Math.round(rect.width || 150));
+        const height = Math.max(1, Math.round(rect.height || 64));
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        BuffyCharacters.draw(ctx, {
+          characterId: id,
+          look: entry.defaultLook,
+          clothing: { outfit: true, bow: true, hat: true, glasses: true, wand: true },
+          state: 'idle',
+          category: 'thinking',
+          hobby: null,
+          now: 1000,
+          width,
+          height,
+          baseY: height,
+          compact: true,
+          cursor: null,
+          reducedMotion: true,
+          thoughtBubbles: 'off',
+          greeting: false,
+          pending: 0,
+          waiting: false,
+          celebration: false,
+          stateSince: 0,
+        });
+      });
+    }
+  }
+
   function render() {
     const meta = SECTIONS[section] || SECTIONS.companion;
     title.textContent = meta.title;
@@ -561,6 +607,7 @@
       else button.removeAttribute('aria-current');
     });
     renderPanel();
+    renderCharacterThumbs();
   }
 
   async function wearLook(id) {

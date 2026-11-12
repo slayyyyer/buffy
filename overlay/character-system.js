@@ -29,10 +29,10 @@
     } else {
       if (character.base) list.push(character.base);
       for (const file of Object.values(character.poses || {})) list.push(file);
-      for (const file of Object.values(character.outfitAssets || {})) list.push(file);
-      for (const slot of Object.values(character.accessoryAssets || {})) {
-        for (const file of Object.values(slot || {})) list.push(file);
-      }
+    }
+    for (const file of Object.values(character.outfitAssets || {})) list.push(file);
+    for (const slot of Object.values(character.accessoryAssets || {})) {
+      for (const file of Object.values(slot || {})) list.push(file);
     }
     return [...new Set(list.filter(Boolean))];
   }
@@ -100,8 +100,8 @@
     return themeOf(theme).accent;
   }
 
-  // The five reaction poses are layered art on Buffy only. Mochi's atlas keeps
-  // its nine hand-drawn cells, so reactions fall back to the closest mood.
+  // The five reaction poses are layered art on Buffy only. Atlas companions
+  // keep their nine hand-drawn cells, so reactions fall back to the closest mood.
   const ATLAS_FALLBACK = {
     flustered: 'idle',
     tapping: 'idle',
@@ -1042,11 +1042,22 @@
         ctx.drawImage(atlas, sx, sy, cellW, cellH, 0, 0, drawWidth, drawHeight);
       }
       ctx.restore();
-      if (!compact && clothing.bow !== false && look.bow && look.bow !== 'none') {
-        const bowRel = character.accessoryAssets?.bow?.[look.bow];
-        drawImage(imageFor(character.id, bowRel), bowRel);
+      if (!compact && clothing.outfit !== false && look.outfit && look.outfit !== 'none') {
+        const outfitRel = character.outfitAssets?.[look.outfit];
+        drawImage(imageFor(character.id, outfitRel), outfitRel);
       }
       if (!compact) {
+        const drawAccessory = (slot) => {
+          if (clothing[slot] === false) return;
+          const value = look[slot];
+          if (!value || value === 'none') return;
+          const rel = character.accessoryAssets?.[slot]?.[value];
+          drawImage(imageFor(character.id, rel), rel);
+        };
+        drawAccessory('glasses');
+        drawAccessory('hat');
+        drawAccessory('bow');
+        if (pose === 'idle' && !hobby) drawAccessory('wand');
         drawStateEffects(ctx, {
           x: 0,
           y: 0,
