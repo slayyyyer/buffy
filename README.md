@@ -6,7 +6,7 @@ keeps her own little life, and can carry a prompt into Claude without sending
 it for you.
 
 <p align="center">
-  <img src="docs/shots/buffy.png" width="260" alt="Buffy, a plush storm-cloud companion with a dark face screen">
+  <img src="docs/shots/buffy.png" width="260" alt="Buffy, a plush storm-cloud companion in a lavender cloud hoodie with heart eyes">
 </p>
 
 <p align="center">
@@ -183,7 +183,7 @@ Claude connection, and where state lives. Reopen it from the tray or with
 `buffy overlay --onboarding`.
 
 <p align="center">
-  <img src="docs/shots/overlay.png" width="360" alt="Buffy's overlay, idle with the pending badge and the toolbar">
+  <img src="docs/shots/overlay.png" width="360" alt="Buffy's overlay showing a heart-eyed hello in starry pajamas with a That tickles! bubble and the toolbar">
 </p>
 
 ## Compose for Claude
@@ -211,7 +211,7 @@ Buffy's composer is a draft tray, not a send button with a text field.
   in-flight handoff.
 
 <p align="center">
-  <img src="docs/shots/compose.png" width="360" alt="Buffy's composer with a draft prompt and Open in Claude button">
+  <img src="docs/shots/compose.png" width="360" alt="Buffy's composer with a draft prompt, a Hi pill, and the Open in Claude button">
 </p>
 
 ## Characters, wardrobe, and poses
@@ -258,7 +258,7 @@ Clothing selections are stored per character. Unavailable art is disabled in
 the choice list rather than silently deleting a saved selection.
 
 <p align="center">
-  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing the Size control set to Medium, the live character preview, and wardrobe controls">
+  <img src="docs/shots/settings.png" width="760" alt="Buffy settings showing the Size control set to Medium, the live character preview in a berry pinafore, and the new outfit chips">
 </p>
 
 ### Daily rotation
@@ -637,7 +637,7 @@ npm run dist:linux
 npm test                 # unit and integration coverage
 npm start                # run the overlay from source
 npx electron . --smoke-test --no-sandbox
-npx electron . --shot docs/shots/overlay.png --shot-exit
+npx electron . --shot docs/shots/overlay.png --shot-mode hello --shot-exit
 npx electron . --shot docs/shots/settings.png --shot-mode settings --shot-exit
 ```
 

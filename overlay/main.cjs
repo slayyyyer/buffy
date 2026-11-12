@@ -776,6 +776,11 @@ function createWindow() {
             } else if (shotMode === 'compact') {
               setMode('compact');
               await sleep(700);
+            } else if (shotMode === 'hello') {
+              await win.webContents.executeJavaScript(
+                "document.querySelector('[data-action=\"hello\"]').click()",
+              );
+              await sleep(500);
             }
             const image = await win.webContents.capturePage();
             const target = path.resolve(shotPath);
