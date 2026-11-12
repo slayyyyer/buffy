@@ -612,6 +612,87 @@ h1 em::after {
   font-size: 0.88em;
 }
 
+.section.companion-section {
+  padding-top: 0;
+  padding-bottom: 88px;
+  scroll-margin-top: 92px;
+}
+
+.companion-heading {
+  max-width: 650px;
+}
+
+.companion-gallery {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.companion-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 253, 251, 0.72);
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.companion-card:hover {
+  border-color: rgba(166, 46, 110, 0.3);
+  background: var(--paper);
+  transform: translateY(-2px);
+}
+
+.companion-portrait {
+  display: grid;
+  aspect-ratio: 256 / 210;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffe6f0, #ffd3e5);
+}
+
+.companion-card:nth-child(4n + 2) .companion-portrait {
+  background: linear-gradient(145deg, #f0e7ff, #e3d4ff);
+}
+
+.companion-card:nth-child(4n + 3) .companion-portrait {
+  background: linear-gradient(145deg, #e3f8ff, #d2efff);
+}
+
+.companion-card:nth-child(4n + 4) .companion-portrait {
+  background: linear-gradient(145deg, #e4fff3, #cdf4e2);
+}
+
+.companion-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 6px rgba(91, 38, 77, 0.12));
+}
+
+.companion-card-buffy .companion-portrait img {
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.companion-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .screenshots-section {
   padding: 88px 0 96px;
   border-top: 1px solid var(--line);
@@ -1008,6 +1089,12 @@ h1 em::after {
   }
 }
 
+@media (max-width: 1100px) {
+  .companion-gallery {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
@@ -1029,6 +1116,11 @@ h1 em::after {
   .how-section {
     grid-template-columns: 1fr;
     gap: 34px;
+  }
+
+  .companion-gallery {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .install-card {
@@ -1056,7 +1148,8 @@ h1 em::after {
   }
 
   .nav-links a:nth-child(1),
-  .nav-links a:nth-child(2) {
+  .nav-links a:nth-child(2),
+  .nav-links a:nth-child(3) {
     display: none;
   }
 
@@ -1113,6 +1206,31 @@ h1 em::after {
 
   .feature-card {
     padding: 22px;
+  }
+
+  .section.companion-section {
+    padding-top: 0;
+    padding-bottom: 65px;
+  }
+
+  .companion-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .companion-card {
+    gap: 6px;
+    padding: 6px 6px 8px;
+    border-radius: 14px;
+  }
+
+  .companion-portrait {
+    border-radius: 10px;
+  }
+
+  .companion-name {
+    font-size: 10.5px;
+    white-space: normal;
   }
 
   .shot-art {
