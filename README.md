@@ -562,6 +562,10 @@ Freebuff has no user-installable lifecycle hook stream. Buffy uses two signals:
   marked block asking the agent to send thinking/working/needs-you/done events.
   Agents can ignore it.
 
+The database signal needs a locally executed turn: threads whose
+`execution_target` is `cloud` never write `turn_state` or `messages`, so the
+database reader stays silent for them and only a local-target turn can be seen.
+
 The watcher is local (`fs.watch` + a periodic `git status`) and does not read
 file contents or upload anything. **Settings → Connection** can disable it; the
 daemon restarts to apply the change.
