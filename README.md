@@ -31,7 +31,7 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.3.0**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.3.1**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
 project jumps, sound choices, and per-display corners. 3.0 made the interaction
@@ -62,6 +62,15 @@ session from looking like live work:
 - [x] a 90-second liveness clock that marks a silent session quiet without deleting it
 - [x] pose hysteresis so a tool boundary cannot strobe the art
 - [x] readiness reported per adapter in `/health`, `/state`, and `buffy status`
+
+### 3.3.1
+
+- **A one-command check for a real turn.** `scripts/watch-freebuff-turn.js`
+  watches `/state` and reports the first session from Freebuff's own database,
+  so a live turn does not need manual polling.
+- **Honest scope for the database reader.** The Freebuff section now records
+  that threads with `execution_target` `cloud` never write `turn_state` or
+  `messages`, so only a local-target turn can be seen.
 
 ### 3.3.0
 
