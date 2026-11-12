@@ -44,6 +44,14 @@ const TOOL_CATEGORIES = new Map([
   ['grepsearch', 'searching'],
   ['searchfilecontent', 'searching'],
   ['googlewebsearch', 'searching'],
+  // Freebuff and other harnesses name their tools differently; the shared
+  // vocabulary keeps one activity category for every source.
+  ['codesearch', 'searching'],
+  ['searchcodebase', 'searching'],
+  ['readfiles', 'reading'],
+  ['strreplace', 'editing'],
+  ['applypatch', 'editing'],
+  ['runterminalcommand', 'running'],
   ['todowrite', 'planning'],
   ['todo', 'planning'],
 ]);

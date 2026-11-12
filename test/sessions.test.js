@@ -8,7 +8,12 @@ import { readConfig } from '../src/config.js';
 import { startDaemon } from '../src/daemon.js';
 
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'buffy-sessions-'));
-const env = { ...process.env, BUFFY_HOME: home };
+const env = {
+  ...process.env,
+  BUFFY_HOME: home,
+  BUFFY_FREEBUFF_HOME: `${home}/no-freebuff`,
+  CLAUDE_CONFIG_DIR: `${home}/no-claude`,
+};
 delete env.BUFFY_PORT;
 
 const baseConfig = readConfig(env);

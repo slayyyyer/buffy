@@ -185,6 +185,24 @@
     </div>`;
   }
 
+  // A source config.json has switched off cannot be changed from here, so the
+  // switch is shown locked with the reason instead of silently doing nothing.
+  function sourceLocked(key) {
+    return data.sources?.[key]?.locked === true;
+  }
+
+  function sourceNote(key) {
+    return sourceLocked(key)
+      ? '<p class="note rose">Turned off in <span class="mono">~/.buffy/config.json</span>. Remove that line to use this switch.</p>'
+      : '';
+  }
+
+  // Saving a source switch restarts the daemon for you, so the toast says that
+  // instead of asking for a manual restart.
+  function sourceToast(name, enabled) {
+    return enabled ? `${name} enabled. Buffy restarts its daemon to apply it.` : `${name} disabled.`;
+  }
+
   function card(titleText, hint, body, extra = '') {
     return `<section class="card">
       <h2>${esc(titleText)}</h2>
@@ -447,6 +465,16 @@
     );
   }
 
+  function describeAdapter(adapter) {
+    if (!adapter) return 'Starting';
+    if (adapter.enabled === false) return 'Off';
+    if (adapter.error) return `Error: ${adapter.error}`;
+    if (!adapter.available) return adapter.reason || 'Unavailable';
+    if (Number.isFinite(adapter.projects)) return `${adapter.projects} project(s)`;
+    if (Number.isFinite(adapter.transcripts)) return `${adapter.transcripts} transcript(s)`;
+    return 'Ready';
+  }
+
   function renderConnection() {
     const connections = data.connections || { claude: data.connection || {} };
     const health = data.health;
@@ -470,8 +498,36 @@
       card(
         'Freebuff watcher',
         'Freebuff has no hook stream. Buffy watches the project for file activity and labels those events as inferred.',
-        toggleRow('watcher', 'Watch repository activity', 'Working and settled states from local file changes.', prefs.connection.freebuffWatcher !== false, 'data-watcher') +
-          '<p class="note rose">Inferred activity never becomes a permission request and never produces a completion notification.</p>',
+        toggleRow(
+          'watcher',
+          'Watch repository activity',
+          'Working and settled states from local file changes.',
+          !sourceLocked('freebuffWatcher') && prefs.connection.freebuffWatcher !== false,
+          `data-watcher${sourceLocked('freebuffWatcher') ? ' disabled' : ''}`,
+        ) +
+          '<p class="note rose">Inferred activity never becomes a permission request and never produces a completion notification.</p>' +
+          sourceNote('freebuffWatcher'),
+      ),
+      card(
+        'Local session evidence',
+        'Two read-only sources, each covering a gap the hooks and the watcher cannot. Neither one sends anything, approves a tool, or reports a passing test.',
+        toggleRow(
+          'freebuff-database',
+          'Read Freebuff’s session database',
+          'Follows a running Freebuff turn from desktop-v2.db, read-only, when the AGENTS.md checkpoints have gone quiet.',
+          !sourceLocked('freebuffDatabase') && prefs.connection.freebuffDatabase !== false,
+          `data-source="freebuffDatabase"${sourceLocked('freebuffDatabase') ? ' disabled' : ''}`,
+        ) +
+          sourceNote('freebuffDatabase') +
+          toggleRow(
+            'claude-transcript',
+            'Follow Claude transcripts when hooks are quiet',
+            'Tails the newest ~/.claude transcript only while the Claude hook is not delivering events.',
+            !sourceLocked('claudeTranscript') && prefs.connection.claudeTranscript !== false,
+            `data-source="claudeTranscript"${sourceLocked('claudeTranscript') ? ' disabled' : ''}`,
+          ) +
+          sourceNote('claudeTranscript') +
+          '<p class="note rose">Both are labeled inferred, except Freebuff’s own recorded turn. Turning one off makes it silent, never guesses: the remaining sources still work.</p>',
       ),
       card(
         'Local daemon',
@@ -481,6 +537,8 @@
           <span>Watcher</span><strong>${watch?.enabled ? esc(watch.directory) : esc(watch?.reason || 'starting')}</strong>
           <span>Quiet window</span><strong>${watch?.quietMs ? `${Math.round(watch.quietMs / 1000)}s` : '—'}</strong>
           <span>Pending</span><strong>${esc(health?.pendingRequests ?? 0)} request(s)</strong>
+          <span>Freebuff db</span><strong>${esc(describeAdapter(health?.adapters?.freebuff))}</strong>
+          <span>Claude transcripts</span><strong>${esc(describeAdapter(health?.adapters?.claudeTranscript))}</strong>
         </div>
         <div class="row-actions"><button type="button" class="button" data-restart-daemon>Restart daemon</button></div>`,
       ),
@@ -865,7 +923,16 @@
     if (target.matches('[data-watcher]')) {
       prefs.connection.freebuffWatcher = target.checked;
       scheduleSave();
-      toast('Watcher preference saved. Restart the daemon to apply it.');
+      toast(sourceToast('Repository watcher', target.checked));
+      return;
+    }
+    if (target.matches('[data-source]')) {
+      const key = target.dataset.source;
+      const names = { freebuffDatabase: 'Freebuff session reader', claudeTranscript: 'Claude transcript fallback' };
+      if (!names[key]) return;
+      prefs.connection[key] = target.checked;
+      scheduleSave();
+      toast(sourceToast(names[key], target.checked));
       return;
     }
     if (target.matches('[data-update]')) {

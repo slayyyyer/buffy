@@ -6,8 +6,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buffyDir, buffyFile, ensureBuffyDir, readConfig, VERSION, STATES } from './config.js';
+import { createFreebuffAdapter, FREEBUFF_SESSION_ID, freebuffProjectsRoot } from './freebuff.js';
 import { createMachine, normalizeState } from './machine.js';
 import { applyIdleDecay, createState, levelFromXp, loadState, saveState, clamp } from './state.js';
+import { claudeProjectsRoot, createTranscriptAdapter } from './transcript.js';
 import { createWatcher } from './watcher.js';
 
 const MOOD = { idle: 0, thinking: 0, working: 0, 'needs-you': -3, done: 3, error: -6 };
@@ -71,7 +73,11 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   applyIdleDecay(store, Date.now());
   store.counters.sessions += 1;
 
-  const machine = createMachine({ doneHoldMs: config.doneHoldMs, sessionTtlMs: config.sessionTtlMs });
+  const machine = createMachine({
+    doneHoldMs: config.doneHoldMs,
+    sessionTtlMs: config.sessionTtlMs,
+    livenessMs: config.livenessMs,
+  });
   const clients = new Set();
   const decisions = new Map();
   // This token is written only to the user's runtime file. It keeps a browser
@@ -86,6 +92,12 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
   let lastDispatchSession = null;
   let server = null;
   let watcher = null;
+  let freebuffAdapter = null;
+  let transcriptAdapter = null;
+  let adapters = {
+    freebuff: { enabled: config.freebuff?.enabled !== false, available: false, reason: 'starting' },
+    claudeTranscript: { enabled: config.claudeTranscript?.enabled !== false, available: false, reason: 'starting' },
+  };
   let watchInfo = {
     enabled: false,
     directory: null,
@@ -135,6 +147,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       reaction: reaction && now - reaction.at < 10_000 ? reaction : null,
       celebration: celebration && now - celebration.at < 8_000 ? celebration : null,
       watch: watchInfo,
+      adapters,
     };
   }
 
@@ -342,6 +355,86 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
    * the turn. It never overrides an unanswered needs-you alert, and it only
    * settles a state that the watcher itself set.
    */
+  /**
+   * A pushed event from the agent itself beats anything an adapter infers, for
+   * a short grace window. Both Freebuff sources share one session, so the
+   * stronger signal simply keeps the session rather than adding a duplicate.
+   * An unanswered question is never overridden at all.
+   */
+  function explicitSessionFresh(sessionId, graceMs, selfSource = null) {
+    const session = machine.getSession(sessionId);
+    if (!session) return false;
+    // An adapter must never yield to its own last event, or it would go quiet
+    // for the whole grace window after every update it makes.
+    if (selfSource && session.source === selfSource) return false;
+    if (session.state === 'needs-you') return true;
+    if (session.observed !== 'explicit') return false;
+    const at = Number(session.updatedAt) || 0;
+    return Date.now() - at < Math.max(0, Number(graceMs) || 0);
+  }
+
+  /**
+   * The two evidence adapters. Neither can celebrate, resolve a request, or
+   * write anything: they only read a local file and report what it says.
+   */
+  function startAdapters() {
+    const freebuffConfig = config.freebuff || {};
+    if (freebuffConfig.enabled !== false) {
+      freebuffAdapter = createFreebuffAdapter({
+        root: freebuffProjectsRoot(env),
+        pollMs: freebuffConfig.pollMs,
+        idlePollMs: freebuffConfig.idlePollMs,
+        staleMs: freebuffConfig.staleMs,
+        maxProjects: freebuffConfig.maxProjects,
+        now: Date.now,
+        shouldYield: () =>
+          explicitSessionFresh(FREEBUFF_SESSION_ID, freebuffConfig.explicitGraceMs, 'freebuff-db'),
+        onEvent: (event) => {
+          try {
+            dispatch({ ...event, source: 'freebuff-db', sessionId: FREEBUFF_SESSION_ID });
+          } catch {
+            /* a malformed row must not stop the daemon */
+          }
+        },
+        onInfo: (next) => {
+          adapters = { ...adapters, freebuff: next };
+        },
+      });
+      adapters = { ...adapters, freebuff: freebuffAdapter.state() };
+      void freebuffAdapter.start();
+    } else {
+      adapters = { ...adapters, freebuff: { enabled: false, available: false, reason: 'disabled' } };
+    }
+
+    const transcriptConfig = config.claudeTranscript || {};
+    if (transcriptConfig.enabled !== false) {
+      transcriptAdapter = createTranscriptAdapter({
+        root: claudeProjectsRoot(env),
+        pollMs: transcriptConfig.pollMs,
+        activeMs: transcriptConfig.activeMs,
+        stuckMs: transcriptConfig.stuckMs,
+        doneWindowMs: transcriptConfig.doneWindowMs,
+        now: Date.now,
+        shouldYield: (event) =>
+          explicitSessionFresh(event.sessionId, transcriptConfig.explicitGraceMs),
+        onEvent: (event) => {
+          try {
+            dispatch({ ...event, source: 'claude-transcript' });
+          } catch {
+            /* a malformed transcript must not stop the daemon */
+          }
+        },
+        onInfo: (next) => {
+          adapters = { ...adapters, claudeTranscript: next };
+        },
+      });
+      adapters = { ...adapters, claudeTranscript: transcriptAdapter.state() };
+      void transcriptAdapter.start();
+    } else {
+      adapters = { ...adapters, claudeTranscript: { enabled: false, available: false, reason: 'disabled' } };
+    }
+  }
+
   function startWatch() {
     const watchConfig = config.watch || {};
     if (watchConfig.enabled === false) {
@@ -432,7 +525,9 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
         port: server.address()?.port ?? null,
         states: STATES,
         doneHoldMs: config.doneHoldMs,
+        livenessMs: config.livenessMs,
         watch: watchInfo,
+        adapters,
         pendingRequests: snapshot().pendingRequests ?? 0,
         decisions: true,
         overlayConnected: clients.size > 0,
@@ -593,6 +688,7 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
       server.listen(port, '127.0.0.1');
     });
     startWatch();
+    startAdapters();
     return server.address().port;
   }
 
@@ -611,6 +707,10 @@ export function createDaemon({ config = readConfig(), env = process.env } = {}) 
     const currentWatcher = watcher;
     watcher = null;
     await currentWatcher?.close();
+    freebuffAdapter?.close();
+    freebuffAdapter = null;
+    transcriptAdapter?.close();
+    transcriptAdapter = null;
     clearInterval(doneTimer);
     for (const res of clients) {
       try {

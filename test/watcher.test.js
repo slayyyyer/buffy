@@ -11,7 +11,12 @@ import { isIgnored } from '../src/watcher.js';
 
 const project = fs.mkdtempSync(path.join(os.tmpdir(), 'buffy-watch-'));
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'buffy-watch-home-'));
-const env = { ...process.env, BUFFY_HOME: home };
+const env = {
+  ...process.env,
+  BUFFY_HOME: home,
+  BUFFY_FREEBUFF_HOME: `${home}/no-freebuff`,
+  CLAUDE_CONFIG_DIR: `${home}/no-claude`,
+};
 delete env.BUFFY_PORT;
 
 const hasGit = spawnSync('git', ['--version'], { encoding: 'utf8' }).status === 0;

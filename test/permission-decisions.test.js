@@ -15,7 +15,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BIN = path.join(ROOT, 'bin', 'buffy.js');
 
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'buffy-decisions-'));
-const env = { ...process.env, BUFFY_HOME: home };
+const env = {
+  ...process.env,
+  BUFFY_HOME: home,
+  BUFFY_FREEBUFF_HOME: `${home}/no-freebuff`,
+  CLAUDE_CONFIG_DIR: `${home}/no-claude`,
+};
 delete env.BUFFY_PORT;
 const prefsFile = path.join(home, 'preferences.json');
 

@@ -72,7 +72,12 @@ const PNG = makePng();
 
 function tempHome() {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'buffy-hatch-'));
-  const env = { ...process.env, BUFFY_HOME: home };
+  const env = {
+    ...process.env,
+    BUFFY_HOME: home,
+    BUFFY_FREEBUFF_HOME: `${home}/no-freebuff`,
+    CLAUDE_CONFIG_DIR: `${home}/no-claude`,
+  };
   delete env.BUFFY_PORT;
   delete env.OPENAI_API_KEY;
   return { home, env };

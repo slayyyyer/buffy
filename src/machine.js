@@ -111,23 +111,30 @@ function requestIdFor(sessionId, request) {
  * A permission prompt or question survives unrelated parallel tool completions;
  * only a matching request id (or a safe tool-name fallback) resolves it.
  *
- * Three distinct lifecycles are kept apart:
+ * Four distinct lifecycles are kept apart:
  *  - `done` is presented for doneHoldMs (about 30s by default);
  *  - a recent completion stays in `recentCompletions` for recentCompletionMs
  *    (about five minutes) even after an idle reminder or after the presentation
  *    window ends;
+ *  - a working session goes `quiet` after livenessMs (about 90s) with no new
+ *    event. It is still active — a long build reports nothing — but Buffy stops
+ *    presenting it as live activity. This is much shorter than the 30-minute
+ *    sweep, which is what a dead adapter needs;
  *  - a quiet session expires after sessionTtlMs (about 30 minutes).
  */
 export function createMachine({
   doneHoldMs = 30_000,
   sessionTtlMs = DEFAULT_SESSION_TTL_MS,
   recentCompletionMs = 5 * 60_000,
+  livenessMs = 90_000,
 } = {}) {
   const hold = Math.max(0, Number(doneHoldMs) || 0);
   const ttlValue = Number(sessionTtlMs);
   const ttl = Number.isFinite(ttlValue) ? Math.max(0, ttlValue) : DEFAULT_SESSION_TTL_MS;
   const recentHoldValue = Number(recentCompletionMs);
   const recentHold = Number.isFinite(recentHoldValue) ? Math.max(0, recentHoldValue) : 5 * 60_000;
+  const livenessValue = Number(livenessMs);
+  const liveness = Number.isFinite(livenessValue) ? Math.max(1_000, livenessValue) : 90_000;
 
   const sessions = new Map();
   const recentCompletions = new Map();
@@ -156,8 +163,13 @@ export function createMachine({
     };
   }
 
-  function publicSession(session) {
+  function publicSession(session, at = Date.now()) {
     const requests = [...session.requests.values()].sort((a, b) => a.createdAt - b.createdAt);
+    // Liveness is about not claiming activity that never arrived. The session
+    // stays exactly where it is, so a five-minute build is not forgotten.
+    const quietForMs = Math.max(0, at - session.updatedAt);
+    const quiet =
+      !requests.length && (session.state === 'thinking' || session.state === 'working') && quietForMs >= liveness;
     return {
       id: session.id,
       state: session.state,
@@ -173,6 +185,8 @@ export function createMachine({
       recentUntil: session.recentUntil ?? null,
       requests: requests.map(publicRequest),
       pendingRequests: requests.length,
+      quiet,
+      quietForMs: quiet ? quietForMs : 0,
     };
   }
 
@@ -288,6 +302,8 @@ export function createMachine({
         recentUntil: null,
         requests: [],
         pendingRequests: 0,
+        quiet: false,
+        quietForMs: 0,
         pendingRequestsList: pendingRequests,
         recentCompletions: recent,
         lastIdleReminder,
@@ -316,7 +332,9 @@ export function createMachine({
       pendingRequestsList: pendingRequests,
       recentCompletions: recent,
       lastIdleReminder,
-      sessions: active.map(publicSession),
+      quiet: top.requests.size === 0 && (top.state === 'thinking' || top.state === 'working') && now - top.updatedAt >= liveness,
+      quietForMs: top.requests.size === 0 && (top.state === 'thinking' || top.state === 'working') ? Math.max(0, now - top.updatedAt) : 0,
+      sessions: active.map((session) => publicSession(session, now)),
       now,
     };
   }
@@ -531,7 +549,7 @@ export function createMachine({
 
   function getSession(id) {
     const session = sessions.get(normalizeSessionId(id));
-    return session ? publicSession(session) : null;
+    return session ? publicSession(session, Date.now()) : null;
   }
 
   function dismiss(id, now = Date.now()) {

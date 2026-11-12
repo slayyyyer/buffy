@@ -31,7 +31,7 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.2.0**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.3.0**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
 project jumps, sound choices, and per-display corners. 3.0 made the interaction
@@ -39,7 +39,8 @@ and stored identity companion-first, added three outfits, and gave her a larger
 face and a three-beat hello. 3.1 introduced Pip and Mallow, a portrait-based
 picker, and pose-aligned wardrobes for both new companions. 3.2 expands the cast
 to twenty-two companions, adds Buffy's dress collection, and keeps every
-portrait in proportion:
+portrait in proportion. 3.3 reads two more local sources and stops a silent
+session from looking like live work:
 
 - [x] Buffy's layered artwork and the 21 atlas companions, rendered by one engine
 - [x] twenty-two companions with live portrait cards and per-character looks
@@ -56,6 +57,47 @@ portrait in proportion:
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] local-only dictation surfaced honestly; no cloud fallback is used
+- [x] Freebuff's own session database read read-only, so a running turn is explicit
+- [x] a zero-config Claude transcript fallback that yields to installed hooks
+- [x] a 90-second liveness clock that marks a silent session quiet without deleting it
+- [x] pose hysteresis so a tool boundary cannot strobe the art
+- [x] readiness reported per adapter in `/health`, `/state`, and `buffy status`
+
+### 3.3.0
+
+- **Freebuff's own turn record.** Buffy now reads Freebuff Desktop's
+  `desktop-v2.db` for each project, read-only, and maps the recorded turn onto
+  her states: reasoning, reading, searching, editing, running a command,
+  compacting, delegating, a failed tool, and a finished turn. The `AGENTS.md`
+  checkpoints are still the explicit source — while one of those events is
+  fresh, the database stays quiet and the two share one session instead of
+  showing two. Nothing is written to the database and nothing leaves the
+  machine. Between turns it only stats each project's database and WAL: an
+  unchanged tick opens no database at all, and while nothing is running it backs
+  off to `idlePollMs`. A live turn keeps the normal cadence so its heartbeat is
+  still checked. **Settings → Connection → Local session evidence** has a switch
+  for this source, the Claude transcript source, and the watcher, and the daemon
+  card reports what each one last found. A `false` in `config.json` wins over
+  all of those switches and locks them.
+- **A Claude fallback that needs no setup.** If the Claude hook is missing, was
+  removed by an update, or points at a moved install, Buffy tails the newest
+  `~/.claude/projects/*/*.jsonl` transcript instead. A tool call with no result
+  is working, a finished turn is done, and a call that never returns is
+  abandoned after ten minutes. It reports itself as inferred, shares the hook's
+  session id, and stays silent whenever the hook is still delivering.
+- **Quiet, not gone.** A session with no new event for 90 seconds is marked
+  `quiet`. Buffy keeps it in the list and stops presenting it as live work, so
+  a five-minute build is not mistaken for a dead agent — and a dead adapter is
+  not mistaken for a five-minute build. An unanswered permission request is
+  never quiet.
+- **No more strobing.** A pose must persist for 250ms and the current pose is
+  held for at least 380ms, so a `PreToolUse`/`PostToolUse` pair no longer makes
+  her flicker between reading and typing. A calmer pose also cannot interrupt a
+  louder one, so a finished tool never wipes a celebration. Her typing hands
+  still alternate.
+- **Honest about what it can see.** A transcript that goes silent is never
+  turned into a question, and neither adapter can celebrate a pass. Only an
+  explicit zero exit code still does that.
 
 ### 3.2.0
 
@@ -585,6 +627,23 @@ Legacy `~/.buffy/wardrobe.json` and `config.overlay` settings migrate into
   "port": 4517,
   "doneHoldMs": 30000,
   "sessionTtlMs": 1800000,
+  "livenessMs": 90000,
+  "freebuff": {
+    "enabled": true,
+    "pollMs": 1000,
+    "idlePollMs": 5000,
+    "staleMs": 120000,
+    "maxProjects": 4,
+    "explicitGraceMs": 120000
+  },
+  "claudeTranscript": {
+    "enabled": true,
+    "pollMs": 1500,
+    "activeMs": 900000,
+    "stuckMs": 600000,
+    "doneWindowMs": 60000,
+    "explicitGraceMs": 120000
+  },
   "watch": {
     "enabled": true,
     "directory": null,
@@ -602,8 +661,29 @@ Legacy `~/.buffy/wardrobe.json` and `config.overlay` settings migrate into
 ```
 
 `BUFFY_PORT` overrides the port for one process. `BUFFY_HOME` relocates all
-state (used by tests). Preferences are edited through the settings window; the
-main process normalizes them before every save.
+state (used by tests). `BUFFY_FREEBUFF_HOME` and `CLAUDE_CONFIG_DIR` relocate
+the two databases and transcripts those adapters read. Preferences are edited
+through the settings window; the main process normalizes them before every
+save.
+
+A source switched off in this file — `watch.enabled`, `freebuff.enabled`, or
+`claudeTranscript.enabled` — stays off: **Settings → Connection** shows that
+switch locked and says why, and the app will not turn it back on. Otherwise the
+Settings toggle decides, and `enabled: true` (or no `enabled` line at all) is
+only a default. That order is deliberate: a hand-edited file is a statement the
+app must not silently undo, while a toggle is meant to be reversible.
+
+`livenessMs` is how long a session may go without an event before it is shown
+as quiet; it is independent of `sessionTtlMs`, which is when the session is
+finally dropped.
+
+`node scripts/verify-config-precedence.js` checks that order end to end: it
+starts the app against a temporary home whose `config.json` and preferences
+disagree, asserts the daemon health and the locked Connection switch, then flips
+the watcher and the Claude transcript switch and confirms each toast and a real
+daemon restart that keeps honouring the file. It also clicks the locked switch
+to prove it cannot be turned on. It opens a window briefly, so it is not part of
+`npm test`.
 
 ## Hatching a sprite
 
@@ -623,6 +703,11 @@ the command; the key is never written to Buffy state or logged.
   request is `buffy hatch`, which sends the prompt to the configured image API
   using your `OPENAI_API_KEY`.
 - The watcher is local and never reads file contents.
+- The Freebuff and Claude adapters open their local files read-only, inside the
+  same machine, and never write to them. Both can be switched off in
+  **Settings → Connection → Local session evidence** or in `~/.buffy/config.json`,
+  where an explicit `false` is final. Neither can send a prompt, answer a
+  permission request, or report a passing test.
 - The composer deliberately cannot send a prompt. It hands a URL to the OS and
   clears the draft only after a successful launch with no intervening edit.
 - Buffy never installs Cursor's `preToolUse` permission hook, so the companion
@@ -648,9 +733,9 @@ the command; the key is never written to Buffy state or logged.
 - **Allow once / Deny is missing.** Enable **Settings → Connection → Permission
   decisions from Buffy**. It only appears while Claude's hook is waiting (up to
   eight seconds) and the overlay is connected; otherwise Claude prompts normally.
-- **Watcher does not react.** Check **Settings → Connection**; the watched
-  directory is the daemon's working directory. Restart the daemon after
-  changing the watcher switch or start it from the project root.
+- **Watcher does not react.** Check **Settings → Connection**. Changing the
+  watch switch restarts the daemon for you; the watched directory itself is the
+  daemon's working directory, so start it from the project root.
 - **Update is waiting.** Finish or clear the draft, then use the tray or
   **Settings → Updates** to restart explicitly. Buffy does not install updates
   behind an open draft.

@@ -102,6 +102,9 @@
     pillDirty: false,
     pillBlocked: false,
     audio: null,
+    poseSmoother: globalThis.BuffyPoses
+      ? globalThis.BuffyPoses.createPoseSmoother()
+      : { push: (pose) => pose, reset: () => null, current: () => null },
   };
 
   const personality = () => state.prefs?.personality || {};
@@ -858,11 +861,13 @@
     const hobby = scheduler.update(now, { hovered: state.hovered, busy });
     const local = localState(now);
     const startedAt = Number(state.snapshot?.current?.since);
+    // The daemon's quiet flag is a real liveness clock: no new event for
+    // livenessMs. The local timer stays as a fallback for an older daemon.
+    const quiet = state.snapshot?.current?.quiet === true;
     const waiting =
       local === 'working' &&
       currentCategory() !== 'compacting' &&
-      Number.isFinite(startedAt) &&
-      Date.now() - startedAt > 60_000;
+      (quiet || (Number.isFinite(startedAt) && Date.now() - startedAt > 60_000));
     const celebrating = state.celebrateAt > 0 && now - state.celebrateAt < 4200;
     const greeting = local === 'idle' && now - state.greetingAt < 1600 && personality().returnGreetings !== false && pendingCount() === 0;
     if (local === 'idle' && personality().extraIdleGestures !== false && now - state.lastGestureAt > 78_000) {
@@ -870,6 +875,20 @@
       if (Math.random() < 0.5) state.greetingAt = now;
     }
     if (local === 'idle' && personality().extraIdleGestures === false) state.lastGestureAt = now;
+
+    const candidatePose = BuffyCharacters.poseFor({
+      state: local,
+      category: currentCategory(),
+      hobby: local === 'idle' ? hobby : null,
+      greeting,
+      waiting,
+      celebration: celebrating,
+    });
+    // Settle the pose before drawing, but leave the typing pair alone so her
+    // hands keep alternating.
+    const settledPose = state.poseSmoother.push(candidatePose, now);
+    const poseOverride =
+      settledPose === 'typingLeft' || settledPose === 'typingRight' ? null : settledPose;
 
     BuffyCharacters.draw(ctx, {
       characterId: characterId(),
@@ -892,6 +911,7 @@
       celebration: celebrating,
       stateSince: local === 'hello' ? state.helloAt : local === 'wave' ? state.greetingAt : 0,
       customImage: state.customImage,
+      poseOverride,
     });
     drawTrail(now);
     updatePillTop(local);

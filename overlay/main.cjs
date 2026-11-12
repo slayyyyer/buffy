@@ -114,6 +114,7 @@ let prefs = null;
 let prefsApi = null;
 let rotationApi = null;
 let installApi = null;
+let configApi = null;
 let snapshot = null;
 let shortcutStatus = { accelerator: null, ok: false, error: 'Shortcut not registered yet.' };
 let connectionCache = null;
@@ -122,11 +123,24 @@ function sourceModule(name) {
   return import(pathToFileURL(path.join(SOURCE_ROOT, 'src', name)).href);
 }
 
+/**
+ * Which switches `~/.buffy/config.json` has forced off, so Settings can show
+ * them locked instead of pretending a toggle would change anything.
+ */
+function sourceLocks() {
+  try {
+    return configApi.configSourceLocks(configApi.readConfig());
+  } catch {
+    return {};
+  }
+}
+
 async function loadSupportModules() {
-  [prefsApi, rotationApi, installApi] = await Promise.all([
+  [prefsApi, rotationApi, installApi, configApi] = await Promise.all([
     sourceModule('prefs.js'),
     sourceModule('rotation.js'),
     sourceModule('install.js'),
+    sourceModule('config.js'),
   ]);
   const legacyWardrobe = readJson(LEGACY_WARDROBE_FILE, null);
   prefs = prefsApi.loadPrefs({
@@ -457,10 +471,19 @@ async function ensureDaemon() {
     try {
       const daemonRoot = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked') : ROOT;
       const { startDaemon } = await import(pathToFileURL(path.join(daemonRoot, 'src', 'daemon.js')).href);
-      const { readConfig } = await import(pathToFileURL(path.join(daemonRoot, 'src', 'config.js')).href);
+      const { readConfig, appSourceSwitches } = await import(
+        pathToFileURL(path.join(daemonRoot, 'src', 'config.js')).href
+      );
       const base = readConfig();
-      const watchEnabled = smokeTest ? false : prefs?.connection?.freebuffWatcher !== false;
-      const daemonConfig = { ...base, watch: { ...base.watch, enabled: watchEnabled } };
+      // Settings supplies each value; config.json can veto. A smoke test never
+      // reads the user's own agent data.
+      const switches = appSourceSwitches(base, prefs, { forceOff: smokeTest });
+      const daemonConfig = {
+        ...base,
+        watch: { ...base.watch, enabled: switches.watch },
+        freebuff: { ...base.freebuff, enabled: switches.freebuff },
+        claudeTranscript: { ...base.claudeTranscript, enabled: switches.claudeTranscript },
+      };
       embeddedDaemon = await startDaemon({ port: PORT, quiet: true, config: daemonConfig });
     } catch (error) {
       if (error.code !== 'EADDRINUSE') console.error(`buffy daemon: ${error.message}`);
@@ -1234,9 +1257,17 @@ async function settingsAction(type, payload = {}) {
   try {
     switch (type) {
       case 'save': {
-        const beforeWatcher = prefs.connection.freebuffWatcher;
+        const beforeSources = {
+          watcher: prefs.connection.freebuffWatcher,
+          database: prefs.connection.freebuffDatabase,
+          transcript: prefs.connection.claudeTranscript,
+        };
         const result = applyPreferencesFromSettings({ prefs: payload.prefs });
-        if (result.ok && beforeWatcher !== prefs.connection.freebuffWatcher) await restartDaemon();
+        const sourceChanged =
+          beforeSources.watcher !== prefs.connection.freebuffWatcher ||
+          beforeSources.database !== prefs.connection.freebuffDatabase ||
+          beforeSources.transcript !== prefs.connection.claudeTranscript;
+        if (result.ok && sourceChanged) await restartDaemon();
         return result;
       }
       case 'look': {
@@ -1813,6 +1844,7 @@ ipcMain.handle('settings:get', async () => {
     shortcut: shortcutStatus,
     connection: connectionCache.claude,
     connections: connectionCache,
+    sources: sourceLocks(),
     dictation: dictationCapability(),
     health: await getJson('/health', 500).catch(() => null),
     watch: snapshot?.watch || null,

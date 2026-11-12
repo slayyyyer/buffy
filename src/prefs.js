@@ -74,6 +74,8 @@ export function defaultPrefs() {
     permissions: { ...DEFAULT_PERMISSIONS },
     connection: {
       freebuffWatcher: true,
+      freebuffDatabase: true,
+      claudeTranscript: true,
     },
     updates: {
       deferWhileBusy: true,
@@ -291,6 +293,10 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
     },
     connection: {
       freebuffWatcher: connection.freebuffWatcher !== false,
+      // Both evidence sources read local files. They are on by default and
+      // every value except an explicit false leaves them on.
+      freebuffDatabase: connection.freebuffDatabase !== false,
+      claudeTranscript: connection.claudeTranscript !== false,
     },
     updates: {
       deferWhileBusy: updates.deferWhileBusy !== false,
