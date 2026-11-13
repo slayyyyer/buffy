@@ -31,7 +31,7 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.3.2**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.3.3**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
 project jumps, sound choices, and per-display corners. 3.0 made the interaction
@@ -56,12 +56,39 @@ session from looking like live work:
 - [x] default-off request/completion notifications, sounds, and 15m/1h/4h snooze
 - [x] packaged Claude hook installer with a stable launcher and health distinctions
 - [x] draft-aware update guard and explicit deferred-update resume
-- [x] local-only dictation surfaced honestly; no cloud fallback is used
+- [x] reaction effects for every companion, not only for Buffy
 - [x] Freebuff's own session database read read-only, so a running turn is explicit
+- [x] a cloud turn surfaced as one inferred state instead of looking like idle
 - [x] a zero-config Claude transcript fallback that yields to installed hooks
 - [x] a 90-second liveness clock that marks a silent session quiet without deleting it
 - [x] pose hysteresis so a tool boundary cannot strobe the art
 - [x] readiness reported per adapter in `/health`, `/state`, and `buffy status`
+
+### 3.3.3
+
+- **A cloud turn stops looking like an idle one.** A Freebuff thread whose
+  `execution_target` is `cloud` writes no `turn_state` and no messages on this
+  machine, so the database reader could only stay silent while an agent worked
+  somewhere else. Buffy now reports one coarse state — **cloud turn, out of
+  view** — labeled inferred and repeated at most every fifteen seconds while
+  the thread keeps moving. It is a heartbeat, not a claim: no tool, no file, no
+  completion, and never a passing test. A database without that column, or the
+  source switched off in **Settings → Connection**, behaves exactly as before.
+- **Every companion reacts, not just Buffy.** The five reactions had hand-drawn
+  art on Buffy only, and the other twenty-one friends collapsed them to `idle`,
+  `sleepy`, or `happy` before anything was drawn — so an error and a waiting
+  turn looked identical. The atlas cast still borrows its nearest drawn body
+  cell, but motion, face, and effects now keep the real reaction: a sweat drop,
+  a tapping hand, a context squeeze, a waiting clock, and confetti, over every
+  companion.
+- **Dictation is gone instead of permanently unavailable.** The toolbar button
+  was always hidden and Settings could only ever say it could not run, so both
+  are removed along with the copy that promised a feature this build never had.
+  Typing, the clipboard fallback, and the composer are unchanged, and update
+  prompts now defer for a draft or a handoff only.
+- **The installer block names the last published build.** The download links
+  pointed at 3.2.0 and now point at 3.3.2, which is the newest release with
+  artifacts; the v3.3.3 tag builds its own.
 
 ### 3.3.2
 
@@ -245,12 +272,12 @@ above it, so hats, bows, and custom sprites no longer collide with it.
 
 ### Desktop installer
 
-Buffy **3.2.0** ships for Windows, macOS, and Linux:
+Buffy **3.3.2** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.2.0/Buffy-3.2.0-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.2/Buffy-3.3.2-linux-x86_64.AppImage.sha256)
 
 The packaged app includes Buffy, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →
@@ -332,8 +359,10 @@ and Moonlight pinafore. Every companion supports:
 Buffy also reacts to the moment with five extra layered poses: `flustered`
 when a tool reports an error, `tapping` while she needs you, `squish` while the
 context is compacting, `waiting` after a minute of unbroken work, and
-`celebrate` for a verified pass. The atlas companions map each reaction to
-their closest mood.
+`celebrate` for a verified pass. Every companion shows them: where Buffy has
+hand-drawn art, the atlas cast keeps its nearest nine-cell mood and the renderer
+draws the same reaction effects over it — a sweat drop, a tapping hand, a
+context squeeze, a waiting clock, and confetti.
 
 A celebration is never inferred from file churn. Send it explicitly after a
 pass you actually saw:
@@ -440,7 +469,7 @@ The settings window has six sections:
 2. **Personality** — hobbies, gestures, sleep, bubbles, motion, reactions
 3. **Shortcuts** — global summon shortcut and conflict status
 4. **Alerts** — request/completion/sound switches and snooze
-5. **Connection** — Claude, Gemini CLI, and Cursor hook health, Claude permission decisions, Freebuff watcher, daemon status, dictation
+5. **Connection** — Claude, Gemini CLI, and Cursor hook health, Claude permission decisions, Freebuff watcher, daemon status
 6. **Updates** — current version, update check, install guard
 
 The right-hand preview draws the current character at full size with selectable
@@ -577,21 +606,16 @@ Freebuff has no user-installable lifecycle hook stream. Buffy uses two signals:
   marked block asking the agent to send thinking/working/needs-you/done events.
   Agents can ignore it.
 
-The database signal needs a locally executed turn: threads whose
-`execution_target` is `cloud` never write `turn_state` or `messages`, so the
-database reader stays silent for them and only a local-target turn can be seen.
+The database signal reports a locally executed turn in detail. Threads whose
+`execution_target` is `cloud` never write `turn_state` or `messages`, so nothing
+local can say what one is doing. While such a thread is being updated Buffy
+shows a single coarse, explicitly inferred state — `cloud turn, out of view` —
+instead of looking idle while work happens elsewhere. She never claims to know
+what a cloud turn is doing.
 
 The watcher is local (`fs.watch` + a periodic `git status`) and does not read
 file contents or upload anything. **Settings → Connection** can disable it; the
 daemon restarts to apply the change.
-
-## Dictation
-
-Buffy only supports dictation when an on-device recognizer is available. This
-build has no bundled dictation helper. On this Windows host it reports that
-dictation is unavailable and keeps the text path fully usable; it never sends
-audio to a cloud service as a fallback. The composer, clipboard fallback, and
-keyboard shortcuts remain available.
 
 ## CLI
 
@@ -741,7 +765,8 @@ the command; the key is never written to Buffy state or logged.
   the daemon's local control token. The token is a same-user file, not a sandbox
   against malicious local processes.
 - Prompt-bearing URLs are never written to logs.
-- Dictation never falls back to a cloud service.
+- A cloud Freebuff turn is reported as one inferred state; Buffy never fills it
+  in with local-looking progress.
 
 ## Troubleshooting
 
@@ -764,8 +789,6 @@ the command; the key is never written to Buffy state or logged.
 - **Update is waiting.** Finish or clear the draft, then use the tray or
   **Settings → Updates** to restart explicitly. Buffy does not install updates
   behind an open draft.
-- **Dictation is unavailable.** This build has no on-device recognizer. Type,
-  or use the clipboard fallback; no audio is uploaded.
 
 ## Release signing
 
