@@ -184,18 +184,8 @@ function catalogPayload() {
   };
 }
 
-function dictationCapability() {
-  return {
-    available: false,
-    reason:
-      process.platform === 'darwin'
-        ? 'Local dictation needs the signed on-device helper, which is not installed in this build. Typing still works.'
-        : 'On-device dictation is unavailable on this platform; Buffy will not send audio to a cloud service. Typing still works.',
-  };
-}
-
 function modePayload() {
-  return { mode, scale: windowState.scale, dictation: dictationCapability() };
+  return { mode, scale: windowState.scale };
 }
 
 function broadcastPrefs() {
@@ -1847,7 +1837,6 @@ ipcMain.handle('settings:get', async () => {
     connection: connectionCache.claude,
     connections: connectionCache,
     sources: sourceLocks(),
-    dictation: dictationCapability(),
     health: await getJson('/health', 500).catch(() => null),
     watch: snapshot?.watch || null,
     update: {

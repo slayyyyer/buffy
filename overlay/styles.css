@@ -281,12 +281,6 @@ body.dragging .hit {
   cursor: pointer;
 }
 
-/* Keep the dictation slot out of the toolbar until it is available; the
-   display rule above would otherwise defeat the `hidden` attribute. */
-.tool[hidden] {
-  display: none;
-}
-
 .tool svg {
   width: 17px;
   height: 17px;

@@ -87,8 +87,6 @@
     lastMessage: '',
     draftRevision: 0,
     handoffInFlight: false,
-    dictationAvailable: false,
-    dictationReason: '',
     customImage: null,
     customKey: '',
     lastIgnore: null,
@@ -561,16 +559,6 @@
     app.dataset.mode = mode;
     layoutHit();
     schedulePillLayout();
-    const dictation = payload.dictation;
-    if (dictation) {
-      state.dictationAvailable = dictation.available === true;
-      state.dictationReason = dictation.reason || '';
-      const button = toolbar.querySelector('[data-action="dictate"]');
-      if (button) {
-        button.hidden = !state.dictationAvailable;
-        button.title = state.dictationAvailable ? 'Dictation' : state.dictationReason;
-      }
-    }
     if (mode === 'compact') {
       state.composerOpen = false;
       state.cardsOpen = false;
@@ -715,7 +703,7 @@
       return;
     }
     state.prefs = next.prefs;
-    applyMode({ mode: next.mode || state.mode, scale: next.scale || 1, dictation: next.dictation });
+    applyMode({ mode: next.mode || state.mode, scale: next.scale || 1 });
     scheduler.configure({
       idleHobbies: state.prefs.personality?.idleHobbies !== false,
       sleepAfterMs: state.prefs.personality?.sleepy === false ? 24 * 60 * 60 * 1000 : state.prefs.personality?.sleepAfterMs || 120000,
@@ -973,9 +961,6 @@
           break;
         case 'hello':
           sayHello();
-          break;
-        case 'dictate':
-          showToast(state.dictationReason || 'Local dictation is unavailable on this system.');
           break;
         case 'compact':
           requestMode(state.mode === 'compact' ? 'full' : 'compact');
@@ -1298,7 +1283,7 @@
     window.buffy.onUpdate((update) => {
       if (!update) return;
       if (update.kind === 'ready') showToast(`Buffy ${update.version} is ready. Restart from Settings or the tray when you are not mid-draft.`);
-      if (update.kind === 'deferred') showToast('Update deferred until your draft, dictation, or handoff is finished.');
+      if (update.kind === 'deferred') showToast('Update deferred until your draft or handoff is finished.');
     });
   }
 

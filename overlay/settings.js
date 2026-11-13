@@ -514,7 +514,7 @@
         toggleRow(
           'freebuff-database',
           'Read Freebuff’s session database',
-          'Follows a running Freebuff turn from desktop-v2.db, read-only, when the AGENTS.md checkpoints have gone quiet.',
+          'Follows a running Freebuff turn from desktop-v2.db, read-only, when the AGENTS.md checkpoints have gone quiet. A cloud turn shows as one coarse state, because nothing local records it.',
           !sourceLocked('freebuffDatabase') && prefs.connection.freebuffDatabase !== false,
           `data-source="freebuffDatabase"${sourceLocked('freebuffDatabase') ? ' disabled' : ''}`,
         ) +
@@ -543,11 +543,6 @@
         <div class="row-actions"><button type="button" class="button" data-restart-daemon>Restart daemon</button></div>`,
       ),
       card(
-        'Dictation',
-        'Buffy will only add dictation when it can run on-device. There is no silent cloud fallback.',
-        `<p class="hint" style="margin-bottom:0">${esc(data.dictation?.reason || 'Local dictation is unavailable. Typing and the clipboard fallback still work.')}</p>`,
-      ),
-      card(
         'Documentation',
         'Setup for Claude Code, Gemini CLI, Cursor, Freebuff inference, and packaging notes live in the README.',
         '<div class="row-actions"><button type="button" class="button" data-docs>Open setup guide</button></div>',
@@ -570,7 +565,7 @@
           <button type="button" class="button" data-check-update>Check for updates</button>
           <button type="button" class="button primary" data-install-update ${update.ready ? '' : 'disabled'}>Restart and install</button>
         </div>
-        <p class="note">${update.deferred ? 'An update is deferred until your draft, handoff, or dictation is finished. You can still restart explicitly above.' : 'Updates install only when you choose to restart.'}</p>`,
+        <p class="note">${update.deferred ? 'An update is deferred until your draft or handoff is finished. You can still restart explicitly above.' : 'Updates install only when you choose to restart.'}</p>`,
       ),
       card(
         'Update guard',
