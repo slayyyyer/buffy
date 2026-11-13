@@ -26,15 +26,6 @@ const DB_NAME = 'desktop-v2.db';
 const PROJECT_WINDOW_MS = 10 * 60_000;
 
 const FULL_THREAD_SQL = `
-  select id, title, updated_at, turn_state, execution_target, agent_mode, attention_reason,
-         last_turn_outcome, turn_alive_at, last_turn_finished_at
-  from threads
-  order by updated_at desc
-  limit 1
-`;
-
-/** Builds before cloud execution have no `execution_target` column. */
-const LEGACY_FULL_THREAD_SQL = `
   select id, title, updated_at, turn_state, agent_mode, attention_reason,
          last_turn_outcome, turn_alive_at, last_turn_finished_at
   from threads
@@ -119,10 +110,6 @@ function toolLive(part) {
  * `null` means "nothing worth reporting": Buffy keeps whatever another source
  * said rather than clearing an unrelated agent's session.
  */
-export function isCloudThread(thread) {
-  return String(thread?.execution_target || '').toLowerCase() === 'cloud';
-}
-
 export function classifyFreebuffThread({
   thread,
   part = null,
@@ -130,7 +117,6 @@ export function classifyFreebuffThread({
   queueRunning = false,
   now = Date.now(),
   staleMs = 120_000,
-  cloudWindowMs = 120_000,
   doneWindowMs = 60_000,
   errorWindowMs = 10 * 60_000,
 } = {}) {
@@ -140,25 +126,6 @@ export function classifyFreebuffThread({
   const updatedAt = Number(thread.updated_at) || 0;
   const finishedAt = Number(thread.last_turn_finished_at) || 0;
   const aliveAt = Number(thread.turn_alive_at) || updatedAt;
-
-  // A cloud turn runs on Freebuff's servers and never writes `turn_state` or
-  // `messages` here, so nothing local can describe it. Going silent would read
-  // as idle during real work, so the thread row's own freshness becomes one
-  // coarse state that says exactly what it is: out of view. Buffy never dresses
-  // this up with a tool, a file, or a completion she did not see.
-  if (isCloudThread(thread)) {
-    const touched = Math.max(updatedAt, finishedAt);
-    const live = running
-      ? now - aliveAt <= staleMs || toolLive(part)
-      : Boolean(touched) && now - touched <= cloudWindowMs;
-    if (!live) return null;
-    return {
-      state: 'thinking',
-      category: 'cloud',
-      message: 'cloud turn, out of view',
-      observed: 'inferred',
-    };
-  }
 
   if (running) {
     // A crashed session leaves turn_state behind. Without a heartbeat or a
@@ -248,7 +215,7 @@ function attentionLabel(reason) {
   return `Freebuff is waiting: ${text.slice(0, 120)}`;
 }
 
-function signatureOf(event, project, threadId, cloudBucket = '') {
+function signatureOf(event, project, threadId) {
   return [
     event?.state,
     event?.category,
@@ -256,7 +223,6 @@ function signatureOf(event, project, threadId, cloudBucket = '') {
     event?.completedAt || '',
     project || '',
     threadId || '',
-    cloudBucket,
   ].join('|');
 }
 
@@ -281,7 +247,7 @@ function openReadOnly(DatabaseSync, file) {
 }
 
 function readThread(db) {
-  for (const sql of [FULL_THREAD_SQL, LEGACY_FULL_THREAD_SQL, MINIMAL_THREAD_SQL]) {
+  for (const sql of [FULL_THREAD_SQL, MINIMAL_THREAD_SQL]) {
     try {
       const row = db.prepare(sql).get();
       if (row) return row;
@@ -488,14 +454,7 @@ export function createFreebuffAdapter({
 
     if (shouldYield(event)) return null;
 
-    // A cloud turn has no finer detail to dispatch, so it is repeated at most
-    // once every fifteen seconds while the row keeps moving. That is a
-    // heartbeat, not a claim: it keeps the session out of the quiet state
-    // without inventing progress.
-    const cloudBucket = isCloudThread(best.thread)
-      ? Math.floor((Number(best.thread.updated_at) || 0) / 15_000)
-      : '';
-    const signature = signatureOf(event, best.project, best.thread.id, cloudBucket);
+    const signature = signatureOf(event, best.project, best.thread.id);
     if (signature === lastSignature) return null;
     lastSignature = signature;
 

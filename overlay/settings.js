@@ -514,7 +514,7 @@
         toggleRow(
           'freebuff-database',
           'Read Freebuff’s session database',
-          'Follows a running Freebuff turn from desktop-v2.db, read-only, when the AGENTS.md checkpoints have gone quiet. A cloud turn shows as one coarse state, because nothing local records it.',
+          'Follows a running Freebuff turn from desktop-v2.db, read-only, when the AGENTS.md checkpoints have gone quiet.',
           !sourceLocked('freebuffDatabase') && prefs.connection.freebuffDatabase !== false,
           `data-source="freebuffDatabase"${sourceLocked('freebuffDatabase') ? ' disabled' : ''}`,
         ) +

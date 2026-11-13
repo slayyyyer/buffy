@@ -31,7 +31,7 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.3.3**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.3.4**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
 project jumps, sound choices, and per-display corners. 3.0 made the interaction
@@ -58,22 +58,24 @@ session from looking like live work:
 - [x] draft-aware update guard and explicit deferred-update resume
 - [x] reaction effects for every companion, not only for Buffy
 - [x] Freebuff's own session database read read-only, so a running turn is explicit
-- [x] a cloud turn surfaced as one inferred state instead of looking like idle
 - [x] a zero-config Claude transcript fallback that yields to installed hooks
 - [x] a 90-second liveness clock that marks a silent session quiet without deleting it
 - [x] pose hysteresis so a tool boundary cannot strobe the art
 - [x] readiness reported per adapter in `/health`, `/state`, and `buffy status`
 
+### 3.3.4
+
+- **The cloud-turn state is gone.** 3.3.3 added a coarse "cloud turn, out of
+  view" state for threads whose Freebuff record looked cloud-executed. A real
+  `desktop-v2.db` showed the rule read the wrong column: 67 of 80 threads carry
+  `execution_target = 'cloud'` just for belonging to a Cloud account, while
+  every recorded turn ran locally, so the state would have announced itself over
+  ordinary sessions. Watching that database through a full turn recorded no
+  cloud execution at all, so the branch could never fire honestly. It is removed
+  along with its settings copy and documentation.
+
 ### 3.3.3
 
-- **A cloud turn stops looking like an idle one.** A Freebuff thread whose
-  `execution_target` is `cloud` writes no `turn_state` and no messages on this
-  machine, so the database reader could only stay silent while an agent worked
-  somewhere else. Buffy now reports one coarse state — **cloud turn, out of
-  view** — labeled inferred and repeated at most every fifteen seconds while
-  the thread keeps moving. It is a heartbeat, not a claim: no tool, no file, no
-  completion, and never a passing test. A database without that column, or the
-  source switched off in **Settings → Connection**, behaves exactly as before.
 - **Every companion reacts, not just Buffy.** The five reactions had hand-drawn
   art on Buffy only, and the other twenty-one friends collapsed them to `idle`,
   `sleepy`, or `happy` before anything was drawn — so an error and a waiting
@@ -605,12 +607,10 @@ Freebuff has no user-installable lifecycle hook stream. Buffy uses two signals:
   marked block asking the agent to send thinking/working/needs-you/done events.
   Agents can ignore it.
 
-The database signal reports a locally executed turn in detail. Threads whose
-`execution_target` is `cloud` never write `turn_state` or `messages`, so nothing
-local can say what one is doing. While such a thread is being updated Buffy
-shows a single coarse, explicitly inferred state — `cloud turn, out of view` —
-instead of looking idle while work happens elsewhere. She never claims to know
-what a cloud turn is doing.
+The database signal reports a locally executed turn in detail. Freebuff writes no
+local turn state for a turn that runs somewhere else, so Buffy stays silent about
+one rather than guessing: no invented tool, file, or completion. A thread that
+belongs to a Cloud account but runs here is read in full like any other.
 
 The watcher is local (`fs.watch` + a periodic `git status`) and does not read
 file contents or upload anything. **Settings → Connection** can disable it; the
@@ -764,8 +764,8 @@ the command; the key is never written to Buffy state or logged.
   the daemon's local control token. The token is a same-user file, not a sandbox
   against malicious local processes.
 - Prompt-bearing URLs are never written to logs.
-- A cloud Freebuff turn is reported as one inferred state; Buffy never fills it
-  in with local-looking progress.
+- The Freebuff reader reports only the turn Freebuff recorded; it never fills in
+  progress for a turn it cannot see.
 
 ## Troubleshooting
 

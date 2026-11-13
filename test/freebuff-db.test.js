@@ -37,7 +37,6 @@ function writeProject(root, name, { thread, parts = null, outType = null, queue 
       title text,
       updated_at integer,
       turn_state text,
-      execution_target text,
       agent_mode text,
       attention_reason text,
       last_turn_outcome text,
@@ -49,15 +48,14 @@ function writeProject(root, name, { thread, parts = null, outType = null, queue 
     create table queue_items (id text primary key, thread_id text, state text);
   `);
   db.prepare(
-    `insert into threads (id, title, updated_at, turn_state, execution_target, agent_mode, attention_reason,
+    `insert into threads (id, title, updated_at, turn_state, agent_mode, attention_reason,
        last_turn_outcome, turn_alive_at, last_turn_finished_at, harness_state)
-     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     thread.id,
     thread.title || 'a thread',
     thread.updated_at,
     thread.turn_state,
-    thread.execution_target ?? null,
     thread.agent_mode || 'build',
     thread.attention_reason ?? null,
     thread.last_turn_outcome ?? null,
@@ -172,41 +170,6 @@ sqliteTest('a finished turn is reported once, inside the window', () => {
   assert.equal(classifyFreebuffThread({ thread, now: NOW + 120_000, doneWindowMs: 60_000 }), null);
 });
 
-sqliteTest('a cloud turn is visible without pretending to see inside it', () => {
-  const thread = {
-    id: 'thread-cloud',
-    turn_state: null,
-    execution_target: 'cloud',
-    updated_at: NOW - 2_000,
-  };
-  assert.deepEqual(classifyFreebuffThread({ thread, now: NOW }), {
-    state: 'thinking',
-    category: 'cloud',
-    message: 'cloud turn, out of view',
-    observed: 'inferred',
-  });
-});
-
-sqliteTest('a cloud thread that stopped being touched goes quiet', () => {
-  const thread = {
-    id: 'thread-cloud',
-    turn_state: null,
-    execution_target: 'cloud',
-    updated_at: NOW - 30 * 60_000,
-  };
-  assert.equal(classifyFreebuffThread({ thread, now: NOW }), null);
-});
-
-sqliteTest('a local thread keeps its detailed turn mapping', () => {
-  const event = classifyFreebuffThread({
-    thread: runningThread({ execution_target: 'local' }),
-    part: { kind: 'reasoning' },
-    now: NOW,
-  });
-  assert.equal(event.state, 'thinking');
-  assert.equal(event.message, 'thinking it through');
-});
-
 sqliteTest('an old completed turn never replays when buffy starts', () => {
   const thread = {
     id: 'thread-1',
@@ -279,31 +242,6 @@ sqliteTest('the adapter yields to a fresh explicit event', async () => {
     });
     await adapter.sample();
     assert.deepEqual(events, []);
-    adapter.close();
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-sqliteTest('the adapter reports a cloud turn from the database', async () => {
-  const root = makeRoot();
-  try {
-    writeProject(root, 'cloud-proj', {
-      thread: {
-        id: 'thread-c',
-        updated_at: NOW - 1_000,
-        turn_state: null,
-        execution_target: 'cloud',
-      },
-    });
-    const events = [];
-    const adapter = createFreebuffAdapter({ root, now: () => NOW, onEvent: (event) => events.push(event) });
-    await adapter.sample();
-    assert.equal(events.length, 1);
-    assert.equal(events[0].state, 'thinking');
-    assert.equal(events[0].category, 'cloud');
-    assert.equal(events[0].message, 'cloud turn, out of view');
-    assert.equal(events[0].project, 'cloud-proj');
     adapter.close();
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
