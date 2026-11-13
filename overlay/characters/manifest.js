@@ -20,8 +20,9 @@
     'gardening',
   ];
 
-  // Buffy's layered renderer can express reactions that need new art. Atlas
-  // companions stay at the original nine cells and map these to nearest poses.
+  // Buffy's layered renderer has hand-drawn art for each reaction. Atlas
+  // companions keep their nine cells: the body borrows the nearest mood while
+  // the renderer still draws that reaction's own effects over it.
   const REACTION_POSES = ['flustered', 'tapping', 'squish', 'waiting', 'celebrate'];
   const BUFFY_POSES = [...POSES, ...REACTION_POSES];
 

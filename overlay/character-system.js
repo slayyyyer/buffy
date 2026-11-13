@@ -100,8 +100,9 @@
     return themeOf(theme).accent;
   }
 
-  // The five reaction poses are layered art on Buffy only. Atlas companions
-  // keep their nine hand-drawn cells, so reactions fall back to the closest mood.
+  // The five reaction poses have hand-drawn art on Buffy only. Atlas companions
+  // keep their nine cells, so the body borrows the closest mood while the
+  // reaction's own effects are still drawn over it (see draw()).
   const ATLAS_FALLBACK = {
     flustered: 'idle',
     tapping: 'idle',
@@ -949,12 +950,14 @@
     const originY = (baseY ?? height) - drawHeight;
 
     const resolvedPose = poseFor({ state, category, hobby, greeting, waiting, celebration });
-    const pose = poseOverride
-      ? style === 'atlas'
-        ? atlasPose(poseOverride)
-        : poseOverride
-      : style === 'atlas'
-        ? atlasPose(resolvedPose)
+    // The reaction itself outlives the body cell: an atlas companion borrows
+    // its nearest drawn mood, but motion, effects, and the face still use the
+    // reaction, so an error or a waiting turn reads the same on every friend.
+    const reactionPose = poseOverride || resolvedPose;
+    const pose = style === 'atlas'
+      ? atlasPose(reactionPose)
+      : poseOverride
+        ? poseOverride
         : state === 'working' && !waiting && !celebration && category !== 'compacting'
           ? typingPose(now, category)
           : resolvedPose;
@@ -967,9 +970,9 @@
     const hop = state === 'done' && !reducedMotion ? -Math.abs(Math.sin(now / 190)) * 5 : 0;
     const waveTilt = state === 'wave' && !reducedMotion ? Math.sin(now / 120) * 0.025 : 0;
     const pulse = attention && !reducedMotion ? 1 + Math.sin(now / 380) * 0.008 : 1;
-    const squish = pose === 'squish' && !reducedMotion ? 0.9 + Math.sin(now / 180) * 0.018 : 1;
-    const tap = pose === 'tapping' && !reducedMotion ? Math.sin(now / 95) * 1.8 : 0;
-    const cheerHop = pose === 'celebrate' && !reducedMotion ? -Math.abs(Math.sin(now / 170)) * 7 : 0;
+    const squish = reactionPose === 'squish' && !reducedMotion ? 0.9 + Math.sin(now / 180) * 0.018 : 1;
+    const tap = reactionPose === 'tapping' && !reducedMotion ? Math.sin(now / 95) * 1.8 : 0;
+    const cheerHop = reactionPose === 'celebrate' && !reducedMotion ? -Math.abs(Math.sin(now / 170)) * 7 : 0;
     const helloAge = state === 'hello' ? Math.max(0, now - stateSince) : -1;
     const helloWiggle = helloAge >= 0 && !reducedMotion
       ? Math.sin(helloAge / 48) * 0.022 * Math.max(0, 1 - helloAge / 1200)
@@ -977,7 +980,7 @@
     const helloSquash = helloAge >= 0 && !reducedMotion
       ? Math.sin(Math.min(helloAge, 720) / 62) * Math.exp(-Math.min(helloAge, 720) / 320)
       : 0;
-    const curiousTilt = !reducedMotion && (state === 'needs-you' || pose === 'waiting')
+    const curiousTilt = !reducedMotion && (state === 'needs-you' || reactionPose === 'waiting')
       ? Math.sin(now / 1200) * 0.012
       : 0;
 
@@ -1068,7 +1071,7 @@
           width: drawWidth,
           height: drawHeight,
           state,
-          pose,
+          pose: reactionPose,
           now,
           reducedMotion,
           pending,
@@ -1104,7 +1107,7 @@
           gazeX = (dx / distance) * Math.min(2.6, faceW * 0.02) * reach;
           gazeY = (dy / distance) * Math.min(2, faceH * 0.03) * reach;
         }
-        if (pose === 'tapping' && !reducedMotion) gazeX = Math.sin(now / 240) * 1.6;
+        if (reactionPose === 'tapping' && !reducedMotion) gazeX = Math.sin(now / 240) * 1.6;
         const blink = !reducedMotion && !['needs-you', 'error', 'sleepy', 'done', 'hello', 'wave', 'offline'].includes(state) && now % 4300 < 115;
         drawFace(ctx, {
           x: faceCenterX,
@@ -1112,7 +1115,7 @@
           width: faceW,
           height: faceH,
           state,
-          pose,
+          pose: reactionPose,
           blink,
           gazeX,
           gazeY,
@@ -1189,6 +1192,7 @@
     availableChecker,
     themeAccent,
     poseFor,
+    atlasPose,
     draw,
     drawSparkle,
     drawHeart,

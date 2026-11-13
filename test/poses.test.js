@@ -14,7 +14,7 @@ const { BUFFY_MANIFEST: manifest } = loadClassic(
 const context = loadClassic(new URL('../overlay/character-system.js', import.meta.url), {
   BUFFY_MANIFEST: manifest,
 });
-const { poseFor } = context.BuffyCharacters;
+const { poseFor, atlasPose } = context.BuffyCharacters;
 
 const REACTIONS = ['flustered', 'tapping', 'squish', 'waiting', 'celebrate'];
 
@@ -37,6 +37,13 @@ test('the atlas companions keep nine poses each', () => {
     assert.equal(character.supportedPoses.length, 9, `${character.id} should support nine poses`);
     assert.equal(character.order.length, 9, `${character.id} should order nine poses`);
     assert.deepEqual(character.order, character.supportedPoses, `${character.id} order should match its supported poses`);
+  }
+});
+
+test('every reaction borrows a real nine-cell mood on the atlas cast', () => {
+  for (const reaction of REACTIONS) {
+    const cell = atlasPose(reaction);
+    assert.ok(manifest.poses.includes(cell), `${reaction} maps to ${cell}, which is not a nine-cell pose`);
   }
 });
 
