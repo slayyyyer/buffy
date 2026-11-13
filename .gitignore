@@ -1,6 +1,7 @@
 node_modules/
 artifacts/
 dist/
+dist-live/
 *.log
 .DS_Store
 .freebuff/
