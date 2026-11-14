@@ -78,14 +78,26 @@ jobs:
 
       - name: Load the cask through Homebrew
         shell: bash
+        # Job logs need repo-admin access to read, so every failure is also
+        # raised as an annotation where anyone can see what went wrong.
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_FROM_API: 1
         run: |
-          set -euxo pipefail
-          brew tap-new slayyyyer/buffy-ci >/dev/null
-          tap="$(brew --repository slayyyyer/buffy-ci)"
+          set -uo pipefail
+
+          die() {
+            echo "::error title=Homebrew refused the cask::$1"
+            exit 1
+          }
+
+          brew tap-new slayyyyer/buffy-ci >/dev/null 2>tap.err || die "tap-new: $(tr '\n' '|' < tap.err | tail -c 400)"
+          tap="$(brew --repository slayyyyer/buffy-ci)" || die "could not resolve the tap path"
           # tap-new only scaffolds Formula/, so Casks/ has to exist before the copy.
-          mkdir -p "$tap/Casks"
-          cp Casks/buffy.rb "$tap/Casks/buffy.rb"
-          brew info --cask slayyyyer/buffy-ci/buffy
+          mkdir -p "$tap/Casks" || die "could not create $tap/Casks"
+          cp Casks/buffy.rb "$tap/Casks/buffy.rb" || die "could not copy the cask into $tap"
+          brew info --cask slayyyyer/buffy-ci/buffy >info.out 2>info.err || die "brew info: $(tr '\n' '|' < info.err | tail -c 400)"
+          cat info.out
 
       - name: Check the cask style
         continue-on-error: true
