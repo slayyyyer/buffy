@@ -79,9 +79,11 @@ jobs:
       - name: Load the cask through Homebrew
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           brew tap-new slayyyyer/buffy-ci >/dev/null
           tap="$(brew --repository slayyyyer/buffy-ci)"
+          # tap-new only scaffolds Formula/, so Casks/ has to exist before the copy.
+          mkdir -p "$tap/Casks"
           cp Casks/buffy.rb "$tap/Casks/buffy.rb"
           brew info --cask slayyyyer/buffy-ci/buffy
 
