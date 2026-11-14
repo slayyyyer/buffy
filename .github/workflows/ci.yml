@@ -96,6 +96,8 @@ jobs:
           # tap-new only scaffolds Formula/, so Casks/ has to exist before the copy.
           mkdir -p "$tap/Casks" || die "could not create $tap/Casks"
           cp Casks/buffy.rb "$tap/Casks/buffy.rb" || die "could not copy the cask into $tap"
+          # Homebrew will not load a cask from an untrusted third-party tap.
+          brew trust slayyyyer/buffy-ci >trust.out 2>trust.err || die "brew trust: $(tr '\n' '|' < trust.err | tail -c 400)"
           brew info --cask slayyyyer/buffy-ci/buffy >info.out 2>info.err || die "brew info: $(tr '\n' '|' < info.err | tail -c 400)"
           cat info.out
 

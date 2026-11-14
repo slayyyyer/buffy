@@ -5,8 +5,14 @@ terminal install path with working upgrades:
 
 ```bash
 brew tap slayyyyer/buffy https://github.com/slayyyyer/buffy
+brew trust slayyyyer/buffy
 brew install --cask buffy
 ```
+
+Homebrew refuses to load a cask from an untrusted third-party tap, so the
+`brew trust` line is not optional: skip it and the install fails with
+"Refusing to load cask … from untrusted tap". It approves this tap alone, and it
+is the same command the CI `Homebrew cask` job runs before `brew info`.
 
 It is **not** submitted to `homebrew/cask` on purpose. That channel requires
 casks to pass Homebrew's Gatekeeper checks, and an unsigned app cannot, so a

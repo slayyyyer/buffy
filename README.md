@@ -83,8 +83,13 @@ package manager there.
 
 ```bash
 brew tap slayyyyer/buffy https://github.com/slayyyyer/buffy
+brew trust slayyyyer/buffy
 brew install --cask buffy
 ```
+
+Homebrew refuses to load casks from an untrusted third-party tap, so `brew trust`
+is required between the tap and the install. It approves this one tap, not every
+tap, and the install fails without it.
 
 `homebrew/cask` requires Gatekeeper to pass, which an unsigned build cannot, so
 Buffy keeps its own tap (`Casks/buffy.rb` in this repository). The cask declares
