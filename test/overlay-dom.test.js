@@ -183,6 +183,7 @@ test('the settings window boots every pane, including the trimmed Connection one
     const connection = panel.innerHTML;
     assert.match(connection, /Local session evidence/);
     assert.match(connection, /Freebuff/);
+    assert.match(connection, /Send a test event/, 'each agent can be verified end to end');
     assert.doesNotMatch(connection, /Dictation/, 'the removed dictation card must not come back');
     assert.doesNotMatch(connection, /cloud turn/i, 'the removed cloud-turn state must not come back');
 

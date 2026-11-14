@@ -710,7 +710,12 @@ function createWindow() {
   win.setMinimumSize(size.width, size.height);
   win.setMaximumSize(size.width, size.height);
   win.on('will-resize', (event) => event.preventDefault());
-  if (process.platform !== 'win32') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Stay out of other apps' fullscreen Spaces: during a call, a recording or a
+  // game she should be covered rather than floating over the top of it.
+  if (process.platform !== 'win32') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+  // Keep her out of screenshots and screen recordings where the OS supports it,
+  // so an always-on-top overlay cannot land in someone's demo or client call.
+  if (process.platform !== 'linux') win.setContentProtection(true);
 
   win.loadFile(path.join(__dirname, 'index.html'));
 
@@ -1371,6 +1376,33 @@ async function settingsAction(type, payload = {}) {
           cursor: installApi.uninstallCursor,
         };
         connectionCache = null;
+        if (payload.operation === 'test') {
+          // The checkout can always run a hook, so a test on an uninstalled agent
+          // would report a green chain that the agent will never use.
+          const previous = connectionCache?.[agent] || (await connectionStatus(agent));
+          if (previous.state === 'not-installed' || previous.state === 'disabled') {
+            return {
+              ok: false,
+              error: `${previous.name} hooks are not installed, so there is nothing to test yet.`,
+              connection: previous,
+            };
+          }
+          const { runConnectionTest } = await sourceModule('connect-test.js');
+          const test = await runConnectionTest({
+            agent,
+            env: process.env,
+            packaged: app.isPackaged,
+            port: PORT,
+          });
+          connectionCache = await connectionStatuses();
+          return {
+            ok: test.ok,
+            test,
+            error: test.ok ? undefined : test.error,
+            connection: connectionCache[agent],
+            connections: connectionCache,
+          };
+        }
         if (payload.operation === 'install' || payload.operation === 'repair') {
           const result = installers[agent]({ global: true, env: process.env, packaged: app.isPackaged });
           connectionCache = await connectionStatuses();

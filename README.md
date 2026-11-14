@@ -297,7 +297,7 @@ The settings window has six sections:
 2. **Personality** — hobbies, gestures, sleep, bubbles, motion, reactions
 3. **Shortcuts** — global summon shortcut and conflict status
 4. **Alerts** — request/completion/sound switches and snooze
-5. **Connection** — Claude, Gemini CLI, and Cursor hook health, Claude permission decisions, Freebuff watcher, daemon status
+5. **Connection** — Claude, Gemini CLI, and Cursor hook health with a **Send a test event** button per agent, Claude permission decisions, Freebuff watcher, daemon status
 6. **Updates** — current version, update check, install guard
 
 The right-hand preview draws the current character at full size with selectable
@@ -573,6 +573,9 @@ the command; the key is never written to Buffy state or logged.
 
 - The daemon binds to `127.0.0.1` only and streams updates over SSE with a
   polling fallback.
+- The overlay is excluded from screen capture where the OS supports it, and on
+  macOS it stays out of other apps' fullscreen spaces, so she cannot appear in a
+  screen share or float over a call.
 - No telemetry.
 - Installed builds check GitHub Releases for updates. The only other outbound
   request is `buffy hatch`, which sends the prompt to the configured image API

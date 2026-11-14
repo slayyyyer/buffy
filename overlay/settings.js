@@ -458,6 +458,7 @@
       </div>
       <div class="row-actions">
         <button type="button" class="button primary" data-connection="install" data-agent="${esc(agent)}">${state === 'not-installed' ? `Connect ${esc(meta.name)}` : state === 'repair' ? 'Repair connection' : 'Reinstall hooks'}</button>
+        <button type="button" class="button" data-connection="test" data-agent="${esc(agent)}">Send a test event</button>
         <button type="button" class="button" data-connection="check" data-agent="${esc(agent)}">Check again</button>
         <button type="button" class="button" data-connection="uninstall" data-agent="${esc(agent)}">Remove hooks</button>
       </div>
@@ -780,7 +781,8 @@
       const agent = connectionButton.dataset.agent || 'claude';
       const meta = CONNECTION_META[agent] || CONNECTION_META.claude;
       connectionButton.disabled = true;
-      connectionButton.textContent = operation === 'install' ? 'Connecting…' : 'Checking…';
+      connectionButton.textContent =
+        operation === 'install' ? 'Connecting…' : operation === 'test' ? 'Sending…' : 'Checking…';
       const result = await action('connection', { operation, agent });
       render();
       if (result?.ok) {
@@ -789,8 +791,12 @@
             ? `${meta.name} hooks installed.`
             : operation === 'uninstall'
               ? `${meta.name} hooks removed.`
-              : 'Connection checked.',
+              : operation === 'test'
+                ? `${meta.name} delivered a test event to Buffy in ${result.test?.ms ?? 0} ms.`
+                : 'Connection checked.',
         );
+      } else if (operation === 'test') {
+        toast(result?.error || `${meta.name} did not deliver the test event.`);
       } else if (result?.skipped) {
         toast(result.notes?.[0] || `${meta.name} has hooks disabled.`);
       }
