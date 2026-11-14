@@ -575,7 +575,8 @@ the command; the key is never written to Buffy state or logged.
   polling fallback.
 - The overlay is excluded from screen capture where the OS supports it, and on
   macOS it stays out of other apps' fullscreen spaces, so she cannot appear in a
-  screen share or float over a call.
+  screen share or float over a call. **Settings → Personality → Screen
+  presence** turns the capture exclusion off if you want her in a recording.
 - No telemetry.
 - Installed builds check GitHub Releases for updates. The only other outbound
   request is `buffy hatch`, which sends the prompt to the configured image API

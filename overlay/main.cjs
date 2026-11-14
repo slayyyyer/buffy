@@ -188,8 +188,14 @@ function modePayload() {
   return { mode, scale: windowState.scale };
 }
 
+function applyOverlayPrivacy() {
+  if (!win || win.isDestroyed() || process.platform === 'linux') return;
+  win.setContentProtection(prefs ? prefs.privacy?.hideFromCapture !== false : true);
+}
+
 function broadcastPrefs() {
   if (!prefs) return;
+  applyOverlayPrivacy();
   const payload = { prefs, ...modePayload() };
   for (const target of [win, settingsWindow]) {
     if (target && !target.isDestroyed()) target.webContents.send('prefs', payload);
@@ -1173,6 +1179,8 @@ async function connectionStatus(agent = 'claude') {
     readJson(lastPath, null) ||
     (agent === 'claude' ? readJson(path.join(HOME, 'hook-last.json'), null) : null);
   const lastHookAt = last?.at && Number.isFinite(Date.parse(last.at)) ? last.at : null;
+  // Records written by older builds have no flag; treat those as delivered.
+  const delivered = last ? last.delivered !== false : true;
   if (!installed) {
     return {
       agent,
@@ -1206,6 +1214,19 @@ async function connectionStatus(agent = 'claude') {
       lastHookAt,
     };
   }
+  if (!delivered) {
+    return {
+      agent,
+      name: meta.name,
+      state: 'installed',
+      detail: `A ${meta.name} hook ran, but the daemon never received the event. Repair the connection, or check that Buffy's daemon is running.`,
+      settingsPath,
+      launcher,
+      lastHookAt,
+      delivered: false,
+    };
+  }
+
   const ageMinutes = Math.round((Date.now() - Date.parse(lastHookAt)) / 60000);
   return {
     agent,

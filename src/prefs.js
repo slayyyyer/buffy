@@ -41,6 +41,10 @@ export const DEFAULT_PERMISSIONS = Object.freeze({
   claudeDecisions: false,
 });
 
+export const DEFAULT_PRIVACY = Object.freeze({
+  hideFromCapture: true,
+});
+
 export function defaultCharacterPrefs(look) {
   return {
     look: { outfit: 'dress', bow: 'none', hat: 'none', glasses: 'none', wand: 'none', theme: 'plum', ...(look || {}) },
@@ -72,6 +76,7 @@ export function defaultPrefs() {
     shortcuts: { ...DEFAULT_SHORTCUTS },
     alerts: { ...DEFAULT_ALERTS },
     permissions: { ...DEFAULT_PERMISSIONS },
+    privacy: { ...DEFAULT_PRIVACY },
     connection: {
       freebuffWatcher: true,
       freebuffDatabase: true,
@@ -242,6 +247,7 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
   const shortcuts = raw.shortcuts && typeof raw.shortcuts === 'object' ? raw.shortcuts : {};
   const alerts = raw.alerts && typeof raw.alerts === 'object' ? raw.alerts : {};
   const permissions = raw.permissions && typeof raw.permissions === 'object' ? raw.permissions : {};
+  const privacy = raw.privacy && typeof raw.privacy === 'object' ? raw.privacy : {};
   const connection = raw.connection && typeof raw.connection === 'object' ? raw.connection : {};
   const updates = raw.updates && typeof raw.updates === 'object' ? raw.updates : {};
 
@@ -290,6 +296,10 @@ export function normalizePrefs(raw, { now = Date.now(), legacyWardrobe, legacyOv
     },
     permissions: {
       claudeDecisions: permissions.claudeDecisions === true,
+    },
+    privacy: {
+      // Kept out of screen capture unless explicitly switched off.
+      hideFromCapture: privacy.hideFromCapture !== false,
     },
     connection: {
       freebuffWatcher: connection.freebuffWatcher !== false,

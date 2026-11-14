@@ -331,6 +331,7 @@
 
   function renderPersonality() {
     const p = prefs.personality;
+    const privacy = prefs.privacy || {};
     panel.innerHTML = [
       card(
         'Quiet company',
@@ -340,6 +341,17 @@
           toggleRow('return-greetings', 'Return greetings', 'A small wave when Buffy comes back after being hidden or summoned.', p.returnGreetings !== false, 'data-personality="returnGreetings"') +
           toggleRow('sleepy', 'Sleep when idle', 'Close her eyes after the quiet timeout instead of staying awake forever.', p.sleepy !== false, 'data-personality="sleepy"') +
           toggleRow('reduced-motion', 'Reduce motion', 'Keep bobbing, blinking, and celebration sparkles still.', p.reducedMotion === true, 'data-personality="reducedMotion"'),
+      ),
+      card(
+        'Screen presence',
+        'An always-on-top companion should not turn up in someone else’s demo. This uses the window-capture exclusion the OS provides.',
+        toggleRow(
+          'hide-from-capture',
+          'Stay out of screenshots and recordings',
+          'macOS and Windows only. Turn it off if you want her to appear in a capture.',
+          privacy.hideFromCapture !== false,
+          'data-privacy="hideFromCapture"',
+        ),
       ),
       card(
         'Thought bubbles',
@@ -888,6 +900,11 @@
     if (target.matches('[data-rotation]')) {
       const result = await action('rotation', { characterId, enabled: target.checked });
       if (result?.ok) render();
+      return;
+    }
+    if (target.matches('[data-privacy]')) {
+      prefs.privacy[target.dataset.privacy] = target.checked;
+      scheduleSave();
       return;
     }
     if (target.matches('[data-personality]')) {

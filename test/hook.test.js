@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { readConfig } from '../src/config.js';
 import { startDaemon } from '../src/daemon.js';
-import { mapClaudeHook } from '../src/hook.js';
+import { mapClaudeHook, recordHookSeen } from '../src/hook.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BIN = path.join(ROOT, 'bin', 'buffy.js');
@@ -169,4 +169,39 @@ test('Claude session ids keep concurrent conversations isolated', async () => {
   assert.equal(snapshot.current.state, 'needs-you');
   assert.equal(snapshot.current.sessionId, 'claude:session-a');
   assert.ok(snapshot.sessions.some((session) => session.id === 'claude:session-b'));
+});
+
+test('an event the daemon accepted is recorded as delivered', async () => {
+  const run = await runHook('PreToolUse', {
+    hook_event_name: 'PreToolUse',
+    session_id: 'delivered-check',
+    tool_name: 'Read',
+  });
+  assert.equal(run.status, 0, run.stderr);
+  const record = JSON.parse(fs.readFileSync(path.join(home, 'hook-last-claude.json'), 'utf8'));
+  assert.equal(record.delivered, true);
+  assert.equal(record.sessionId, 'delivered-check');
+});
+
+/**
+ * The regression behind the connection test: a hook that ran but never reached
+ * the daemon used to leave a fresh timestamp behind, which Connection then read
+ * as a healthy adapter.
+ */
+test('a hook that never reached the daemon is not recorded as healthy', () => {
+  const other = fs.mkdtempSync(path.join(os.tmpdir(), 'buffy-undelivered-'));
+  try {
+    recordHookSeen(
+      'claude',
+      'PreToolUse',
+      { session_id: 'never-delivered' },
+      { BUFFY_HOME: other },
+      { delivered: false },
+    );
+    const record = JSON.parse(fs.readFileSync(path.join(other, 'hook-last-claude.json'), 'utf8'));
+    assert.equal(record.delivered, false, 'Connection must not read this as a working adapter');
+    assert.equal(record.sessionId, 'never-delivered');
+  } finally {
+    fs.rmSync(other, { recursive: true, force: true });
+  }
 });

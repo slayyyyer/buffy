@@ -57,13 +57,16 @@ export function readHookInput({ timeoutMs = 1500 } = {}) {
   });
 }
 
-function recordHookSeen(agent, event, payload, env) {
+export function recordHookSeen(agent, event, payload, env, { delivered = false } = {}) {
   try {
     ensureBuffyDir(env);
     const record = {
       agent,
       at: new Date().toISOString(),
       event,
+      // Whether the daemon actually received this event. A hook that ran but
+      // could not deliver must not be recorded as a healthy connection.
+      delivered: Boolean(delivered),
       sessionId: clean(
         payload.session_id || payload.conversation_id || payload.sessionId,
         80,
@@ -157,7 +160,6 @@ export async function runAgentHook(agentName, eventName, { env = process.env } =
   }
 
   const mapped = mapAgentHook(agent, event, payload);
-  recordHookSeen(agent, event, payload, env);
   if (!mapped) {
     writeHookOutput(agent, event);
     return 0;
@@ -170,6 +172,7 @@ export async function runAgentHook(agentName, eventName, { env = process.env } =
     mapped.request &&
     permissionDecisionsEnabled(env);
   const config = readConfig(env);
+  let delivered = false;
   try {
     const health = await ensureDaemon({ port: config.port, env, waitMs: 2500 });
     // Do not hold Claude's native prompt when nobody is watching the overlay.
@@ -187,7 +190,9 @@ export async function runAgentHook(agentName, eventName, { env = process.env } =
       },
       decision ? { timeout: DECISION_WAIT_MS + 2000, full: true } : undefined,
     );
+    delivered = true;
     if (decision && result?.decision?.behavior) {
+      recordHookSeen(agent, event, payload, env, { delivered });
       writePermissionDecision(result.decision);
       return 0;
     }
@@ -198,6 +203,7 @@ export async function runAgentHook(agentName, eventName, { env = process.env } =
   } catch (error) {
     process.stderr.write(`buffy hook: ${error.message}\n`);
   }
+  recordHookSeen(agent, event, payload, env, { delivered });
   writeHookOutput(agent, event);
   return 0;
 }

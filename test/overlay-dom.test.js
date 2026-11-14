@@ -178,6 +178,10 @@ test('the settings window boots every pane, including the trimmed Connection one
     assert.deepEqual(sections, ['companion', 'personality', 'shortcuts', 'alerts', 'connection', 'updates']);
 
     const panel = document.getElementById('panel');
+    document.querySelector('[data-section="personality"]').click();
+    await waitFor(() => /Stay out of screenshots/.test(panel.innerHTML), 'the Personality pane');
+    assert.match(panel.innerHTML, /data-privacy="hideFromCapture"/, 'capture exclusion is switchable');
+
     document.querySelector('[data-section="connection"]').click();
     await waitFor(() => /Local session evidence/.test(panel.innerHTML), 'the Connection pane');
     const connection = panel.innerHTML;
