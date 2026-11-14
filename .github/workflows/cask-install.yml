@@ -76,19 +76,32 @@ jobs:
             *) die "unexpected architecture $(uname -m)" ;;
           esac
 
-          dmg="$(find "$(brew --cache)" -type f -name 'Buffy-*.dmg' | head -1 || true)"
-          [ -n "$dmg" ] || die "no cached Buffy dmg to check"
+          version="$(node -p "require('./package.json').version")"
+          url="https://github.com/slayyyyer/buffy/releases/download/v${version}/Buffy-${version}-${slug}.dmg"
+
+          # Homebrew verifies sha256 before installing, so the install above is
+          # already a match. This re-derives the checksum from the bytes on disk,
+          # preferring Homebrew's own download and fetching the release artifact
+          # only when the cache has already been cleaned out.
+          dmg="$(find "$(brew --cache)" -type f -name '*.dmg' | head -1 || true)"
+          if [ -n "$dmg" ]; then
+            echo "using Homebrew's download: $dmg"
+          else
+            echo "no dmg under $(brew --cache); fetching $url"
+            dmg="$(mktemp -t buffy).dmg"
+            curl -fL --retry 3 -o "$dmg" "$url" || die "could not download $url"
+          fi
+
           actual="$(shasum -a 256 "$dmg" | awk '{print $1}')"
 
           # The cask's own value for this architecture.
           cask_hash="$(grep -oE "${key}: *\"[0-9a-f]{64}\"" Casks/buffy.rb | grep -oE "[0-9a-f]{64}" || true)"
           [ -n "$cask_hash" ] || die "could not read the $key hash out of the cask"
 
-          version="$(node -p "require('./package.json').version")"
-          published="$(curl -fsSL "https://github.com/slayyyyer/buffy/releases/download/v${version}/Buffy-${version}-${slug}.dmg.sha256" | awk '{print $1}')"
+          published="$(curl -fsSL "${url}.sha256" | awk '{print $1}')"
 
-          [ "$actual" = "$cask_hash" ] || die "cached dmg ($actual) does not match the cask ($cask_hash)"
-          [ "$actual" = "$published" ] || die "cached dmg ($actual) does not match the published checksum ($published)"
+          [ "$actual" = "$cask_hash" ] || die "dmg ($actual) does not match the cask ($cask_hash)"
+          [ "$actual" = "$published" ] || die "dmg ($actual) does not match the published checksum ($published)"
           echo "dmg $(basename "$dmg") sha256 $actual matches the cask and the release"
 
       - name: Uninstall, since a zap leaves user data
