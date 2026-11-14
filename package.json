@@ -32,7 +32,8 @@
   "devDependencies": {
     "@electron/notarize": "^3.1.2",
     "electron": "^45.2.3",
-    "electron-builder": "^26.18.0"
+    "electron-builder": "^26.18.0",
+    "jsdom": "^31.0.1"
   },
   "dependencies": {
     "electron-updater": "^6.8.11"

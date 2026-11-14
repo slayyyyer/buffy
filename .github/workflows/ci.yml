@@ -42,3 +42,50 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  packaging:
+    name: Cask matches package.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check the cask against package.json
+        run: node scripts/check-cask.js
+
+  cask:
+    name: Homebrew cask
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Check the cask parses as Ruby
+        shell: bash
+        run: |
+          set -euo pipefail
+          ruby -v
+          for file in Casks/*.rb; do
+            ruby -c "$file"
+          done
+
+      - name: Load the cask through Homebrew
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew tap-new slayyyyer/buffy-ci >/dev/null
+          tap="$(brew --repository slayyyyer/buffy-ci)"
+          cp Casks/buffy.rb "$tap/Casks/buffy.rb"
+          brew info --cask slayyyyer/buffy-ci/buffy
+
+      - name: Check the cask style
+        continue-on-error: true
+        shell: bash
+        run: brew style Casks/buffy.rb
