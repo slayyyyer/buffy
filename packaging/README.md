@@ -28,7 +28,7 @@ The cask declares `arch arm: "arm64", intel: "x64"` and pins one `sha256` per
 architecture with `sha256 arm: … , intel: …`, both taken from the release's own
 `.dmg.sha256` assets. The URL interpolates `#{version}` and `#{arch}`, so a
 release bump is the version line plus two hashes and nothing else. A
-`depends_on macos: ">= :ventura"` line records Electron 45's floor.
+`depends_on macos: :ventura` line records Electron 45's floor.
 
 The cask declares `auto_updates true` because Buffy ships `electron-updater` and
 updates herself in place. Homebrew therefore treats the install as self-managing:

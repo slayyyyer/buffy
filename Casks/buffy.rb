@@ -17,7 +17,7 @@ cask "buffy" do
   # Electron 45 requires macOS 13, and Buffy updates herself through
   # electron-updater, so Homebrew leaves later versions to the app.
   auto_updates true
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   app "Buffy.app"
 
