@@ -3,6 +3,22 @@
 Release notes for every Buffy version, newest first. The current feature list,
 install steps, adapter setup and configuration live in [README.md](README.md).
 
+## 3.3.5
+
+- **You can prove a connection works.** Every agent in **Settings → Connection**
+  now has **Send a test event**: it runs the installed hook with a synthetic
+  payload, waits for the daemon to report that session, and says how long the
+  round trip took. A launcher left behind by an update no longer looks identical
+  to a working one.
+- **A hook that could not deliver is not called connected.** The hook health
+  record now says whether the daemon received the event, so a failed delivery
+  reads as something to repair instead of a fresh, healthy timestamp.
+- **She stays out of your screen share.** The overlay is excluded from screen
+  capture on macOS and Windows, and on macOS she no longer floats over
+  fullscreen apps, so she cannot turn up in a demo or sit on top of a call.
+  **Settings → Personality → Screen presence** turns the capture exclusion off
+  if you want her in a recording.
+
 ## 3.3.4
 
 - **The cloud-turn state is gone.** 3.3.3 added a coarse "cloud turn, out of
