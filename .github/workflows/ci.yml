@@ -102,6 +102,5 @@ jobs:
           cat info.out
 
       - name: Check the cask style
-        continue-on-error: true
         shell: bash
         run: brew style Casks/buffy.rb

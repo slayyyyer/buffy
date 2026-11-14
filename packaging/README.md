@@ -24,9 +24,11 @@ still shows the unidentified-developer dialog. Approve that one app in
 **System Settings → Privacy & Security → Open Anyway**. Do not disable Gatekeeper
 globally, and do not treat the tap as a way around the warning.
 
-The cask pins one `sha256` per architecture inside `on_arm` / `on_intel`, taken
-from the release's own `.dmg.sha256` assets. The URLs interpolate `#{version}`,
-so a release bump is the version line plus two hashes and nothing else.
+The cask declares `arch arm: "arm64", intel: "x64"` and pins one `sha256` per
+architecture with `sha256 arm: … , intel: …`, both taken from the release's own
+`.dmg.sha256` assets. The URL interpolates `#{version}` and `#{arch}`, so a
+release bump is the version line plus two hashes and nothing else. A
+`depends_on macos: ">= :ventura"` line records Electron 45's floor.
 
 The cask declares `auto_updates true` because Buffy ships `electron-updater` and
 updates herself in place. Homebrew therefore treats the install as self-managing:

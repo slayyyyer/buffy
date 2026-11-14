@@ -26,7 +26,17 @@ for (const name of casks) {
   if (declared !== version) {
     problems.push(`Casks/${name} pins version ${declared || '(none)'}, package.json is ${version}`);
   }
-  const hashes = [...text.matchAll(/sha256\s+"([0-9a-fA-F]+)"/g)].map((match) => match[1]);
+  // Stanzas are grouped by blank lines, so the checksum group runs from `sha256`
+  // to the next blank line. That covers `sha256 "…"` and the arch-split form
+  // `sha256 arm: "…", intel: "…"`.
+  const shaIndex = text.search(/^[ \t]*sha256\b/m);
+  let checksums = '';
+  if (shaIndex >= 0) {
+    const stanza = text.slice(shaIndex);
+    const groupEnd = stanza.search(/\n[ \t]*\n/);
+    checksums = groupEnd >= 0 ? stanza.slice(0, groupEnd) : stanza;
+  }
+  const hashes = [...checksums.matchAll(/"([0-9a-fA-F]{64})"/g)].map((match) => match[1]);
   if (hashes.length < 2) problems.push(`Casks/${name} should carry one sha256 per architecture`);
   for (const hash of hashes) {
     if (!/^[0-9a-f]{64}$/i.test(hash)) problems.push(`Casks/${name} has a malformed sha256: ${hash.slice(0, 12)}…`);
