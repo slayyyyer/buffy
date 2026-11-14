@@ -5,9 +5,9 @@
 cask "buffy" do
   arch arm: "arm64", intel: "x64"
 
-  version "3.3.4"
-  sha256 arm:   "8b3ba4866fc0ed1e6614f743734e06ca0bb24e1e45914b1ab21f5f21973608a8",
-         intel: "46cec6682842d77a4a023acd391156e647eee23d5edc854846b4920039bc665b"
+  version "3.3.5"
+  sha256 arm:   "1ae708a3070a87d07e405049a74d2bb8a2595f5767d5b1a8afb6f905b2de17f4",
+         intel: "29b2b465f32536f4de64ff6bdc88848bc240f9963da5bee03a640899b7755cec"
 
   url "https://github.com/slayyyyer/buffy/releases/download/v#{version}/Buffy-#{version}-mac-#{arch}.dmg"
   name "Buffy"
