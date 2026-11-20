@@ -117,24 +117,6 @@ export function encode({ width, height, pixels }) {
   ]);
 }
 
-/** Bounding box of pixels that are not (nearly) transparent. */
-export function opaqueBounds({ width, height, pixels }, threshold = 12) {
-  let left = width;
-  let top = height;
-  let right = -1;
-  let bottom = -1;
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      if (pixels[(y * width + x) * 4 + 3] <= threshold) continue;
-      if (x < left) left = x;
-      if (x > right) right = x;
-      if (y < top) top = y;
-      if (y > bottom) bottom = y;
-    }
-  }
-  return right < 0 ? null : { left, top, right, bottom };
-}
-
 /**
  * Compare two captures.
  *
@@ -205,8 +187,6 @@ export function compare(expected, actual, { block = 8, channelTolerance = 10, pi
     blockTotal,
     blockDiffering,
     blockRatio: blockDiffering / blockTotal,
-    expectedBounds: opaqueBounds(expected),
-    actualBounds: opaqueBounds(actual),
     mask: { width, height, pixels: mask },
   };
 }

@@ -24,12 +24,11 @@ const CASES = [
   { name: 'settings-thumb', mode: 'settings-thumb' },
 ];
 
-// A CI runner shares the platform but not the rasteriser. Block averages wash
-// out antialiasing already — measured noise of ±20 per channel moves 0% of
-// blocks — so the CI budget is sized for font and edge differences inside the
-// pill, while a real regression moves a third of the blocks at least:
-// a one-pixel shift is 29% on the compact shot and 41% on the thumbnail.
-const BUDGET = process.env.CI ? { blockRatio: 0.15, bounds: 3 } : { blockRatio: 0.03, bounds: 2 };
+// Measured on these two captures: ±20 per channel of noise moves no blocks, a
+// one-pixel shift moves 29% of the compact blocks and 41% of the thumbnail's,
+// and both recorded regressions move ~48%. Antialiasing on another runner is
+// noise, so the CI budget sits far below anything a framing change does.
+const MAX_BLOCK_RATIO = process.env.CI ? 0.15 : 0.03;
 
 // Everything here has to be stable across runs: no daemon, no clock, no motion.
 async function seedHome(home) {
@@ -72,8 +71,6 @@ async function shoot(name, mode) {
         '--shot-mode',
         mode,
         '--shot-fixture',
-        '--shot-dpr',
-        '1',
         '--shot-exit',
       ],
       {
@@ -86,11 +83,6 @@ async function shoot(name, mode) {
   } finally {
     await fs.rm(workspace, { recursive: true, force: true });
   }
-}
-
-function boundsClose(expected, actual, tolerance = 2) {
-  if (!expected || !actual) return expected === actual;
-  return Object.keys(expected).every((edge) => Math.abs(expected[edge] - actual[edge]) <= tolerance);
 }
 
 test('golden shots keep the compact frame and the picker thumbnail in place', async (t) => {
@@ -129,12 +121,8 @@ test('golden shots keep the compact frame and the picker thumbnail in place', as
       const result = compare(golden, image);
       const detail =
         `${result.blockDiffering} of ${result.blockTotal} blocks differ (${(result.blockRatio * 100).toFixed(2)}%), ` +
-        `${result.differing} pixels, largest channel delta ${result.worst}; ` +
-        `bounds ${JSON.stringify(result.expectedBounds)} vs ${JSON.stringify(result.actualBounds)}`;
-      if (
-        result.blockRatio > BUDGET.blockRatio ||
-        !boundsClose(result.expectedBounds, result.actualBounds, BUDGET.bounds)
-      ) {
+        `${result.differing} pixels, largest channel delta ${result.worst}`;
+      if (result.blockRatio > MAX_BLOCK_RATIO) {
         const artifact = path.join(os.tmpdir(), `buffy-golden-${item.name}-diff.png`);
         await fs.writeFile(artifact, encode(result.mask));
         assert.fail(

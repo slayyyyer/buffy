@@ -29,10 +29,9 @@
   const compactCount = $('compact-count');
   const toastEl = $('toast');
   const PILL_GAP = 8;
-  // --shot-fixture loads the page with ?shot=frozen: golden screenshots need a
-  // clock that never moves, or every frame bobs and blinks a little differently.
-  const SHOT_FROZEN = new URLSearchParams(window.location.search).get('shot') === 'frozen';
-  const SHOT_NOW = 600000;
+  // --shot-fixture loads the page with ?shot=frozen: golden shots need a clock
+  // that never moves, or every frame bobs and blinks a little differently.
+  const SHOT_NOW = new URLSearchParams(window.location.search).get('shot') === 'frozen' ? 600000 : null;
 
   const STATE_LABELS = {
     idle: 'Idle',
@@ -839,7 +838,7 @@
     state.frameId = null;
     if (!state.visible) return;
     state.frameId = requestAnimationFrame(frame);
-    if (SHOT_FROZEN) now = SHOT_NOW;
+    if (SHOT_NOW !== null) now = SHOT_NOW;
     const width = window.innerWidth;
     const height = window.innerHeight;
     ctx.clearRect(0, 0, width, height);

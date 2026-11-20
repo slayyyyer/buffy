@@ -38,21 +38,22 @@ const { createDraftStore, buildClaudeCodeUrl } = require('./handoff.cjs');
 const { createAlertPlanner } = require('./alerts.cjs');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Screenshots must not race image loading, so the shot path waits until the
-// renderer reports that the character art is drawn from loaded files.
+// A shot must not race image loading, so the shot path polls the renderer until
+// its answer is truthy (art drawn, picker canvas painted) and gives up quietly.
 async function waitForScript(webContents, expression, timeoutMs = 4000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (await webContents.executeJavaScript(expression).catch(() => false)) return true;
+    const result = await webContents.executeJavaScript(expression).catch(() => null);
+    if (result) return result;
     await sleep(120);
   }
-  return false;
+  return null;
 }
 
-const ART_READY = "(() => { const C = globalThis.BuffyCharacters; return Boolean(C && C.isReady(C.manifest().characters[0].id)); })()";
-const THUMB_SELECTOR = '[data-character-thumb="buffy"]';
-const THUMB_READY = `(() => { const c = document.querySelector('${THUMB_SELECTOR}'); return Boolean(c && c.width > 1); })()`;
-const THUMB_RECT = `(() => { const c = document.querySelector('${THUMB_SELECTOR}'); if (!c) return null; const r = c.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) }; })()`;
+const ART_READY = "(() => { const C = globalThis.BuffyCharacters; return Boolean(C && C.isReady()); })()";
+// The picker canvas stays blank until its images load, so it only reports a
+// rect once it has been painted.
+const THUMB_RECT = "(() => { const c = document.querySelector('[data-character-thumb=\"buffy\"]'); if (!c || c.width < 2) return null; const r = c.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) }; })()";
 
 function readJson(file, fallback) {
   try {
@@ -87,14 +88,11 @@ function argValue(name) {
 const shotPath = argValue('--shot');
 const shotMode = argValue('--shot-mode') || 'full';
 const shotExit = process.argv.includes('--shot-exit');
-// Golden shots pin the device pixel ratio (so a capture is the same size on any
-// display) and drop the live daemon, cursor feed and clock (so nothing in the
-// frame changes between runs).
+// --shot-fixture freezes a capture: a fixture state instead of the daemon, no
+// cursor feed, a clock that never moves, and device pixel ratio 1 so the PNG is
+// the same size on every display.
 const shotFixture = process.argv.includes('--shot-fixture');
-const shotDpr = Number(argValue('--shot-dpr'));
-if (Number.isFinite(shotDpr) && shotDpr > 0) {
-  app.commandLine.appendSwitch('force-device-scale-factor', String(shotDpr));
-}
+if (shotFixture) app.commandLine.appendSwitch('force-device-scale-factor', '1');
 const settingsShotPath = argValue('--settings-shot') || argValue('--wardrobe-shot');
 const settingsShotExit = process.argv.includes('--settings-shot-exit') || process.argv.includes('--wardrobe-shot-exit');
 const dev = process.argv.includes('--dev');
@@ -139,15 +137,10 @@ let prefsApi = null;
 let rotationApi = null;
 let installApi = null;
 let configApi = null;
-let snapshot = null;
-// The frozen fixture state for golden shots: a resting companion, no pending
-// work, no project row, and nothing that depends on a live agent.
-const SHOT_SNAPSHOT = {
-  current: { state: 'idle', message: '', category: 'thinking', seq: 1, quiet: true, since: 0 },
-  watch: { directory: 'buffy', enabled: true },
-  pendingRequests: 0,
-  companion: { name: 'Buffy' },
-};
+// The whole fixture state: a resting companion with no message, pending work or
+// project row. Everything else the renderer reads already defaults to empty.
+const SHOT_SNAPSHOT = { current: { state: 'idle' } };
+let snapshot = shotFixture ? SHOT_SNAPSHOT : null;
 let shortcutStatus = { accelerator: null, ok: false, error: 'Shortcut not registered yet.' };
 let connectionCache = null;
 
@@ -765,12 +758,10 @@ function createWindow() {
     win.webContents.send('mode', modePayload());
     win.webContents.send('draft', DRAFT.snapshot());
     win.setIgnoreMouseEvents(true, { forward: true });
-    if (shotFixture) {
-      win.webContents.send('state', SHOT_SNAPSHOT);
-      return;
+    if (!shotFixture) {
+      connectStream();
+      poll();
     }
-    connectStream();
-    poll();
   });
 
   win.once('ready-to-show', () => {
@@ -829,8 +820,7 @@ function createWindow() {
             if (shotMode === 'settings-thumb') {
               // Crop to one picker canvas: the rest of the page is text, which
               // shifts with fonts, while the thumbnail is pure character art.
-              await waitForScript(targetWindow.webContents, THUMB_READY, 5000);
-              rect = await targetWindow.webContents.executeJavaScript(THUMB_RECT);
+              rect = await waitForScript(targetWindow.webContents, THUMB_RECT, 5000);
               if (!rect) throw new Error('the companion thumbnail is not in the settings window');
             }
             const image = await targetWindow.webContents.capturePage(rect);
@@ -1808,7 +1798,7 @@ ipcMain.handle('session:focus', (_event, payload) => {
   return { ok: false, error: 'That session did not report a project folder.' };
 });
 
-ipcMain.handle('snapshot:get', () => (shotFixture ? SHOT_SNAPSHOT : snapshot));
+ipcMain.handle('snapshot:get', () => snapshot);
 
 ipcMain.handle('composer:get', () => DRAFT.snapshot());
 
