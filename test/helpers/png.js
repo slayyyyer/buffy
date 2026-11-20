@@ -136,15 +136,20 @@ export function opaqueBounds({ width, height, pixels }, threshold = 12) {
 }
 
 /**
- * Compare two captures. A pixel counts as different when any channel moves by
- * more than `channelTolerance`, which absorbs antialiasing without hiding a
- * change in size or position.
+ * Compare two captures.
+ *
+ * Pixel equality is the wrong bar: another machine rasterises the same layout
+ * with slightly different antialiasing. So the verdict comes from block
+ * averages, where edge blending washes out but a change in size, position or
+ * colour does not. Exact pixel counts are kept for the failure message and the
+ * diff mask.
  */
-export function compare(expected, actual, channelTolerance = 24) {
+export function compare(expected, actual, { block = 8, channelTolerance = 10, pixelTolerance = 24 } = {}) {
   if (expected.width !== actual.width || expected.height !== actual.height) {
     throw new Error(`size mismatch: ${expected.width}x${expected.height} vs ${actual.width}x${actual.height}`);
   }
-  const total = expected.width * expected.height;
+  const { width, height } = expected;
+  const total = width * height;
   let differing = 0;
   let worst = 0;
   const mask = new Uint8Array(total * 4);
@@ -155,7 +160,7 @@ export function compare(expected, actual, channelTolerance = 24) {
       delta = Math.max(delta, Math.abs(expected.pixels[offset + channel] - actual.pixels[offset + channel]));
     }
     if (delta > worst) worst = delta;
-    if (delta > channelTolerance) {
+    if (delta > pixelTolerance) {
       differing += 1;
       mask[offset] = 255;
       mask[offset + 1] = 40;
@@ -163,13 +168,45 @@ export function compare(expected, actual, channelTolerance = 24) {
       mask[offset + 3] = 255;
     }
   }
+
+  let blockTotal = 0;
+  let blockDiffering = 0;
+  for (let top = 0; top < height; top += block) {
+    const bottom = Math.min(top + block, height);
+    for (let left = 0; left < width; left += block) {
+      const right = Math.min(left + block, width);
+      const count = (right - left) * (bottom - top);
+      const expectedSums = [0, 0, 0, 0];
+      const actualSums = [0, 0, 0, 0];
+      for (let y = top; y < bottom; y += 1) {
+        for (let x = left; x < right; x += 1) {
+          const offset = (y * width + x) * 4;
+          for (let channel = 0; channel < 4; channel += 1) {
+            expectedSums[channel] += expected.pixels[offset + channel];
+            actualSums[channel] += actual.pixels[offset + channel];
+          }
+        }
+      }
+      blockTotal += 1;
+      for (let channel = 0; channel < 4; channel += 1) {
+        if (Math.abs(expectedSums[channel] - actualSums[channel]) / count > channelTolerance) {
+          blockDiffering += 1;
+          break;
+        }
+      }
+    }
+  }
+
   return {
     total,
     differing,
     ratio: differing / total,
     worst,
+    blockTotal,
+    blockDiffering,
+    blockRatio: blockDiffering / blockTotal,
     expectedBounds: opaqueBounds(expected),
     actualBounds: opaqueBounds(actual),
-    mask: { width: expected.width, height: expected.height, pixels: mask },
+    mask: { width, height, pixels: mask },
   };
 }

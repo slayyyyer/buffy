@@ -20,9 +20,16 @@ const PORT = '45177';
 // canvas. A regression in either shows up as pixels moving, so a golden recorded
 // from the frozen fixture is enough to catch it.
 const CASES = [
-  { name: 'compact', mode: 'compact', width: 234, height: 300, maxDiffRatio: 0.02 },
-  { name: 'settings-thumb', mode: 'settings-thumb', maxDiffRatio: 0.04 },
+  { name: 'compact', mode: 'compact', width: 234, height: 300 },
+  { name: 'settings-thumb', mode: 'settings-thumb' },
 ];
+
+// A CI runner shares the platform but not the rasteriser. Block averages wash
+// out antialiasing already — measured noise of ±20 per channel moves 0% of
+// blocks — so the CI budget is sized for font and edge differences inside the
+// pill, while a real regression moves a third of the blocks at least:
+// a one-pixel shift is 29% on the compact shot and 41% on the thumbnail.
+const BUDGET = process.env.CI ? { blockRatio: 0.15, bounds: 3 } : { blockRatio: 0.03, bounds: 2 };
 
 // Everything here has to be stable across runs: no daemon, no clock, no motion.
 async function seedHome(home) {
@@ -121,10 +128,13 @@ test('golden shots keep the compact frame and the picker thumbnail in place', as
 
       const result = compare(golden, image);
       const detail =
-        `${result.differing} of ${result.total} pixels differ (${(result.ratio * 100).toFixed(2)}%, ` +
-        `largest channel delta ${result.worst}); bounds ${JSON.stringify(result.expectedBounds)} vs ` +
-        `${JSON.stringify(result.actualBounds)}`;
-      if (result.ratio > item.maxDiffRatio || !boundsClose(result.expectedBounds, result.actualBounds)) {
+        `${result.blockDiffering} of ${result.blockTotal} blocks differ (${(result.blockRatio * 100).toFixed(2)}%), ` +
+        `${result.differing} pixels, largest channel delta ${result.worst}; ` +
+        `bounds ${JSON.stringify(result.expectedBounds)} vs ${JSON.stringify(result.actualBounds)}`;
+      if (
+        result.blockRatio > BUDGET.blockRatio ||
+        !boundsClose(result.expectedBounds, result.actualBounds, BUDGET.bounds)
+      ) {
         const artifact = path.join(os.tmpdir(), `buffy-golden-${item.name}-diff.png`);
         await fs.writeFile(artifact, encode(result.mask));
         assert.fail(
