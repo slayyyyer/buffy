@@ -1,124 +1,91 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
   <defs>
-    <linearGradient id="body" x1="0.18" y1="0" x2="0.72" y2="1">
-      <stop offset="0" stop-color="#fff8ec"/>
-      <stop offset="0.44" stop-color="#fbe6d9"/>
-      <stop offset="0.78" stop-color="#f3cdc8"/>
-      <stop offset="1" stop-color="#e7b3b8"/>
+    <linearGradient id="plush" x1="0.15" y1="0" x2="0.82" y2="1">
+      <stop offset="0" stop-color="#ffb2d0"/>
+      <stop offset=".34" stop-color="#ff79ad"/>
+      <stop offset=".74" stop-color="#f34b8a"/>
+      <stop offset="1" stop-color="#dc2c70"/>
     </linearGradient>
-    <radialGradient id="sheen" cx="0.32" cy="0.22" r="0.72">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
-      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="screen" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#4b2a47"/>
-      <stop offset="0.55" stop-color="#3a2039"/>
-      <stop offset="1" stop-color="#2a1529"/>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2=".8">
+      <stop stop-color="#ffb4d2"/><stop offset=".5" stop-color="#f64d8c"/><stop offset="1" stop-color="#c91e61"/>
     </linearGradient>
-    <radialGradient id="cheek" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#f08fae" stop-opacity="0.55"/>
-      <stop offset="1" stop-color="#f08fae" stop-opacity="0"/>
+    <linearGradient id="screen" x1="0" y1="0" x2=".2" y2="1">
+      <stop stop-color="#501331"/><stop offset=".55" stop-color="#351022"/><stop offset="1" stop-color="#260c1c"/>
+    </linearGradient>
+    <linearGradient id="boot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ff79ac"/><stop offset=".55" stop-color="#f43f80"/><stop offset="1" stop-color="#c91e5c"/>
+    </linearGradient>
+    <radialGradient id="softLight" cx=".34" cy=".2" r=".82">
+      <stop stop-color="#fff" stop-opacity=".72"/><stop offset=".54" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
-    <filter id="bodyShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#5c3150" flood-opacity="0.18"/>
+    <linearGradient id="screenGlint" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff" stop-opacity=".48"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="plushShadow" x="-.2" y="-.2" width="1.4" height="1.5">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#76163f" flood-opacity=".25"/>
+    </filter>
+    <filter id="smallShadow" x="-.3" y="-.3" width="1.6" height="1.7">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#841b48" flood-opacity=".24"/>
     </filter>
   </defs>
 
-  <g id="buffy-base">
-    <!-- feet, tucked behind the body -->
-    <g id="feet">
-      <ellipse cx="204" cy="550" rx="34" ry="23" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
-      <ellipse cx="308" cy="550" rx="34" ry="23" fill="#f9e6d7" stroke="#5c3150" stroke-width="8"/>
-      <path d="M176 562 Q204 576 232 562" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
-      <path d="M280 562 Q308 576 336 562" fill="none" stroke="#e2b7b2" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="186" cy="544" r="5" fill="#f6cfd8" opacity="0.9"/>
-      <circle cx="290" cy="544" r="5" fill="#f6cfd8" opacity="0.9"/>
-      <g fill="#e2b7b2" opacity="0.9">
-        <ellipse cx="196" cy="558" rx="3.4" ry="2.6"/>
-        <ellipse cx="204" cy="560" rx="3.4" ry="2.6"/>
-        <ellipse cx="212" cy="558" rx="3.4" ry="2.6"/>
-        <ellipse cx="300" cy="558" rx="3.4" ry="2.6"/>
-        <ellipse cx="308" cy="560" rx="3.4" ry="2.6"/>
-        <ellipse cx="316" cy="558" rx="3.4" ry="2.6"/>
-      </g>
+  <g id="buffy-base" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Soft rounded boots -->
+    <g filter="url(#smallShadow)">
+      <path d="M169 532 Q178 520 199 522 L225 530 Q237 538 236 557 L232 574 Q226 586 204 586 L177 581 Q164 574 164 556Z" fill="url(#boot)" stroke="#bd2059" stroke-width="7"/>
+      <path d="M276 530 Q288 520 310 522 L334 532 Q347 542 346 558 L341 575 Q334 586 312 586 L282 581 Q270 574 270 556Z" fill="url(#boot)" stroke="#bd2059" stroke-width="7"/>
+      <path d="M178 543 Q199 549 223 543 M284 543 Q308 549 333 543" fill="none" stroke="#ffb1d0" stroke-width="5" opacity=".82"/>
+      <path d="M178 570 Q199 579 224 571 M284 570 Q309 579 334 571" fill="none" stroke="#a8174d" stroke-width="4" opacity=".55"/>
+      <g fill="#ffadc9" opacity=".9"><ellipse cx="190" cy="555" rx="3" ry="2"/><ellipse cx="200" cy="557" rx="3" ry="2"/><ellipse cx="210" cy="555" rx="3" ry="2"/><ellipse cx="295" cy="555" rx="3" ry="2"/><ellipse cx="305" cy="557" rx="3" ry="2"/><ellipse cx="315" cy="555" rx="3" ry="2"/></g>
     </g>
 
-    <!-- plush cloud body: one clean silhouette with soft lobes -->
-    <path
-      id="cloud-body"
-      d="M256 128
-         C286 112 320 124 332 150
-         C364 140 396 158 402 188
-         C438 196 458 226 450 258
-         C480 274 490 314 470 340
-         C488 368 476 410 446 424
-         C446 464 414 492 378 484
-         C364 512 330 526 300 514
-         C284 528 254 530 238 516
-         C210 528 178 514 164 486
-         C128 492 96 464 96 426
-         C64 410 52 368 72 340
-         C52 314 62 274 92 258
-         C84 226 104 196 140 188
-         C146 158 178 140 210 150
-         C222 124 256 112 256 128 Z"
-      fill="url(#body)"
-      stroke="#5c3150"
-      stroke-width="9"
-      stroke-linejoin="round"
-      filter="url(#bodyShadow)"
-    />
-    <path
-      d="M256 128
-         C286 112 320 124 332 150
-         C364 140 396 158 402 188
-         C438 196 458 226 450 258
-         C480 274 490 314 470 340
-         C488 368 476 410 446 424
-         C446 464 414 492 378 484
-         C364 512 330 526 300 514
-         C284 528 254 530 238 516
-         C210 528 178 514 164 486
-         C128 492 96 464 96 426
-         C64 410 52 368 72 340
-         C52 314 62 274 92 258
-         C84 226 104 196 140 188
-         C146 158 178 140 210 150
-         C222 124 256 112 256 128 Z"
-      fill="url(#sheen)"
-    />
+    <!-- Small plush body under the oversized cloud head -->
+    <path d="M198 362 Q256 345 314 362 L326 420 Q338 471 312 526 Q256 545 200 526 Q174 471 186 420Z" fill="url(#plush)" stroke="#c12662" stroke-width="8" filter="url(#smallShadow)"/>
+    <path d="M212 379 Q256 365 300 379 M204 402 Q256 416 308 402" fill="none" stroke="#ffbed6" stroke-width="4" opacity=".68"/>
+    <path d="M256 384 V515" fill="none" stroke="#d92d70" stroke-width="3" stroke-dasharray="3 8" opacity=".45"/>
 
-    <!-- soft inner shadow where the body meets the floor -->
-    <ellipse cx="256" cy="470" rx="154" ry="26" fill="#b97b8c" opacity="0.16"/>
-
-    <!-- plush seam -->
-    <path d="M150 456 Q256 478 362 456" fill="none" stroke="#e0aca9" stroke-width="4" stroke-linecap="round" stroke-dasharray="3 9" opacity="0.75"/>
-
-    <!-- shoulder nubs; the pose layer supplies the arms -->
-    <ellipse cx="120" cy="404" rx="15" ry="19" fill="#f8e0d4" stroke="#5c3150" stroke-width="7"/>
-    <ellipse cx="392" cy="404" rx="15" ry="19" fill="#f8e0d4" stroke="#5c3150" stroke-width="7"/>
-
-    <!-- little top puff -->
-    <g id="top-puff">
-      <path d="M238 136 C232 112 246 96 264 98 C280 88 302 96 306 114 C322 120 326 138 312 148 C304 158 280 160 268 150 C252 158 238 150 238 136 Z" fill="#fff4e6" stroke="#5c3150" stroke-width="7" stroke-linejoin="round"/>
-      <path d="M252 120 Q262 108 278 110" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+    <!-- Round pink ears peek out from the cloud -->
+    <g filter="url(#smallShadow)">
+      <rect x="34" y="208" width="75" height="83" rx="34" fill="url(#ear)" stroke="#d92869" stroke-width="8"/>
+      <rect x="403" y="208" width="75" height="83" rx="34" fill="url(#ear)" stroke="#d92869" stroke-width="8"/>
+      <rect x="47" y="220" width="29" height="59" rx="14" fill="#ffd1e2" opacity=".9"/>
+      <rect x="436" y="220" width="29" height="59" rx="14" fill="#ffd1e2" opacity=".9"/>
+      <ellipse cx="55" cy="232" rx="7" ry="16" fill="#fff" opacity=".78"/>
+      <ellipse cx="457" cy="232" rx="7" ry="16" fill="#fff" opacity=".78"/>
     </g>
 
-    <!-- cheeks peek out around the screen -->
-    <circle cx="134" cy="344" r="32" fill="url(#cheek)"/>
-    <circle cx="378" cy="344" r="32" fill="url(#cheek)"/>
+    <!-- Puffy scalloped cloud hood -->
+    <path id="cloud-shadow" d="M256 64 C281 51 310 62 322 81 C350 72 377 89 383 113 C411 117 430 140 428 168 C455 182 464 212 450 236 C468 259 462 291 442 308 C448 337 430 363 402 371 C386 396 356 402 333 389 C307 407 279 400 256 386 C233 400 205 407 179 389 C154 402 124 394 110 371 C80 363 63 339 70 309 C48 289 43 259 61 236 C47 211 57 181 83 168 C81 140 100 117 129 113 C135 89 161 72 190 81 C202 61 231 51 256 64Z" fill="#aa1b51" opacity=".5" transform="translate(0 8)"/>
+    <path id="cloud-body" d="M256 58 C281 46 309 57 321 77 C350 67 378 84 384 109 C412 113 432 137 429 165 C456 180 465 211 451 235 C469 259 463 291 443 308 C449 337 431 363 402 370 C386 396 356 403 333 389 C307 407 279 400 256 386 C233 400 205 407 179 389 C154 403 124 395 110 370 C80 363 63 338 70 308 C49 289 43 259 61 235 C47 211 57 180 83 165 C80 137 100 113 128 109 C135 84 162 67 191 77 C203 56 231 46 256 58Z" fill="url(#plush)" stroke="#ed3978" stroke-width="10" filter="url(#plushShadow)"/>
 
-    <!-- face screen: the renderer draws the expression here -->
-    <rect x="160" y="246" width="192" height="120" rx="36" fill="url(#screen)" stroke="#5c3150" stroke-width="8"/>
-    <rect x="170" y="256" width="172" height="100" rx="28" fill="none" stroke="#ffc7dd" stroke-width="2" opacity="0.2"/>
-    <path d="M186 264 Q212 252 246 254" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.16"/>
-    <circle cx="338" cy="276" r="4" fill="#ffc7dd" opacity="0.55"/>
+    <!-- Soft layered puff highlights -->
+    <path d="M256 74 C281 61 309 73 315 96 C336 87 359 99 362 119 C388 120 403 141 398 162 C420 173 426 196 414 214 C430 233 424 256 407 269 C412 293 397 311 376 315 C364 337 342 343 324 333 C305 351 280 347 256 333 C231 347 207 351 188 333 C169 344 146 336 136 315 C111 310 98 292 104 269 C86 255 80 233 97 214 C85 195 93 174 114 162 C109 139 125 120 149 119 C153 98 175 86 197 96 C203 73 232 61 256 74Z" fill="url(#softLight)" opacity=".58"/>
+    <g fill="#ffd1e3" opacity=".3">
+      <circle cx="159" cy="137" r="19"/><circle cx="205" cy="103" r="18"/><circle cx="256" cy="91" r="19"/><circle cx="307" cy="103" r="18"/><circle cx="352" cy="137" r="19"/>
+      <circle cx="116" cy="190" r="18"/><circle cx="396" cy="190" r="18"/><circle cx="91" cy="240" r="15"/><circle cx="421" cy="240" r="15"/>
+    </g>
+    <g fill="#fff1f7" opacity=".5">
+      <ellipse cx="187" cy="113" rx="9" ry="4" transform="rotate(-32 187 113)"/><ellipse cx="277" cy="99" rx="9" ry="4" transform="rotate(-25 277 99)"/>
+      <ellipse cx="335" cy="122" rx="8" ry="4" transform="rotate(24 335 122)"/><ellipse cx="129" cy="174" rx="7" ry="4" transform="rotate(-34 129 174)"/>
+      <ellipse cx="389" cy="227" rx="7" ry="4" transform="rotate(32 389 227)"/>
+    </g>
 
-    <!-- tiny stitch details on the body -->
-    <path d="M118 380 L108 398" stroke="#d9a3a5" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-    <path d="M394 380 L404 398" stroke="#d9a3a5" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-    <circle cx="126" cy="446" r="5" fill="#f6cfd8" opacity="0.8"/>
-    <circle cx="386" cy="446" r="5" fill="#f6cfd8" opacity="0.8"/>
+    <!-- The large dark display keeps the animated face centered and clear -->
+    <path d="M176 211 H336 L368 226 V331 L351 347 H161 L144 331 V227Z" fill="url(#screen)" stroke="#821941" stroke-width="11" filter="url(#smallShadow)"/>
+    <path d="M180 222 H332 L355 233 V325 L343 336 H169 L157 325 V235Z" fill="none" stroke="#ffb6d1" stroke-width="3" opacity=".35"/>
+    <path d="M174 229 Q191 219 222 219 H297" fill="none" stroke="url(#screenGlint)" stroke-width="7"/>
+    <circle cx="343" cy="242" r="4" fill="#ff9ec5" opacity=".72"/>
+
+    <!-- Pink cuffs at the base of the cloud frame the pose-driven arms -->
+    <ellipse cx="154" cy="402" rx="15" ry="17" fill="url(#ear)" stroke="#d82b6c" stroke-width="6"/>
+    <ellipse cx="358" cy="402" rx="15" ry="17" fill="url(#ear)" stroke="#d82b6c" stroke-width="6"/>
+    <ellipse cx="150" cy="396" rx="4" ry="3" fill="#fff" opacity=".72"/>
+    <ellipse cx="354" cy="396" rx="4" ry="3" fill="#fff" opacity=".72"/>
+
+    <!-- Blush and tiny sparkle stitching -->
+    <ellipse cx="125" cy="332" rx="24" ry="11" fill="#ff7fa9" opacity=".46"/>
+    <ellipse cx="387" cy="332" rx="24" ry="11" fill="#ff7fa9" opacity=".46"/>
+    <path d="M104 327 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3Z" fill="#fff4fa" opacity=".92"/>
+    <path d="M411 339 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2Z" fill="#fff4fa" opacity=".86"/>
   </g>
 </svg>

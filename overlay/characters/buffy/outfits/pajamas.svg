@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640"><defs><filter id="glossShadow" x="-.2" y="-.2" width="1.4" height="1.5"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#71143d" flood-opacity=".2"/></filter></defs>
   <defs>
     <linearGradient id="mintPj" x1="0" y1="0" x2="0.25" y2="1">
       <stop offset="0" stop-color="#e4f8ee"/>
@@ -6,18 +6,18 @@
       <stop offset="1" stop-color="#b4ddc9"/>
     </linearGradient>
   </defs>
-  <g id="buffy-pajamas">
+  <g filter="url(#glossShadow)" id="buffy-pajamas">
     <!-- nightgown -->
     <path d="M192 386 C182 422 174 478 158 552 C172 570 340 570 354 552 C338 478 330 422 320 386 C296 372 216 372 192 386 Z"
-      fill="url(#mintPj)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+      fill="url(#mintPj)" stroke="#7a1645" stroke-width="8" stroke-linejoin="round"/>
     <!-- scalloped hem -->
     <path d="M160 548 Q176 566 192 548 Q208 566 224 548 Q240 566 256 548 Q272 566 288 548 Q304 566 320 548 Q336 566 352 548"
       fill="none" stroke="#fdf8ec" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
     <!-- collar -->
     <path d="M214 382 C222 402 242 412 256 412 C270 412 290 402 298 382"
-      fill="none" stroke="#5c3150" stroke-width="7" stroke-linecap="round"/>
+      fill="none" stroke="#7a1645" stroke-width="7" stroke-linecap="round"/>
     <path d="M220 382 Q238 400 256 400 Q274 400 292 382 Q274 372 256 372 Q238 372 220 382 Z"
-      fill="#fdf8ec" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+      fill="#fdf8ec" stroke="#7a1645" stroke-width="6" stroke-linejoin="round"/>
     <!-- buttons -->
     <circle cx="256" cy="424" r="4.5" fill="#fdf8ec" stroke="#8aa898" stroke-width="2"/>
     <circle cx="256" cy="448" r="4.5" fill="#fdf8ec" stroke="#8aa898" stroke-width="2"/>
@@ -28,7 +28,7 @@
     <path d="M227 480 C220 486 220 496 227 501 C221 501 217 495 217 490 C217 486 220 482 227 480 Z"
       fill="#8fbfa7"/>
     <!-- tiny stitched stars -->
-    <g fill="#fff8dc" stroke="#a9cdbb" stroke-width="1.4">
+    <g filter="url(#glossShadow)" fill="#fff8dc" stroke="#a9cdbb" stroke-width="1.4">
       <path d="M292 432 L294 438 L300 438 L295 442 L297 448 L292 444 L287 448 L289 442 L284 438 L290 438 Z"/>
       <path d="M196 462 L198 467 L203 467 L199 470 L201 475 L196 472 L191 475 L193 470 L189 467 L194 467 Z"/>
       <path d="M304 500 L306 505 L311 505 L307 508 L309 513 L304 510 L299 513 L301 508 L297 505 L302 505 Z"/>
@@ -38,8 +38,8 @@
     <path d="M286 462 C286 454 296 451 301 458 C307 452 316 458 313 466 C318 471 311 478 304 475 C296 480 286 474 288 467 Z"
       fill="#fdf8ec" stroke="#8aa898" stroke-width="2.4"/>
     <!-- fluffy cloud slippers -->
-    <ellipse cx="204" cy="558" rx="35" ry="22" fill="#fdf8ec" stroke="#5c3150" stroke-width="7"/>
-    <ellipse cx="308" cy="558" rx="35" ry="22" fill="#fdf8ec" stroke="#5c3150" stroke-width="7"/>
+    <ellipse cx="204" cy="558" rx="35" ry="22" fill="#fdf8ec" stroke="#7a1645" stroke-width="7"/>
+    <ellipse cx="308" cy="558" rx="35" ry="22" fill="#fdf8ec" stroke="#7a1645" stroke-width="7"/>
     <path d="M176 556 Q190 548 204 556 Q218 548 232 556" fill="none" stroke="#d9eadf" stroke-width="5" stroke-linecap="round"/>
     <path d="M280 556 Q294 548 308 556 Q322 548 336 556" fill="none" stroke="#d9eadf" stroke-width="5" stroke-linecap="round"/>
   </g>

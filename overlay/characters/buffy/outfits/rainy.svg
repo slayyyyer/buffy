@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640"><defs><filter id="glossShadow" x="-.2" y="-.2" width="1.4" height="1.5"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#71143d" flood-opacity=".2"/></filter></defs>
   <defs>
     <linearGradient id="rain" x1="0" y1="0" x2="0.2" y2="1">
       <stop offset="0" stop-color="#ffe8a6"/>
@@ -10,9 +10,9 @@
       <stop offset="1" stop-color="#56667d"/>
     </linearGradient>
   </defs>
-  <g id="buffy-rainy">
+  <g filter="url(#glossShadow)" id="buffy-rainy">
     <!-- boots -->
-    <g>
+    <g filter="url(#glossShadow)">
       <path d="M170 520 C170 504 186 498 202 498 C220 498 232 506 232 522 L232 572 C232 582 224 588 212 588 L178 588 C170 588 166 580 166 572 Z"
         fill="url(#boot)" stroke="#3d2a3f" stroke-width="7" stroke-linejoin="round"/>
       <path d="M278 522 C278 506 294 498 310 498 C328 498 344 504 344 520 L344 572 C344 580 340 588 332 588 L298 588 C286 588 278 582 278 572 Z"
@@ -22,10 +22,10 @@
     </g>
     <!-- coat -->
     <path d="M172 382 C150 424 146 484 156 536 C190 556 322 556 356 536 C366 484 362 424 340 382 C312 366 200 366 172 382 Z"
-      fill="url(#rain)" stroke="#5c3150" stroke-width="8" stroke-linejoin="round"/>
+      fill="url(#rain)" stroke="#7a1645" stroke-width="8" stroke-linejoin="round"/>
     <!-- lapels -->
-    <path d="M206 376 L246 434 L222 448 L190 398 Z" fill="#fff0bf" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M306 376 L266 434 L290 448 L322 398 Z" fill="#fff0bf" stroke="#5c3150" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M206 376 L246 434 L222 448 L190 398 Z" fill="#fff0bf" stroke="#7a1645" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M306 376 L266 434 L290 448 L322 398 Z" fill="#fff0bf" stroke="#7a1645" stroke-width="6" stroke-linejoin="round"/>
     <!-- buttons and pockets -->
     <circle cx="256" cy="452" r="6" fill="#fff2c2" stroke="#8a6224" stroke-width="3"/>
     <circle cx="256" cy="486" r="6" fill="#fff2c2" stroke="#8a6224" stroke-width="3"/>

@@ -6,7 +6,7 @@ keeps her own little life, and can carry a prompt into Claude without sending
 it for you.
 
 <p align="center">
-  <img src="docs/shots/buffy.png" width="260" alt="Buffy, a plush storm-cloud companion in a lavender cloud hoodie with heart eyes">
+  <img src="docs/shots/buffy.png" width="260" alt="Buffy, a fluffy pink cloud robot in a bright princess dress">
 </p>
 
 <p align="center">
@@ -171,7 +171,7 @@ Buffy uses an asset-driven character system. A character is either layered
 cell per pose. The overlay, wardrobe preview, and settings preview all use the
 same renderer.
 
-**Buffy** is the plush storm-cloud, drawn as layered SVG. **Mochi** is a
+**Buffy** is the plush pink storm-cloud robot, drawn as layered SVG. **Mochi** is a
 pocket bunny, **Pip** is a comet fox with a star-tipped tail, and **Mallow** is
 a mint marshmallow bear. The 3.2 roster adds Fairy, Retro robot, Knight, Fox
 wizard, Little ghost, Red panda, Axolotl, Clockwork inventor, Tiny witch, Star

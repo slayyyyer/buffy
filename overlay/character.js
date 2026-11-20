@@ -132,16 +132,16 @@
   };
 
   const MASCOT = {
-    outline: '#7a2556',
-    screen: '#3d102d',
-    screenPink: '#ff8ccb',
-    pink: '#f47fbd',
-    pinkLight: '#ffc0e1',
-    pinkDeep: '#dd4f9d',
-    cloudTop: '#ffd3eb',
-    cloudMid: '#fb9dd1',
-    cloudLow: '#ee69b0',
-    cloudShadow: '#8e235f',
+    outline: '#821941',
+    screen: '#351022',
+    screenPink: '#ff9fc7',
+    pink: '#ff79ad',
+    pinkLight: '#ffd0e2',
+    pinkDeep: '#e63879',
+    cloudTop: '#ffb2d0',
+    cloudMid: '#ff79ad',
+    cloudLow: '#f34b8a',
+    cloudShadow: '#a91c51',
     blue: '#82cdf2',
     blueLight: '#d0f1ff',
     blueDeep: '#4b9ac9',
@@ -447,6 +447,18 @@
     ctx.lineWidth = 2.4;
     ctx.stroke();
 
+    // Small overlapping puffs give the cloud head a soft plush texture.
+    ctx.save();
+    ctx.globalAlpha = 0.26;
+    ctx.fillStyle = MASCOT.pinkLight;
+    [[-25, -38, 8], [-12, -47, 8], [2, -49, 8], [17, -43, 8], [29, -32, 7], [-34, -23, 6], [34, -17, 6]]
+      .forEach(([x, y, radius]) => {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    ctx.restore();
+
     ctx.save();
     ctx.globalAlpha = 0.16;
     ctx.fillStyle = MASCOT.cloudShadow;
@@ -479,16 +491,25 @@
     [-1, 1].forEach((side) => {
       const x = side * 44;
       ctx.save();
-      ctx.shadowColor = 'rgba(255, 62, 162, 0.8)';
-      ctx.shadowBlur = 10;
-      drawJewelHeart(x, -19, 11.8, '#e82b83', MASCOT.outline);
-      ctx.restore();
-
-      drawJewelHeart(x, -19, 8, '#ff9ed4', '#b82870');
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.shadowColor = 'rgba(205, 30, 94, 0.35)';
+      ctx.shadowBlur = 5;
+      ctx.fillStyle = MASCOT.pinkDeep;
+      ctx.strokeStyle = MASCOT.outline;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.ellipse(x - 2.3, -21.5, 1.8, 1.2, -0.5, 0, Math.PI * 2);
+      ctx.ellipse(x, -19, 11.5, 14, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = MASCOT.pinkLight;
+      ctx.beginPath();
+      ctx.ellipse(x, -19, 7.2, 9.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.beginPath();
+      ctx.ellipse(x - 2.4, -23, 2.3, 3.4, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     });
   }
 
