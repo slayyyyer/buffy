@@ -31,7 +31,7 @@ Freebuff watcher is inferred and labeled as such.
 
 ## Status
 
-Buffy is at **v3.3.4**. The 2.0 line rebuilt the companion around an
+Buffy is at **v3.4.0**. The 2.0 line rebuilt the companion around an
 asset-driven character system and a request-aware session model; 2.1 added a
 real size control and kept compact mode inside its window; 2.2 added reactions,
 project jumps, sound choices, and per-display corners. 3.0 made the interaction
@@ -63,7 +63,7 @@ session from looking like live work:
 - [x] pose hysteresis so a tool boundary cannot strobe the art
 - [x] readiness reported per adapter in `/health`, `/state`, and `buffy status`
 
-Every release from 2.0.1 through 3.3.4 is written up in
+Every release from 2.0.1 through 3.4.0 is written up in
 [CHANGELOG.md](CHANGELOG.md).
 
 ## Requirements
@@ -100,12 +100,12 @@ Settings → Privacy & Security → Open Anyway**.
 
 ### Direct installers
 
-Buffy **3.3.4** ships for Windows, macOS, and Linux:
+Buffy **3.4.0** ships for Windows, macOS, and Linux:
 
-- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-win-x64.exe.sha256)
-- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-mac-arm64.dmg.sha256)
-- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-mac-x64.dmg.sha256)
-- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.3.4/Buffy-3.3.4-linux-x86_64.AppImage.sha256)
+- **Windows 10/11 (x64):** [installer](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-win-x64.exe) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-win-x64.exe.sha256)
+- **macOS Apple silicon:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-mac-arm64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-mac-arm64.dmg.sha256)
+- **macOS Intel:** [dmg](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-mac-x64.dmg) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-mac-x64.dmg.sha256)
+- **Linux x64:** [AppImage](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-linux-x86_64.AppImage) · [SHA-256](https://github.com/slayyyyer/buffy/releases/download/v3.4.0/Buffy-3.4.0-linux-x86_64.AppImage.sha256)
 
 The packaged app includes Buffy, the local daemon, and stable hook and CLI
 launchers, so Claude Code does **not** need a Node checkout. Open **Settings →

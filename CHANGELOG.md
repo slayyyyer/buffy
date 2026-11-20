@@ -3,6 +3,23 @@
 Release notes for every Buffy version, newest first. The current feature list,
 install steps, adapter setup and configuration live in [README.md](README.md).
 
+## 3.4.0
+
+- **Buffy is drawn from scratch as a plush pink cloud robot.** The cream cloud
+  with the plum sash is gone: the head is a scalloped pink hood with round ears,
+  the display is wider and darker, and the body is a small plush torso on soft
+  boots with pink cuffs. Every outfit and pose was redrawn on the same plush arms
+  and crimson outlines so a look still lines up on the new body, and the app
+  icon, README art, and site screenshots follow the new character.
+- **Her accessories sit on the new head.** The glasses, hats and bows were placed
+  for the old proportions and floated off the drawn shape; they are remeasured
+  for the bigger head, and the head-area pieces now draw in compact mode too
+  instead of vanishing with the shorter frame.
+- **Compact mode and the wardrobe thumbnails frame the whole character again.**
+  The compact crop treats the full canvas as the frame, so the head is no longer
+  cut off at 234×300, and the picker thumbnail uses its own square crop so the
+  body is not squeezed into a slot that only fits her head.
+
 ## 3.3.5
 
 - **You can prove a connection works.** Every agent in **Settings → Connection**
