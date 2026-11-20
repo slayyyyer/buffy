@@ -88,8 +88,11 @@
         size: { width: 512, height: 640 },
         base: 'buffy/base.svg',
         poses: buffyPoseFiles,
-        compactCrop: { x: 56, y: 62, width: 400, height: 400 },
-        face: { x: 256, y: 308, width: 192, height: 120 },
+        // Thumbnails are wide and short (150x64): a square crop keeps the head
+        // and apron in frame at the atlas companions' head-and-torso scale.
+        // Compact mode needs no crop; its default frame is the whole character.
+        thumbCrop: { x: 0, y: 0, width: 512, height: 512 },
+        face: { x: 256, y: 279, width: 224, height: 136 },
         outfits: [
           'none',
           'dress',

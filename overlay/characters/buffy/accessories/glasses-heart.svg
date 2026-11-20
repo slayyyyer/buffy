@@ -1,9 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
-  <g fill="#e78bb030" stroke="#e79ab8" stroke-width="6" stroke-linejoin="round">
-    <path d="M218 290 C202 276 190 292 196 306 C202 320 218 330 218 330 C218 330 234 320 240 306 C246 292 234 276 218 290 Z"/>
-    <path d="M294 290 C278 276 266 292 272 306 C278 320 294 330 294 330 C294 330 310 320 316 306 C322 292 310 276 294 290 Z"/>
-    <path d="M240 304 Q256 296 272 304" fill="none" stroke-linecap="round"/>
-    <path d="M190 298 L162 292 M322 298 L350 292" fill="none" stroke-linecap="round"/>
-    <path d="M208 298 Q212 292 218 294" fill="none" stroke="#ffd7e6" stroke-width="3" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640"><defs><filter id="glossShadow" x="-.2" y="-.2" width="1.4" height="1.5"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#71143d" flood-opacity=".2"/></filter></defs>
+  <g filter="url(#glossShadow)" fill="none" stroke-linecap="round">
+    <g transform="translate(213.4 269.5) scale(1.15) translate(-218 -303)" fill="#e78bb030" stroke="#e79ab8" stroke-width="6" stroke-linejoin="round">
+      <path d="M218 290 C202 276 190 292 196 306 C202 320 218 330 218 330 C218 330 234 320 240 306 C246 292 234 276 218 290 Z"/>
+      <path d="M208 298 Q212 292 218 294" fill="none" stroke="#ffd7e6" stroke-width="3"/>
+    </g>
+    <g transform="translate(298.6 269.5) scale(1.15) translate(-218 -303)" fill="#e78bb030" stroke="#e79ab8" stroke-width="6" stroke-linejoin="round">
+      <path d="M218 290 C202 276 190 292 196 306 C202 320 218 330 218 330 C218 330 234 320 240 306 C246 292 234 276 218 290 Z"/>
+    </g>
+    <path d="M242 265 Q256 257 270 265" stroke="#e79ab8" stroke-width="6"/>
+    <path d="M185 260 L154 252 M327 260 L358 252" stroke="#e79ab8" stroke-width="6"/>
   </g>
 </svg>

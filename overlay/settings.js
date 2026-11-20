@@ -644,6 +644,7 @@
           height,
           baseY: height,
           compact: true,
+          crop: entry.thumbCrop,
           cursor: null,
           reducedMotion: true,
           thoughtBubbles: 'off',

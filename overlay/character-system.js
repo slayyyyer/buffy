@@ -871,6 +871,7 @@
       height = 520,
       baseY = null,
       compact = false,
+      crop = null,
       cursor = null,
       reducedMotion = false,
       thoughtBubbles = 'off',
@@ -935,13 +936,14 @@
       width: atlasCell.width,
       height: atlasCell.height * 0.7,
     };
-    const source = style === 'atlas'
-      ? compact
-        ? atlasCompactCell
-        : { x: 0, y: 0, width: atlasCell.width, height: atlasCell.height }
-      : compact && character.compactCrop
-        ? character.compactCrop
-        : { x: 0, y: 0, width: character.size?.width || 512, height: character.size?.height || 640 };
+    // Compact frames the whole character; a caller can ask for a tighter one
+    // instead (settings thumbnails want head and torso).
+    let source = { x: 0, y: 0, width: character.size?.width || 512, height: character.size?.height || 640 };
+    if (style === 'atlas') {
+      source = compact ? atlasCompactCell : { x: 0, y: 0, width: atlasCell.width, height: atlasCell.height };
+    } else if (crop) {
+      source = crop;
+    }
     const aspect = source.width / source.height;
     const targetHeight = compact ? height * 0.98 : height * 0.96;
     const drawHeight = Math.min(targetHeight, width / aspect);
@@ -1126,34 +1128,35 @@
         });
       }
 
-      if (!compact) {
-        if (clothing.glasses !== false && look.glasses && look.glasses !== 'none') {
-          const glassesRel = character.accessoryAssets?.glasses?.[look.glasses];
-          drawImage(imageFor(character.id, glassesRel), glassesRel);
-        }
-        if (clothing.hat !== false && look.hat && look.hat !== 'none') {
-          const hatRel = character.accessoryAssets?.hat?.[look.hat];
-          drawImage(imageFor(character.id, hatRel), hatRel);
-        }
-        if (clothing.bow !== false && look.bow && look.bow !== 'none') {
-          const bowRel = character.accessoryAssets?.bow?.[look.bow];
-          const bowSwing = reducedMotion ? 0 : Math.sin(now / 1000 - 0.7) * 0.022 + helloWiggle * 1.2;
-          drawImage(imageFor(character.id, bowRel), bowRel, {
-            rotate: bowSwing,
-            scale: 1.12,
-            pivot: { x: 366, y: 190 },
-          });
-        }
-        if (
-          clothing.wand !== false &&
-          look.wand &&
-          look.wand !== 'none' &&
-          pose === 'idle' &&
-          !hobby
-        ) {
-          const wandRel = character.accessoryAssets?.wand?.[look.wand];
-          drawImage(imageFor(character.id, wandRel), wandRel);
-        }
+      // Head-area layers stay on at every size so compact keeps the wardrobe;
+      // the wand is a hand prop and remains full-size only.
+      if (clothing.glasses !== false && look.glasses && look.glasses !== 'none') {
+        const glassesRel = character.accessoryAssets?.glasses?.[look.glasses];
+        drawImage(imageFor(character.id, glassesRel), glassesRel);
+      }
+      if (clothing.hat !== false && look.hat && look.hat !== 'none') {
+        const hatRel = character.accessoryAssets?.hat?.[look.hat];
+        drawImage(imageFor(character.id, hatRel), hatRel);
+      }
+      if (clothing.bow !== false && look.bow && look.bow !== 'none') {
+        const bowRel = character.accessoryAssets?.bow?.[look.bow];
+        const bowSwing = reducedMotion ? 0 : Math.sin(now / 1000 - 0.7) * 0.022 + helloWiggle * 1.2;
+        drawImage(imageFor(character.id, bowRel), bowRel, {
+          rotate: bowSwing,
+          scale: 1,
+          pivot: { x: 389, y: 160 },
+        });
+      }
+      if (
+        !compact &&
+        clothing.wand !== false &&
+        look.wand &&
+        look.wand !== 'none' &&
+        pose === 'idle' &&
+        !hobby
+      ) {
+        const wandRel = character.accessoryAssets?.wand?.[look.wand];
+        drawImage(imageFor(character.id, wandRel), wandRel);
       }
 
       drawStateEffects(ctx, {
