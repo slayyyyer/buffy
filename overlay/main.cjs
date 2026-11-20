@@ -38,6 +38,22 @@ const { createDraftStore, buildClaudeCodeUrl } = require('./handoff.cjs');
 const { createAlertPlanner } = require('./alerts.cjs');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Screenshots must not race image loading, so the shot path waits until the
+// renderer reports that the character art is drawn from loaded files.
+async function waitForScript(webContents, expression, timeoutMs = 4000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await webContents.executeJavaScript(expression).catch(() => false)) return true;
+    await sleep(120);
+  }
+  return false;
+}
+
+const ART_READY = "(() => { const C = globalThis.BuffyCharacters; return Boolean(C && C.isReady(C.manifest().characters[0].id)); })()";
+const THUMB_SELECTOR = '[data-character-thumb="buffy"]';
+const THUMB_READY = `(() => { const c = document.querySelector('${THUMB_SELECTOR}'); return Boolean(c && c.width > 1); })()`;
+const THUMB_RECT = `(() => { const c = document.querySelector('${THUMB_SELECTOR}'); if (!c) return null; const r = c.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) }; })()`;
+
 function readJson(file, fallback) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -71,6 +87,14 @@ function argValue(name) {
 const shotPath = argValue('--shot');
 const shotMode = argValue('--shot-mode') || 'full';
 const shotExit = process.argv.includes('--shot-exit');
+// Golden shots pin the device pixel ratio (so a capture is the same size on any
+// display) and drop the live daemon, cursor feed and clock (so nothing in the
+// frame changes between runs).
+const shotFixture = process.argv.includes('--shot-fixture');
+const shotDpr = Number(argValue('--shot-dpr'));
+if (Number.isFinite(shotDpr) && shotDpr > 0) {
+  app.commandLine.appendSwitch('force-device-scale-factor', String(shotDpr));
+}
 const settingsShotPath = argValue('--settings-shot') || argValue('--wardrobe-shot');
 const settingsShotExit = process.argv.includes('--settings-shot-exit') || process.argv.includes('--wardrobe-shot-exit');
 const dev = process.argv.includes('--dev');
@@ -116,6 +140,14 @@ let rotationApi = null;
 let installApi = null;
 let configApi = null;
 let snapshot = null;
+// The frozen fixture state for golden shots: a resting companion, no pending
+// work, no project row, and nothing that depends on a live agent.
+const SHOT_SNAPSHOT = {
+  current: { state: 'idle', message: '', category: 'thinking', seq: 1, quiet: true, since: 0 },
+  watch: { directory: 'buffy', enabled: true },
+  pendingRequests: 0,
+  companion: { name: 'Buffy' },
+};
 let shortcutStatus = { accelerator: null, ok: false, error: 'Shortcut not registered yet.' };
 let connectionCache = null;
 
@@ -723,7 +755,7 @@ function createWindow() {
   // so an always-on-top overlay cannot land in someone's demo or client call.
   if (process.platform !== 'linux') win.setContentProtection(true);
 
-  win.loadFile(path.join(__dirname, 'index.html'));
+  win.loadFile(path.join(__dirname, 'index.html'), shotFixture ? { query: { shot: 'frozen' } } : undefined);
 
   win.webContents.on('did-finish-load', () => {
     if (!win || win.isDestroyed()) return;
@@ -733,6 +765,10 @@ function createWindow() {
     win.webContents.send('mode', modePayload());
     win.webContents.send('draft', DRAFT.snapshot());
     win.setIgnoreMouseEvents(true, { forward: true });
+    if (shotFixture) {
+      win.webContents.send('state', SHOT_SNAPSHOT);
+      return;
+    }
     connectStream();
     poll();
   });
@@ -774,20 +810,30 @@ function createWindow() {
     disconnectStream();
   });
 
-  pollTimer = setInterval(poll, 2200);
-  cursorTimer = setInterval(sendCursor, 80);
-  sendCursor();
+  if (!shotFixture) {
+    pollTimer = setInterval(poll, 2200);
+    cursorTimer = setInterval(sendCursor, 80);
+    sendCursor();
+  }
 
   if (shotPath) {
     win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         try {
-          if (shotMode === 'settings') {
+          if (shotMode === 'settings' || shotMode === 'settings-thumb') {
             await openSettings();
             // Wait past the connection toast so screenshots stay clean.
-            await sleep(5200);
+            await sleep(shotMode === 'settings' ? 5200 : 1400);
             const targetWindow = settingsWindow;
-            const image = await targetWindow.webContents.capturePage();
+            let rect;
+            if (shotMode === 'settings-thumb') {
+              // Crop to one picker canvas: the rest of the page is text, which
+              // shifts with fonts, while the thumbnail is pure character art.
+              await waitForScript(targetWindow.webContents, THUMB_READY, 5000);
+              rect = await targetWindow.webContents.executeJavaScript(THUMB_RECT);
+              if (!rect) throw new Error('the companion thumbnail is not in the settings window');
+            }
+            const image = await targetWindow.webContents.capturePage(rect);
             const target = path.resolve(shotPath);
             fs.mkdirSync(path.dirname(target), { recursive: true });
             fs.writeFileSync(target, image.toPNG());
@@ -806,6 +852,7 @@ function createWindow() {
               );
               await sleep(500);
             }
+            if (shotFixture) await waitForScript(win.webContents, ART_READY, 5000);
             const image = await win.webContents.capturePage();
             const target = path.resolve(shotPath);
             fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -1761,7 +1808,7 @@ ipcMain.handle('session:focus', (_event, payload) => {
   return { ok: false, error: 'That session did not report a project folder.' };
 });
 
-ipcMain.handle('snapshot:get', () => snapshot);
+ipcMain.handle('snapshot:get', () => (shotFixture ? SHOT_SNAPSHOT : snapshot));
 
 ipcMain.handle('composer:get', () => DRAFT.snapshot());
 

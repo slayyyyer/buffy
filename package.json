@@ -23,6 +23,7 @@
     "dist:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "dist:linux": "electron-builder --linux AppImage --x64 --publish never",
     "test": "node --test",
+    "test:shots": "node --test test/golden-shots.test.js",
     "smoke:packaged": "node scripts/smoke-packaged.js"
   },
   "engines": {
